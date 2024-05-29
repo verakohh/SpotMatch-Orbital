@@ -33,6 +33,7 @@ export default Settings
 const styles = StyleSheet.create({
     settings: {
         flex: 1,
+        color: '#212e37',
         justifyContent: 'space-between',
         alignItems: 'center',
     }
