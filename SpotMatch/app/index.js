@@ -20,7 +20,7 @@ function InsideLayout() {
 
   return (
     <InsideStack.Navigator>
-      <InsideStack.Screen name='Home' component={Home} />
+      <InsideStack.Screen name='Home' component={Home} options={{ headerShown: false }} />
       <InsideStack.Screen name='Settings' component={Settings} />
     </InsideStack.Navigator>
   );
