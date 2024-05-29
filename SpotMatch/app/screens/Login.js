@@ -1,4 +1,4 @@
-import { Text, TextInput, View, StyleSheet, KeyboardAvoidingView } from 'react-native';
+import { Text, TextInput, Image, View, StyleSheet, KeyboardAvoidingView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import Button from '../../components/navigation/Button';
 import {FIREBASE_AUTH} from '../../firebase';
@@ -45,7 +45,7 @@ const Login = () => {
       style={styles.container}
       behavior='padding'
     >
-      <Text style= {styles.login}>SpotMatch</Text>
+      <Image source={require('../../assets/images/SpotMatch-login.png')} />
       <View style= {styles.inputContainer}>
         <TextInput
           value={email}
@@ -66,7 +66,7 @@ const Login = () => {
         {/* button code goes here */}
         <View style= {styles.buttonContainer}>
           <Button type='primary' size='m' text='Login' onPress={handleLogin} />
-            <Text style= {{fontSize: 15, marginTop: 12, fontWeight: '400', color:'gray'}}>New to SpotMatch?</Text>
+            <Text style= {{fontSize: 15, marginTop: 12, fontWeight: '400', color:'gray'}}>New here?</Text>
             <Button type='secondary' size='m' text='Sign Up' onPress={handleSignUp} />
         </View>
     </KeyboardAvoidingView>
@@ -83,16 +83,8 @@ const styles = StyleSheet.create({
 
   },
 
-  login: {
-    marginTop: '5px',
-    color: '#accafc',
-    fontSize: '24px',
-    fontWeight: 'bold',
-  },
-
   inputContainer: {
     width: '80%',
-    marginTop: 10,
 
   },
 

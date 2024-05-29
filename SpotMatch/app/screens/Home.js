@@ -8,8 +8,8 @@ const Home = () => {
   const navigation= useNavigation();
   return (
     <View style={{flex: 1, justifyContent:'center', alignItems: 'center'}}>
-      <Button type='secondary' size='s' text='Settings' onPress={() => navigation.navigate('Settings')} />
       <Text>Home Screen</Text>
+      <Button type='secondary' size='s' text='Settings' onPress={() => navigation.navigate('Settings')} />
     </View>
   );
 };
