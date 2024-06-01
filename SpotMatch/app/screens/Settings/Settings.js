@@ -23,6 +23,17 @@ const Settings = () => {
     return (
     <View style= {styles.settings}>
       <Text>Settings</Text>
+      <View style ={styles.contact}>
+        <Text> {`
+        Contact Us:
+
+        Charlene Teoh         
+        e1297771@u.nus.edu        
+
+        Vera Koh 
+        e1138412@u.nus.edu        
+        `}</Text>
+      </View>
         <Button type='danger' size='m' text='Sign Out' onPress={handleSignOut} style={{flex: 1, justifyContent: 'space-between'}}></Button>
     </View>
   )     
@@ -36,6 +47,15 @@ const styles = StyleSheet.create({
         color: '#212e37',
         justifyContent: 'space-between',
         alignItems: 'center',
+        backgroundColor: 'lightgrey'
+    }, 
+
+    contact: {
+        borderWidth: 2,
+        borderColor: 'grey',
+        backgroundColor: 'white',
+        borderRadius: 15,
+    
     }
 
 })
