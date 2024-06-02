@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@react-navigation/native-stack": "^6.9.26",
-    "expo": "^51.0.9"
+    "expo": "^51.0.9",
+    "expo-updates": "~0.25.15"
   }
 }
