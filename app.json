@@ -15,6 +15,8 @@
     "updates": {
       "url": "https://u.expo.dev/33fcd0c8-f561-43b4-8356-f89ba41d6d5b"
     },
-    "android": {}
+    "android": {
+      "package": "com.lenetcy.spotmatch1"
+    }
   }
 }
