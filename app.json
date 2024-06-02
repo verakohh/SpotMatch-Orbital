@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "33fcd0c8-f561-43b4-8356-f89ba41d6d5b"
+      }
+    },
+    "owner": "lenetcy",
+    "ios": {
+      "bundleIdentifier": "com.lenetcy.spotmatch1"
+    }
+  }
+}
