@@ -1,35 +1,3 @@
-// import React from 'react';
-// import { View, Text, TouchableOpacity } from 'react-native';
-
-// const NavigationTab = ({ state, descriptors, navigation }) => {
-    //   const tabs = [
-//     { name: "Match", icon: "⚔️", route: "Match" },
-//     { name: "Discover", icon: "🔍", route: "Discover" },
-//     { name: "Chat", icon: "💬", route: "Chat" },
-//     { name: "Events", icon: "🎉", route: "Events" },
-//   ];
-
-//   return (
-//     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-//       {tabs.map((tab, index) => {
-    //         const isFocused = state.index === index;
-
-//         return (
-//           <TouchableOpacity
-//             key={tab.name}
-//             onPress={() => navigation.navigate(tab.route)}
-//             style={{ alignItems: 'center', padding: 10 }}
-//           >
-//             <Text style={{ color: isFocused ? 'blue' : 'black' }}>{tab.icon}</Text>
-//             <Text style={{ color: isFocused ? 'blue' : 'black' }}>{tab.name}</Text>
-//           </TouchableOpacity>
-//         );
-//       })}
-//     </View>
-//   );
-// };
-
-// export default NavigationTab;
 import React from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
