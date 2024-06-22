@@ -1,33 +1,62 @@
+// import 'react-native-gesture-handler';
+// import * as React from 'react';
+// import { NavigationContainer } from '@react-navigation/native';
+// import { createNativeStackNavigator } from '@react-navigation/native-stack';
+// import Registration from './screens/Registration';
+// import Login from './screens/Login';
+// import SideBar from './screens/SideBar';
+// import { useState, useEffect } from 'react';
+// import { onAuthStateChanged } from 'firebase/auth';
+// import { FIREBASE_AUTH } from '@/firebase';
+
+// const Stack = createNativeStackNavigator();
+
+// export default function App() {
+//   const [user, setUser] = useState(null);
+
+//   useEffect(() => {
+//     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, user => {
+//       setUser(user);
+//     });
+//     return () => unsubscribe();
+//   }, []);
+
+//   return (
+    
+//       <Stack.Navigator>
+//         {user ? (
+//           <Stack.Screen name="SideBar" component={SideBar} options={{ headerShown: false }} />
+//         ) : (
+//           <>
+//             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+//             <Stack.Screen name="Registration" component={Registration} options={{ headerShown: false }} />
+//           </>
+//         )}
+//       </Stack.Navigator>
+    
+//   );
+// }
 import 'react-native-gesture-handler';
 import * as React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import Registration from './screens/Registration';
 import Login from './screens/Login';
-import Home from './screens/Home';
-import Settings from './screens/Settings/Settings';
-import MatchScreen from './screens/MatchScreen';
-import DiscoverScreen from './screens/DiscoverScreen';
-import ChatScreen from './screens/ChatScreen';
-import EventsScreen from './screens/EventsScreen';
-import NavigationTab from './screens/NavigationTab';
+import SideBar from './screens/SideBar';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { FIREBASE_AUTH } from '@/firebase';
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
 
-function InsideLayout() {
+function AuthStack() {
   return (
-    <Tab.Navigator tabBar={props => <NavigationTab {...props} />}>
-      <Tab.Screen name="Match" component={MatchScreen} />
-      <Tab.Screen name="Discover" component={DiscoverScreen} />
-      <Tab.Screen name="Chat" component={ChatScreen} />
-      <Tab.Screen name="Events" component={EventsScreen} />
-    </Tab.Navigator>
+    <Stack.Navigator>
+      <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+      <Stack.Screen name="Registration" component={Registration} options={{ headerShown: false }} />
+    </Stack.Navigator>
   );
 }
 
@@ -41,10 +70,22 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // return (
+  //   <NavigationContainer>
+  //     {user ? (
+  //       <Drawer.Navigator initialRouteName="SideBar">
+  //         <Drawer.Screen name="SideBar" component={SideBar} options={{ headerShown: false }} />
+  //       </Drawer.Navigator>
+  //     ) : (
+  //       <AuthStack />
+  //     )}
+  //   </NavigationContainer>
+  // );
   return (
+    
       <Stack.Navigator>
         {user ? (
-          <Stack.Screen name="InsideLayout" component={InsideLayout} options={{ headerShown: false }} />
+          <Stack.Screen name="SideBar" component={SideBar} options={{ headerShown: false }} />
         ) : (
           <>
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
