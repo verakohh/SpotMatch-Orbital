@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   },
 
   signInText: {  
-    fontSize: 20,      
+    fontSize: 26,      
     fontWeight: '400', 
     fontFamily: 'Verdana',
     color: '#212e37',      

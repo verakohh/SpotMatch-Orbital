@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   }, 
 
   gText: {
-    fontSize: 25, 
+    fontSize: 30, 
     fontFamily: 'verdana',
   }, 
 
