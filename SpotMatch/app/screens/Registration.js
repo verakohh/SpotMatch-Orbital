@@ -4,9 +4,11 @@ import { FIREBASE_AUTH } from '../../firebase';
 import Button from '../../components/navigation/Button';
 import { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { usersRef } from '../../firebase';
+import { ref, set } from '../../firebase';
 import { useNavigation } from '@react-navigation/core';
-import { addDoc } from 'firebase/firestore';
+import { addDoc, setDoc, updateDoc } from 'firebase/firestore';
+
+let docRef;
 
 const Registration = () => {
     const [email, setEmail] = useState('');
@@ -14,6 +16,7 @@ const Registration = () => {
     const [loading, setLoading] = useState(false);
     const[firstName, setFirstName] = useState('');
     const[lastName, setLastName] = useState('');
+   
 
     const auth = FIREBASE_AUTH;
   
@@ -23,14 +26,16 @@ const Registration = () => {
         const response = await createUserWithEmailAndPassword(auth, email, password);
         console.log(response);  
         if(response.user) {
-            let doc = await addDoc(usersRef, {
-                    firstName,
-                    lastName,
-                    email,
-                    userId: response.user.uid
-                
-            });
-            alert('Created Successfully!')
+          set(response.user.uid, {
+                firstName,
+                lastName,
+                email,
+                userId: response.user.uid
+                }
+              );
+          docRef = ref(response.user.uid)
+          console.log('the ref is: ', docRef)
+          alert('Created Successfully!')
         }
       } catch (error) {
         console.log(error);
@@ -96,6 +101,7 @@ const Registration = () => {
 }
 
 export default Registration
+export const update = data => setDoc(docRef, data , {merge: true});
 
 const styles = StyleSheet.create({
     container: {
