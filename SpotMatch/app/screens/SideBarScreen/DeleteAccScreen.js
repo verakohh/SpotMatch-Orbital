@@ -5,7 +5,7 @@ import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react
 export default function DeleteAccount() {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Delete Account Screen</Text>
+        <Text>Delete Account Screen</Text>
         </View>
     );
 }
