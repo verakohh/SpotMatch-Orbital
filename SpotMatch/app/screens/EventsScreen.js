@@ -1,10 +1,20 @@
+// app/screens/EventsScreen.js
 import React from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import GigsScreen from './Events/GigsScreen'; 
+import ConcertsScreen from './Events/ConcertsScreen'; 
+import ActivitiesScreen from './Events/ActivitiesScreen'; 
 
-export default function EventsScreen() {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Events Screen</Text>
-        </View>
-    );
-}
+const Tab = createMaterialTopTabNavigator();
+
+const EventsScreen = () => {
+  return (
+    <Tab.Navigator>
+      <Tab.Screen name="Concerts" component={ConcertsScreen} />
+      <Tab.Screen name="Local Gigs" component={GigsScreen} /> 
+      <Tab.Screen name="Activities" component={ActivitiesScreen} />
+    </Tab.Navigator>
+  );
+};
+
+export default EventsScreen;
