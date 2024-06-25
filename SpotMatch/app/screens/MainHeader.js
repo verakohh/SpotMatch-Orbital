@@ -1,3 +1,4 @@
+//this is for side bar
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, TouchableOpacity } from 'react-native';
