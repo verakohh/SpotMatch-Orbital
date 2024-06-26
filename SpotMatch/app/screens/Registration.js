@@ -1,50 +1,91 @@
 import { StyleSheet, Text, View, KeyboardAvoidingView, Image, TextInput, TouchableOpacity } from 'react-native'
-import React from 'react'
-import { FIREBASE_AUTH } from '../../firebase';
+import React, {useContext, useEffect} from 'react'
+import { FIREBASE_AUTH, db } from '../../firebase';
 import Button from '../../components/navigation/Button';
 import { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword , updateProfile} from 'firebase/auth';
 import { ref, set } from '../../firebase';
 import { useNavigation } from '@react-navigation/core';
-import { addDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, addDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { UserContext } from '../UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import User , {storeEmail, storeUser} from '../User';
+import GetSpotifyData from '../../components/GetSpotifyData';
+
 
 let docRef;
 
 const Registration = () => {
+    // const { setUserInfo } = useUserInfo();
+    const {user, setUser} = useContext(UserContext);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const[firstName, setFirstName] = useState('');
     const[lastName, setLastName] = useState('');
+    // const[docRef, setDocRef] = useState('');
+    // const[userId, setUserId] = useState("");
    
+  
 
     const auth = FIREBASE_AUTH;
   
+    <GetSpotifyData />
+
+    // useEffect(() => {
+    //   localStorage.setItem("user", JSON.stringify(user))
+    // }, [user])
+
     const handleSignUp = async () => {
       setLoading(true);
       try {
         const response = await createUserWithEmailAndPassword(auth, email, password);
         console.log(response);  
         if(response.user) {
-          set(response.user.uid, {
+          const userId = response.user.uid;
+          set(email, {
                 firstName,
                 lastName,
                 email,
                 userId: response.user.uid
                 }
               );
-          docRef = ref(response.user.uid)
-          console.log('the ref is: ', docRef)
+
+              const docRef = doc(db, 'users', email);
+              const docRefPath = `users/${email}`;
+              console.log('the ref is: ', docRef)
+          
+              const newUser = new User(firstName, lastName, email);
+              // user = newUser;
+              await storeUser(newUser);
+              // await storeEmail(email);
+              // setUser(newUser);
+              console.log("registered user Object : ",newUser);
+
+              // setUserInfo(newUser);
+
+              // const newDocRef = ref(response.user.uid)
+          // setUserInfo(userId, newDocRef);
+
+
+          // setID(response.user.uid);
+          // console.log(id);
+          
+          // console.log('the ref is: ', newDocRef)
+
           alert('Created Successfully!')
         }
       } catch (error) {
         console.log(error);
         alert('Sign Up failed: ' + error.message);
+       
+
       } finally {
         setLoading(false);
       }
     }
     const navigation= useNavigation();
+    
 
     return (
         <KeyboardAvoidingView
@@ -99,9 +140,13 @@ const Registration = () => {
       
   )
 }
-
+// console.log("this is the docRef: ", docRef);
 export default Registration
-export const update = data => setDoc(docRef, data , {merge: true});
+
+export const refDoc = docRef;
+export const update = data => { if (docRef) {setDoc(docRef, data , {merge: true});} 
+                        else { console.error("No user docRef"); } } 
+
 
 const styles = StyleSheet.create({
     container: {

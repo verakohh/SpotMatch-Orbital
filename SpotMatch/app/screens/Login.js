@@ -1,30 +1,113 @@
 import { Text, TextInput, Image, View, StyleSheet, KeyboardAvoidingView } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import Button from '../../components/navigation/Button';
-import { FIREBASE_AUTH } from '../../firebase';
+import { FIREBASE_AUTH, ref } from '../../firebase';
 import { signInWithEmailAndPassword} from 'firebase/auth';
 import { useNavigation } from '@react-navigation/core';
+import { UserContext } from '../UserContext';
+import { getDoc } from 'firebase/firestore';
+import User, { storeUser, getToken , storeEmail } from '../User';
+import GetSpotifyData  from '../../components/GetSpotifyData';
+import axios from 'axios';
+
+
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const auth = FIREBASE_AUTH;
+  // const {user, setUser, token} = useContext(UserContext);
+
+  useEffect(() => {
+    async function createUser() {
+      const userDoc = ref(email);
+      const docSnap = await getDoc(userDoc);
+      console.log(docSnap);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        console.log("Document data:", data);
+        const newUser = new User(data.firstName, data.lastName, data.email, `users/${email}`);
+        newUser.setArtists(data.artists);
+        newUser.setGenres(data.genres);
+        newUser.setDisplayName(data.displayName);
+        newUser.setTopTracksData(data.tracks);
+
+        await storeUser(newUser);
+       
+      }
+    }
+    createUser();
+  }, [])
+  // useEffect(() => {
+  //   async function createUser() {
+  //     const userDoc = ref(email);
+  //     const userDocPath = `users/${email}`;
+  //     const docSnap = await getDoc(userDoc);
+  //     console.log(docSnap);
+
+  //     if (docSnap.exists()) {
+  //       const data = docSnap.data()
+  //       console.log("Document data:", data);
+  //       const newUser = new User(data.firstName, data.lastName, data.email, userDocPath);
+  //       newUser.setArtists(data.artists);
+  //       newUser.setGenres(data.genres);
+  //       newUser.setDisplayName(data.displayName);
+  //       newUser.setTopTracksData(data.tracks);
+
+  //       await storeUser(newUser);
+       
+  //     }
+  //   }
+  //   createUser();
+  // }, [])
 
   const handleLogin = async () => {
+    // <GetSpotifyData />
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);  
+      // await storeEmail(email);
+      console.log(response); 
+      
+      // setUser(get());
+      const userDoc = ref(email);
+      const docSnap = await getDoc(userDoc);
+      console.log(docSnap);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        console.log("Document data:", data);
+        const newUser = new User(data.firstName, data.lastName, data.email);
+        newUser.setArtists(data.artists);
+        newUser.setGenres(data.genres);
+        newUser.setDisplayName(data.displayName);
+        newUser.setTopTracksData(data.tracks);
+
+        await storeUser(newUser);
+
+        navigation.navigate("InsideLayout");
+      } else {
+        console.log("No such document!");
+      }
     } catch (error) {
       console.log(error);
       alert('Login failed: ' + error.message);
     } finally {
       setLoading(false);
+      
+
     }
     
   }
   const navigation= useNavigation();
+  // const data = GetSpotifyData();
+  // <GetSpotifyData />
+  
+  // <GetSpotifyData></GetSpotifyData>
+
 
   return (
     <KeyboardAvoidingView
