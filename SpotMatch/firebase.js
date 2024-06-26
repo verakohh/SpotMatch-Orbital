@@ -43,5 +43,5 @@ export const FIREBASE_APP = app;
 export const db = getFirestore(app);
 export const FIREBASE_AUTH = auth;
 export const set = (id, data) => { setDoc(doc(db, 'users', id), data)}
-export const ref = id => doc(db, 'users', id)
-export const usersRef = collection(db, 'users');
+export const ref = id => doc(usersColRef, id);
+export const usersColRef = collection(db, 'users');

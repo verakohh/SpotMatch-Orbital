@@ -1,11 +1,16 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import Button from '../../components/navigation/Button';
 import { ResponseType, useAuthRequest} from 'expo-auth-session';
-import { useEffect, useState } from 'react';
+import Login from './Login';
+import { useEffect, useState, useContext } from 'react';
 import React from 'react';
 import axios from 'axios';
-import { update } from './Registration';
+import { refDoc , update} from './Registration';
 import { useNavigation } from '@react-navigation/core';
+import { useUserInfo, UserContext } from '../UserContext';
+import { ref } from '../../firebase';
+import { storeToken } from '../User';
+
 
 
 const discovery = {
@@ -19,16 +24,15 @@ const redirectUri = 'SpotMatch://callback';
 
 export default function Access() {
 
-    const [token, setToken] = useState("");
-    const [artistNames, setArtistNames] = useState([]);
-    const [genres, setGenres] = useState([]);
-    const [displayName, setDisplayName] = useState("");
-    const [topTracksData, setTopTracksData] = useState("");
+    // const [token, setToken] = useState("");
+    const { user, setUser, token, setToken } = useContext(UserContext);
+    // const [artistNames, setArtistNames] = useState([""]);
+    // const [genres, setGenres] = useState([""]);
+    // const [displayName, setDisplayName] = useState("");
+    // const [topTracksData, setTopTracksData] = useState("");
 
 
     const navigation= useNavigation();
-
-
     const [request, response, promptAsync] = useAuthRequest(
         {
           clientId,
@@ -49,71 +53,91 @@ export default function Access() {
           const { access_token } = response.params;
           console.log(response)
           console.log(access_token)
+          storeToken(access_token);
           setToken(access_token);
+          navigation.navigate("Login");
         }
       }, [response]);
 
 
-    useEffect(() => {
-        if (token) {
-            try {
-                console.log('yes')
-                axios("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10", {
-                    method: "GET",
-                    headers: {
-                        Accept: "application/json",
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer " + token,
-                    },
-                })
-                .then(res => {
-                    const names = res.data.items.map(artist => artist.name); 
-                    setArtistNames(names);
+    // useEffect(() => {
+    //     if (token) {
+    //         try {
+    //             console.log('yes')
+    //             axios("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10", {
+    //                 method: "GET",
+    //                 headers: {
+    //                     Accept: "application/json",
+    //                     "Content-Type": "application/json",
+    //                     Authorization: "Bearer " + token,
+    //                 },
+    //             })
+    //             .then(res => {
+    //                 if (res.data && res.data.items && Array.isArray(res.data.items)) {
+    //                     const names = res.data.items.map(artist => artist.name); 
+    //                     user.setArtists(names);
+    //                     console.log(res.data.items);
+    //                     console.log(user.artists);
+    //                     console.log(names);
+                        
+    //                     const genre = res.data.items.flatMap(user => user.genres);
+    //                     const uniqueGenres = [...new Set(genre)];
+    //                     user.setGenres(uniqueGenres);
+    //                     console.log(genre); 
+    //                     console.log(uniqueGenres);
 
-                    const genre = res.data.items.flatMap(user => user.genres);
-                    setGenres(genre);
-                    console.log(genres)
-                    update({topArtists: artistNames});
-                    update({genres: genres});
+    //                     // console.log(refDoc);
+                       
+    //                         // console.log(artistNames);
+    //                     user.update({topArtists: names, genres: genre});
+    //                         // user.update({genres: genre}); 
+                        
+    //                 } else {
+    //                     console.error('Invalid response format: ', res.data);
+    //                 }
+    //             })
+    //             // .catch(err => {
+    //             //     console.error('Error fetching top artists: ', err)
+    //             // })
 
-                })
+    //             axios('https://api.spotify.com/v1/me', {
+    //                 method: 'GET',
+    //                 headers: {
+    //                     Accept: "application/json",
+    //                     "Content-Type": "application/json",
+    //                     Authorization: "Bearer " + token,
+    //                 },
+    //             })
+    //             .then(res => {
+    //                 console.log(res.data)
+    //                 const displayname = res.data.display_name;
+    //                 user.setDisplayName(displayname);
+    //                 user.update({displayName: displayname});
+    //             })
 
-                axios('https://api.spotify.com/v1/me', {
-                    method: 'GET',
-                    headers: {
-                        Accept: "application/json",
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer " + token,
-                    },
-                })
-                .then(res => {
-                    const displayname = res.data.display_name;
-                    setDisplayName(displayname);
-                    update({displayName: displayName});
-                })
+    //             axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+    //                 method: "GET",
+    //                 headers: {
+    //                     Accept: "application/json",
+    //                     "Content-Type": "application/json",
+    //                     Authorization: "Bearer " + token,
+    //                 },
+    //             })
+    //             .then(res => {
+    //                 const tracks = res.data.items;
+    //                 user.setTopTracksData(tracks);
+    //                 // console.log(tracks)
+    //             })
+    //             console.log("here",user)
+    //             setUser(user);
+    //             navigation.navigate('TabLayout');
 
-                axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
-                    method: "GET",
-                    headers: {
-                        Accept: "application/json",
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer " + token,
-                    },
-                })
-                .then(res => {
-                    const tracks = res.data.items;
-                    setTopTracksData(tracks);
-                    // console.log(tracks)
-                })
-                
-                navigation.navigate('Home');
-
-            } catch (error) {
-                console.error('Error getting top artists: ', error);
-            }
-        }
+    //         } catch (error) {
+    //             console.error('Error in useEffect: ', error);
+    //         }
+    //     } 
     
-    }, [token, navigation]);
+    // }, [token, navigation]);
 
 
 
@@ -138,8 +162,13 @@ export default function Access() {
             text="Login to Spotify"
             onPress={() => {
               promptAsync();
+              
             }}
           />
+        {/* <TouchableOpacity onPress={}> 
+            <Text style={{color: '#2196F3', fontSize: 15}}>Go Back</Text>
+        </TouchableOpacity> */}
+          
         </View>
       );
 
@@ -164,6 +193,68 @@ const styles = StyleSheet.create({
 
 })
 
+
+//alternative axios all with axios spread:
+                // axios.all([
+                //     axios("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10", {
+                //         method: "GET",
+                //         headers: {
+                //             Accept: "application/json",
+                //             "Content-Type": "application/json",
+                //             Authorization: "Bearer " + token,
+                //         },
+                //     }),
+                //     axios('https://api.spotify.com/v1/me', {
+                //         method: 'GET',
+                //         headers: {
+                //             Accept: "application/json",
+                //             "Content-Type": "application/json",
+                //             Authorization: "Bearer " + token,
+                //         },
+                //     }),
+                //     axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+                //         method: "GET",
+                //         headers: {
+                //             Accept: "application/json",
+                //             "Content-Type": "application/json",
+                //             Authorization: "Bearer " + token,
+                //         },
+                //     })
+                // ])
+                // .then(axios.spread((artistResponse, displayNameResponse, TopTracksResponse) => {
+                //     const names = artistResponse.data.items.map(artist => artist.name); 
+                //         user.setArtists(names);
+                //         console.log(artistResponse.data.items);
+                //         console.log(user.artists);
+                //         console.log(names);
+
+                //     const genre = artistResponse.data.items.flatMap(user => user.genres);
+                //         const uniqueGenres = [...new Set(genre)];
+                //         user.setGenres(uniqueGenres);
+                //         console.log(genre);
+                //         console.log(uniqueGenres);
+
+                //     console.log(artistNames);
+                //     user.update({topArtists: names, genres: genre});
+
+
+
+                //     console.log(displayNameResponse.data)
+                //     const displayname = displayNameResponse.data.display_name;
+                //     user.setDisplayName(displayname);
+                //     user.update({displayName: displayName});
+
+
+
+                //     const tracks = TopTracksResponse.data.items;
+                //     user.setTopTracksData(tracks);
+
+                // }))
+
+
+
+
+//------------------------------------
     // var app = express();
 
     // app.get('/login', function(req, res) {
