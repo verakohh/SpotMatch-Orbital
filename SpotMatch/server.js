@@ -11,6 +11,10 @@ app.get('/messages.json', (req, res) => {
   res.sendFile(path.join(__dirname, 'messages.json'));
 });
 
+app.get('/concerts.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'concerts.json'));
+});
+
 // Default route
 app.get('/', (req, res) => {
   res.send('Hello World!');
