@@ -1,7 +1,5 @@
-// app/screens/Events/GigsScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Linking, Platform, ActivityIndicator } from 'react-native';
-import { fetchRSSFeed, extractGigData } from './rssParser';
 
 const GigsScreen = () => {
   const [gigs, setGigs] = useState([]);
@@ -22,16 +20,6 @@ const GigsScreen = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch gigs from RSS feed
-        const feed = await fetchRSSFeed(1, 15); // No need for pagination
-        let gigItems = [];
-        if (feed && feed.items.length > 0) {
-          console.log('Feed fetched, number of items:', feed.items.length);
-          gigItems = feed.items.map(extractGigData);
-          console.log('Gigs extracted:', gigItems.length);
-        }
-
-        // Fetch images from messages.json
         const response = await fetch(`${baseUrl}/messages.json`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -48,17 +36,8 @@ const GigsScreen = () => {
           throw error;
         }
 
-        // Combine the gig data with image data
-        const combinedData = gigItems.map(gig => {
-          const matchedImage = imageData.find(image => image.message.includes(gig.gig_title));
-          if (matchedImage) {
-            gig.gig_image = `${baseUrl}/${matchedImage.media_url}`;
-          }
-          return gig;
-        });
-
-        setGigs(combinedData);
-        console.log('Combined gigs:', combinedData.length);
+        setGigs(imageData);
+        console.log('Gigs fetched:', imageData.length);
 
       } catch (error) {
         console.error('Error fetching gigs or images:', error);
@@ -74,28 +53,30 @@ const GigsScreen = () => {
 
   const renderGig = ({ item }) => (
     <View style={styles.gigContainer}>
-      {item.gig_image ? (
+      {item.media_url ? (
         <Image 
-          source={{ uri: item.gig_image }}
+          source={{ uri: `${baseUrl}/${item.media_url}` }}
           style={styles.image} 
           resizeMode="contain"
-          onError={(error) => console.log('Image failed to load:', item.gig_image, error.nativeEvent.error)}
+          onError={(error) => console.log('Image failed to load:', item.media_url, error.nativeEvent.error)}
         />
       ) : (
         <Text>Image not available</Text>
       )}
-      <Text style={styles.title}>{item.gig_title}</Text>
-      {item.gig_extrainfo ? <Text style={styles.extraInfo}>{item.gig_extrainfo}</Text> : null}
-      <Text style={styles.mainArtist}>{item.gig_mainartist}</Text>
-      <Text style={styles.artists}>{item.gig_artists}</Text>
-      {item.gig_dateandtime ? <Text style={styles.dateAndTime}>{item.gig_dateandtime}</Text> : <Text style={styles.dateAndTime}>Date and time not specified</Text>}
-      {item.gig_location ? <Text style={styles.location}>📍 {item.gig_location}</Text> : null}
-      {item.gig_link === "Free entry!" ? (
-        <Text style={styles.linkText}>Free entry!</Text>
-      ) : (
-        <TouchableOpacity onPress={() => Linking.openURL(item.gig_link)}>
-          <Text style={styles.link}>Get tickets here!</Text>
+      <Text style={styles.title}>{extractGigTitle(item.message)}</Text>
+      {extractGigExtraInfo(item.message) ? <Text style={styles.extraInfo}>{extractGigExtraInfo(item.message)}</Text> : null}
+      <Text style={styles.mainArtist}>{extractGigMainArtist(item.message)}</Text>
+      <Text style={styles.artists}>{extractGigArtists(item.message)}</Text>
+      <Text style={styles.dateAndTime}>{extractGigDateAndTime(item.message)}</Text>
+      <Text style={styles.location}>📍 {extractGigLocation(item.message)}</Text>
+      {extractGigLink(item.message) ? (
+        <TouchableOpacity onPress={() => Linking.openURL(extractGigLink(item.message))}>
+          <Text style={styles.link}>{extractGigLinkText(item.message)}</Text>
         </TouchableOpacity>
+      ) : (
+        extractGigLinkText(item.message) && (
+          <Text style={styles.linkText}>{extractGigLinkText(item.message).toLowerCase().startsWith('free') ? 'Free admission!' : extractGigLinkText(item.message)}</Text>
+        )
       )}
     </View>
   );
@@ -107,6 +88,44 @@ const GigsScreen = () => {
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
+  };
+
+  const extractGigTitle = (message) => {
+    return message.split('\n')[0];
+  };
+
+  const extractGigExtraInfo = (message) => {
+    const lines = message.split('\n');
+    return lines[1].startsWith('by') ? null : lines[1];
+  };
+
+  const extractGigMainArtist = (message) => {
+    const lines = message.split('\n');
+    return lines.find(line => line.startsWith('by'));
+  };
+
+  const extractGigArtists = (message) => {
+    return message.split('\n').find(line => line.startsWith('ft.'));
+  };
+
+  const extractGigDateAndTime = (message) => {
+    return message.split('\n').find(line => /\d{1,2} \w{3}, \d{1,2}(AM|PM)/.test(line) || /\d{1,2}:\d{2}(AM|PM)/.test(line));
+  };
+
+  const extractGigLocation = (message) => {
+    const lines = message.split('\n');
+    const locationLine = lines.find(line => line.includes('📍'));
+    return locationLine ? locationLine.replace(/📍/, '').trim() : '';
+  };
+
+  const extractGigLink = (message) => {
+    const linkMatch = message.match(/https?:\/\/[^\s]+/);
+    return linkMatch ? linkMatch[0] : null;
+  };
+
+  const extractGigLinkText = (message) => {
+    const linkTextMatch = message.match(/(tickets here!|Free admission!)/i);
+    return linkTextMatch ? linkTextMatch[0] : '';
   };
 
   return (
@@ -188,5 +207,3 @@ const styles = StyleSheet.create({
 });
 
 export default GigsScreen;
-
-
