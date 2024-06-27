@@ -1,15 +1,23 @@
 {
-    "expo": {
-      "name": "SpotMatch",
-      "slug": "SpotMatch",
-      "version": "1.0.0",
-      "orientation": "portrait",
-      "icon": "./assets/images/SpotMatch-icon.png",
-      "scheme": "myapp",
-      "userInterfaceStyle": "automatic",
-      "splash": {
-        "image": "./assets/images/SpotMatch-splashScreen.png",
-        "resizeMode": "contain",
+  "expo": {
+    "name": "SpotMatch",
+    "slug": "SpotMatch",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/SpotMatch-icon.png",
+    "scheme": "SpotMatch",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/SpotMatch-splashScreen.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "ios": {
@@ -48,3 +56,4 @@
       }
     }
   }
+}
