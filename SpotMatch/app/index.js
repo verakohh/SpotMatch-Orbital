@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { UserContext } from './UserContext';
 import Registration from './screens/Registration';
 import Login from './screens/Login';
 import SideBar from './screens/SideBar';

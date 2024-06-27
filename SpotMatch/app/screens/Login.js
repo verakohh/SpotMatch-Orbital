@@ -20,27 +20,27 @@ const Login = () => {
   const auth = FIREBASE_AUTH;
   // const {user, setUser, token} = useContext(UserContext);
 
-  useEffect(() => {
-    async function createUser() {
-      const userDoc = ref(email);
-      const docSnap = await getDoc(userDoc);
-      console.log(docSnap);
+  // useEffect(() => {
+  //   async function createUser() {
+  //     const userDoc = ref(email);
+  //     const docSnap = await getDoc(userDoc);
+  //     console.log(docSnap);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data()
-        console.log("Document data:", data);
-        const newUser = new User(data.firstName, data.lastName, data.email, `users/${email}`);
-        newUser.setArtists(data.artists);
-        newUser.setGenres(data.genres);
-        newUser.setDisplayName(data.displayName);
-        newUser.setTopTracksData(data.tracks);
+  //     if (docSnap.exists()) {
+  //       const data = docSnap.data()
+  //       console.log("Document data:", data);
+  //       const newUser = new User(data.firstName, data.lastName, data.email, `users/${email}`);
+  //       newUser.setArtists(data.artists);
+  //       newUser.setGenres(data.genres);
+  //       newUser.setDisplayName(data.displayName);
+  //       newUser.setTopTracksData(data.tracks);
 
-        await storeUser(newUser);
+  //       await storeUser(newUser);
        
-      }
-    }
-    createUser();
-  }, [])
+  //     }
+  //   }
+  //   createUser();
+  // }, [])
   // useEffect(() => {
   //   async function createUser() {
   //     const userDoc = ref(email);
@@ -88,7 +88,7 @@ const Login = () => {
 
         await storeUser(newUser);
 
-        navigation.navigate("InsideLayout");
+        navigation.navigate("SideBar");
       } else {
         console.log("No such document!");
       }
