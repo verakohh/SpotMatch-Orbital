@@ -11,9 +11,6 @@ import { UserContext } from '../UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import User , {storeEmail, storeUser} from '../User';
 import GetSpotifyData from '../../components/GetSpotifyData';
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-import moment from 'moment';
-
 
 
 let docRef;
@@ -26,9 +23,6 @@ const Registration = () => {
     const [loading, setLoading] = useState(false);
     const[firstName, setFirstName] = useState('');
     const[lastName, setLastName] = useState('');
-    const [isDatePickerVisible, setDatePickerVisible] = useState(false);
-    const [birthdate, setBirthdate] = useState('');
-    const [age, setAge] = useState(0);
     // const[docRef, setDocRef] = useState('');
     // const[userId, setUserId] = useState("");
    
@@ -36,6 +30,7 @@ const Registration = () => {
 
     const auth = FIREBASE_AUTH;
   
+    <GetSpotifyData />
 
     // useEffect(() => {
     //   localStorage.setItem("user", JSON.stringify(user))
@@ -52,8 +47,6 @@ const Registration = () => {
                 firstName,
                 lastName,
                 email,
-                age,
-                birthdate,
                 userId: response.user.uid
                 }
               );
@@ -62,8 +55,7 @@ const Registration = () => {
               const docRefPath = `users/${email}`;
               console.log('the ref is: ', docRef)
           
-              const newUser = new User(firstName, lastName, email, age);
-              newUser.setBirthdate(birthdate);
+              const newUser = new User(firstName, lastName, email);
               // user = newUser;
               await storeUser(newUser);
               // await storeEmail(email);
@@ -90,81 +82,9 @@ const Registration = () => {
 
       } finally {
         setLoading(false);
-        navigation.navigate("SideBar")
       }
     }
-
-    const handleSignUpWithAge = () => {
-      if (birthdate) {
-          handleSignUp();
-      } else {
-          alert('Please select your birthdate to calculate age.');
-      }
-  };
-
-  //   useEffect(() => {
-  //     if (age > 0 && birthdate) {
-  //         handleSignUp();
-  //     }
-  // }, [age, birthdate]);
-  
     const navigation= useNavigation();
-    
-
-    const showDatePicker = () => setDatePickerVisible(true);
-    const hideDatePicker = () => setDatePickerVisible(false);
-
-
-
-    const handleConfirm = (date) => {
-      setBirthdate(date);
-      const today = new Date();
-      const birthDate = new Date(date);
-
-      let years = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          years--;
-      }
-      setAge(years);
-      console.log(birthdate);
-      console.log(age);
-      hideDatePicker();
-      
-  };
-
-    // useEffect (()=> {
-    //   const today = new Date();
-    //   const birthDate = new Date(birthdate);
-
-    //   let years = today.getFullYear() - birthDate.getFullYear();
-    //   const monthDiff = today.getMonth() - birthDate.getMonth();
-    //   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    //       years--;
-    //   }
-    //   console.log(birthdate)
-    //   console.log(birthDate)
-    //   console.log(years);
-    //   setAge(years);
-    //   console.log(age);
-
-    // }, [birthdate])
-    // const calculateAge = () => {
-    //   const today = new Date();
-    //   const birthDate = new Date(birthdate);
-
-    //   let years = today.getFullYear() - birthDate.getFullYear();
-    //   const monthDiff = today.getMonth() - birthDate.getMonth();
-    //   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    //       years--;
-    //   }
-    //   console.log(birthdate)
-    //   console.log(birthDate)
-    //   console.log(years);
-    //   setAge(years);
-    //   console.log(age)
-
-    // };
     
 
     return (
@@ -204,33 +124,11 @@ const Registration = () => {
                     style={styles.input}
                     secureTextEntry
                 /> 
-                {/* <Button type='primary' size='s' text='Select your birthdate' onPress={showDatePicker} /> */}
-                <TouchableOpacity onPress={showDatePicker}>
-                  <View pointerEvents="none">
-                    <TextInput
-                      numberOfLines={1}
-                      editable={false}
-                      placeholder= "Select your birthdate"
-                      value={birthdate ? moment(birthdate).format('DD MMMM, YYYY') : ''}
-                      style={styles.input}
-                    />
-                    <DateTimePickerModal
-                      isVisible={isDatePickerVisible}
-                      mode='date'
-                      date={birthdate ? new Date(birthdate) : new Date()}
-                      onConfirm={(date) => {
-                      handleConfirm(date);
-                    }}
-                    onCancel={hideDatePicker}
-                    maximumDate={new Date(moment())}
-                    />
-                    </View>
-                </TouchableOpacity>
             </View>
         
             {/* button code goes here */}
             <View style= {styles.buttonContainer}>
-                <Button type='secondary' size='m' text='Sign Up' onPress={(handleSignUpWithAge)} />
+                <Button type='secondary' size='m' text='Sign Up' onPress={(handleSignUp)} />
             </View>
             <View style = {{flex: 1, flexDirection: 'row', marginVertical: 25}}>
                 <Text >Already have one?  </Text>
@@ -245,9 +143,9 @@ const Registration = () => {
 // console.log("this is the docRef: ", docRef);
 export default Registration
 
-// export const refDoc = docRef;
-// export const update = data => { if (docRef) {setDoc(docRef, data , {merge: true});} 
-//                         else { console.error("No user docRef"); } } 
+export const refDoc = docRef;
+export const update = data => { if (docRef) {setDoc(docRef, data , {merge: true});} 
+                        else { console.error("No user docRef"); } } 
 
 
 const styles = StyleSheet.create({

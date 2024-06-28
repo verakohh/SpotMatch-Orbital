@@ -80,13 +80,11 @@ const Login = () => {
       if (docSnap.exists()) {
         const data = docSnap.data()
         console.log("Document data:", data);
-        const newUser = new User(data.firstName, data.lastName, data.email, data.age);
-        newUser.setBirthdate(data.birthdate);
-        newUser.setArtists(data.topArtists);
+        const newUser = new User(data.firstName, data.lastName, data.email);
+        newUser.setArtists(data.artists);
         newUser.setGenres(data.genres);
         newUser.setDisplayName(data.displayName);
-        // newUser.setTopTracksData(data.tracks); not yet decided on keeping the data
-        newUser.setImgUrl(data.imgageUrl)
+        newUser.setTopTracksData(data.tracks);
 
         await storeUser(newUser);
 
