@@ -13,7 +13,7 @@
     "lint": "expo lint",
     "run-telegram-bot": "node ./scripts/telegramBot.js",
     "start-server": "node server.js",
-    "start-app": "cd ./app && npx expo start", 
+    "start-app": "cd ./app && npx expo start",
     "start-all": "concurrently \"npm run start-server\" \"npm run start-app\" \"npm run start-python\""
   },
   "jest": {
@@ -57,6 +57,7 @@
     "react-native": "^0.74.2",
     "react-native-app-auth": "^7.2.0",
     "react-native-elements": "^3.4.3",
+    "react-native-feather": "^1.1.2",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-pager-view": "^6.3.0",
     "react-native-reanimated": "~3.10.1",

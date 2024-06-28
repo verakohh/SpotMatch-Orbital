@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-
 const NavigationTab = ({ state, descriptors, navigation }) => {
     const tabs = [
         { name: "Match", icon: "heart", route: "Match" },

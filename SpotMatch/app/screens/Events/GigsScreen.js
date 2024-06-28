@@ -147,13 +147,16 @@ const GigsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 10,
+    backgroundColor: '#FAF4EC',
   },
   gigContainer: {
     margin: 10,
-    padding: 10,
+    padding: 15,
     borderColor: '#ccc',
+    backgroundColor: '#E6F2F4',
     borderWidth: 1,
-    borderRadius: 5,
+    borderRadius: 15,
   },
   image: {
     width: '100%',
@@ -167,28 +170,29 @@ const styles = StyleSheet.create({
   },
   extraInfo: {
     fontSize: 16,
-    marginVertical: 5,
+    marginVertical: 2,
   },
   mainArtist: {
     fontSize: 16,
-    marginVertical: 5,
+    marginVertical: 2,
   },
   artists: {
     fontSize: 16,
-    marginVertical: 5,
+    marginVertical: 2,
   },
   dateAndTime: {
     fontSize: 14,
-    marginVertical: 5,
+    marginTop: 8,
+    marginVertical: 2,
   },
   location: {
     fontSize: 14,
-    marginVertical: 5,
+    marginVertical: 2,
   },
   link: {
     color: 'blue',
     textDecorationLine: 'underline',
-    marginTop: 10,
+    marginTop: 2,
   },
   linkText: {
     fontSize: 15,

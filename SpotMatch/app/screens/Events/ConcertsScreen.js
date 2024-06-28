@@ -62,13 +62,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#FAF4EC',
   },
   concertItem: {
     marginBottom: 20,
-    padding: 10,
+    padding: 15,
     borderColor: '#ccc',
+    backgroundColor: '#E6F2F4',
     borderWidth: 1,
-    borderRadius: 5,
+    borderRadius: 15,
   },
   concertImage: {
     width: '100%',
@@ -80,17 +82,22 @@ const styles = StyleSheet.create({
   concertTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   concertText: {
     textAlign: 'left',
+    fontSize: 16,
+    marginVertical: 2,
   },
   linkContainer: {
     width: '100%', // Ensure it takes the full width
+    marginTop: 2,
   },
   link: {
     color: 'blue',
     textDecorationLine: 'underline',
     textAlign: 'left',
+    marginTop: 2,
   },
 });
 
