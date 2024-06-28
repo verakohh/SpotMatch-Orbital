@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler';
 import * as React from 'react';
+import { SafeAreaView } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { UserContext } from './UserContext';
@@ -34,7 +35,9 @@ export default function App() {
 
 
   return (
+   
     <UserContext.Provider value={{user, setUser, token, setToken}}>
+      
       <Stack.Navigator>
           
             <Stack.Screen name='Access' component={Access} options={{ headerShown: false }} />

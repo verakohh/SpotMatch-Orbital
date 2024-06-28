@@ -1,14 +1,15 @@
-import {doc, getDoc, setDoc} from 'firebase/firestore'
+import {doc, getDoc, setDoc, updateDoc} from 'firebase/firestore'
 import { db, ref } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 
 export default class User {
 
-    constructor(firstName, lastName, email) {
+    constructor(firstName, lastName, email, age) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email =email;
+        this.age = age;
         this.docRefPath = `users/${email}`;
         this.docRef = this.docRefPath ? doc(db, this.docRefPath) : null;
         // this.artists = artists;
@@ -17,8 +18,6 @@ export default class User {
 
     setArtists(artists) {
         this.artists = artists;
-        // const ref = doc(db, 'users').withConverter(userConverter);
-        // await setDoc(ref, new User(""))
     }
 
     setGenres(genres) {
@@ -33,6 +32,14 @@ export default class User {
       this.tracks = tracks;
     }
 
+    setImgUrl(url) {
+      this.imgUrl = url
+    }
+
+    setBirthdate(date) {
+      this.birthdate = date;
+    }
+
      userInstance() {
       return this;
     }
@@ -40,7 +47,7 @@ export default class User {
     async update(data) {
         if (this.docRef) {
           try {
-            await setDoc(this.docRef, data, { merge: true });
+            await updateDoc(this.docRef, data);
             console.log("Document updated successfully");
           } catch (error) {
             console.error("Error updating document: ", error);
@@ -50,24 +57,6 @@ export default class User {
         }
     }
 }
-
-
-const userConverter = {
-    toFirestore: (user) => {
-        return {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            userId: user.userId,
-            artists: user.artists
-
-        };
-    },
-    fromFirestore: (snapshot, options) => {
-        const data= snapshot.data(options);
-        return new User(data.firstName, data.lastName, data.email, data.userId, data.artists)
-    }
-};
 
 export const removeUser = async () => {
   await AsyncStorage.removeItem('user');
@@ -96,8 +85,9 @@ export const getUser = async () => {
     console.log("stringified user: ", userJson)
     if(userJson) {
       const userData = JSON.parse(userJson);
-      const user = new User(userData.firstName, userData.lastName, userData.email);
+      const user = new User(userData.firstName, userData.lastName, userData.email, userData.age);
       console.log("user object: ", user)
+      user.setBirthdate(userData.birthdate)
       user.setArtists(userData.artists);
       user.setGenres(userData.genres);
       user.setDisplayName(userData.displayName);
