@@ -16,8 +16,6 @@ import NavigationTab from './NavigationTab';
 import CustomDrawerContent from './CustomDrawerContent';
 import { Feather } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
-import { usersColRef } from '../../firebase';
-import { useState, useEffect } from 'react';
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
@@ -36,7 +34,6 @@ const HeaderLeftChevron = ({ navigation }) => (
 );
 
 function InsideLayout({ navigation }) {
-  
   return (
     <Tab.Navigator
       tabBar={props => <NavigationTab {...props} />}
@@ -57,7 +54,6 @@ function InsideLayout({ navigation }) {
 }
 
 const SideBar = () => {
-  
   return (
     <Drawer.Navigator
       initialRouteName="InsideLayout"
