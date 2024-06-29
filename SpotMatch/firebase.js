@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import {initializeApp, getApps, getApp} from 'firebase/app';
 import {getAuth} from 'firebase/auth';
-import { collection, getFirestore, doc, setDoc, getDocs} from 'firebase/firestore';
+import { collection, getFirestore, doc, setDoc} from 'firebase/firestore';
 import { getAnalytics } from "firebase/analytics";
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
@@ -39,15 +39,9 @@ if (!getApps().length) {
   
 }
 
-const getUsers = async () => {
-  await getDocs(usersColRef);
-}
-
-
 export const FIREBASE_APP = app;
 export const db = getFirestore(app);
 export const FIREBASE_AUTH = auth;
 export const set = (id, data) => { setDoc(doc(db, 'users', id), data)}
 export const ref = id => doc(usersColRef, id);
 export const usersColRef = collection(db, 'users');
-

@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     settings: {
         flex: 1,
         color: '#212e37',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: 'lightgrey'
     }, 
