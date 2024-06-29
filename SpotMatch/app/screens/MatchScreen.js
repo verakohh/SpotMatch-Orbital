@@ -2,9 +2,9 @@ import React, {useEffect, useState, useContext} from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, Image, StyleSheet, Settings, ActivityIndicator, Dimensions, Modal, ScrollView } from 'react-native';
 import Button from '../../components/navigation/Button';
 import { useNavigation } from '@react-navigation/core';
-import axios from 'axios';
 import Swiper from "react-native-deck-swiper";
 import { BlurView } from "expo-blur";
+import axios from 'axios';
 import GetSpotifyData from '../../components/GetSpotifyData';
 import { getUser, getToken, getEmail } from '../User';
 import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
@@ -30,8 +30,9 @@ const MatchScreen = () => {
     // check();
 
     
-    const GetSpotifyData= () => {
-    console.log("at get spotifydata ")
+    // const GetSpotifyData= () => {
+    // console.log("at get spotifydata ")
+
     // const [user, setUser] = useState(null);
     
 
@@ -65,6 +66,7 @@ const MatchScreen = () => {
             }
 
             if (token && user) {
+                setLoading(true);
                 try {
                     console.log('yes')
                     console.log(user)
@@ -94,7 +96,7 @@ const MatchScreen = () => {
                             // console.log(refDoc);
                         
                                 // console.log(artistNames);
-                            user.update({topArtists: names, genres: genre});
+                            user.update({topArtists: names, genres: uniqueGenres});
                                 // user.update({genres: genre}); 
                             
                         } else {
@@ -117,7 +119,14 @@ const MatchScreen = () => {
                         console.log(res.data)
                         const displayname = res.data.display_name;
                         user.setDisplayName(displayname);
-                        user.update({displayName: displayname});
+
+                        console.log(res.data.images)
+                        const imgUrl = res.data.images.map(img => img.url)
+                        const uniqueUrl = imgUrl[0];
+                        console.log('this is imgUrl: ', uniqueUrl)
+                        user.setImgUrl(uniqueUrl);
+
+                        user.update({displayName: displayname, imageUrl: uniqueUrl});
                     })
     
                     axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
@@ -144,16 +153,21 @@ const MatchScreen = () => {
     
                 } catch (error) {
                     console.error('Error in useEffect: ', error.response);
+                } finally {
+                    setLoading(false);
                 }
             } else {
               console.log("no token")
-            } 
-        }
+            }}
+
+            // const getUsers = async () => {
+            //     setUserDocs(await getDocs(usersColRef));
+            // }
+
         fetchData();
+        // getUsers();
     
         }, [request]);
-    }
-    GetSpotifyData();
 
 
     if (loading) {
@@ -231,7 +245,7 @@ const MatchScreen = () => {
                             <Text style={styles.headerText}>Top 3 Artists: <Text style={styles.text}>{card.topArtists ? top3artists(card) : "N/A"}</Text></Text>
                             <Text style={styles.headerText}>Top Track:  
                             {card.topTracks && card.topTracks.slice(0, 1).map((track, index) => (
-                                <Text key={index} style={styles.text}> {track.name} by {track.artist}</Text>
+                                <Text key={index} style={styles.text}> {track.name} by {track.artist} </Text>
                             ))}</Text>
                             <Text style={styles.headerText}>Top 3 Genres: <Text style={styles.text}>{card.genres ? card.genres.slice(0, 3).toString() : "N/A"}</Text></Text>
                         </View>
@@ -256,7 +270,6 @@ const MatchScreen = () => {
         </View>
     );
 }
-
 
 export default MatchScreen;
 
