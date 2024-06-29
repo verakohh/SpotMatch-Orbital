@@ -12,7 +12,7 @@ const CustomHeader = ({ title }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 20, // Adjust the top padding
+    paddingTop: 2, // Adjust the top padding
     height: 20,    // Adjust the height
     backgroundColor: '#fff',
     justifyContent: 'center',
