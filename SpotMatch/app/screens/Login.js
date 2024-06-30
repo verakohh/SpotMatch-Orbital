@@ -84,7 +84,8 @@ const Login = () => {
         newUser.setArtists(data.artists);
         newUser.setGenres(data.genres);
         newUser.setDisplayName(data.displayName);
-        // newUser.setTopTracksData(data.tracks); not yet decided on keeping the data
+        newUser.setTopTracksData(data.tracks); 
+        newUser.setBirthdate(data.birthdate);
         newUser.setImgUrl(data.imgageUrl)
         newUser.setRequestedBy(data.requestedBy);
         newUser.setMatched(data.matched);

@@ -64,7 +64,7 @@ const Matches = () => {
   if (!matches || matches.length === 0) {
     return (
       <View style={styles.container}>
-        <Text>No matches found.</Text>
+        <Text>No matches yet!</Text>
       </View>
     );
   }
