@@ -84,17 +84,22 @@ const Login = () => {
         newUser.setArtists(data.artists);
         newUser.setGenres(data.genres);
         newUser.setDisplayName(data.displayName);
-        newUser.setTopTracksData(data.tracks);
+        // newUser.setTopTracksData(data.tracks); not yet decided on keeping the data
+        newUser.setImgUrl(data.imgageUrl)
+        newUser.setRequestedBy(data.requestedBy);
+        newUser.setMatched(data.matched);
+        newUser.setSentRequest(data.sentRequest);
+        newUser.setRejected(data.rejected);
 
         await storeUser(newUser);
 
         navigation.navigate("SideBar");
       } else {
-        console.log("No such document!");
+        alert("Login failed! Try again");
       }
     } catch (error) {
       console.log(error);
-      alert('Login failed: ' + error.message);
+      alert('Login failed: ' + Error);
     } finally {
       setLoading(false);
       

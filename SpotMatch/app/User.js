@@ -33,6 +33,30 @@ export default class User {
       this.tracks = tracks;
     }
 
+    setImgUrl(url) {
+      this.imgUrl = url
+    }
+
+    setBirthdate(date) {
+      this.birthdate = date;
+    }
+
+    setRequestedBy(users) {
+      this.requestedBy = users;
+    }
+
+    setMatched(users) {
+      this.matched = users;
+    }
+
+    setSentRequest(user) {
+      this.sentRequest = user;
+    }
+
+    setRejected(user) {
+      this.rejected = user;
+    }
+
      userInstance() {
       return this;
     }

@@ -1,3 +1,4 @@
+
 [
   {
     "link": "https://www.bandsintown.com/e/105534582-take-that-at-the-star-theatre?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
@@ -36,7 +37,7 @@
     "time": "7:00 PM",
     "title": "",
     "location": "Capitol Theatre",
-    "genre": "Pop",
+    "genre": "Country",
     "image": "https://media.bandsintown.com/300x300/16816782.webp"
   },
   {
@@ -86,7 +87,7 @@
     "time": "7:00 PM",
     "title": "",
     "location": "Singapore Indoor Stadium",
-    "genre": "Alt Pop Rock",
+    "genre": "Indie Pop",
     "image": "https://media.bandsintown.com/300x300/16508543.webp"
   },
   {
@@ -96,8 +97,19 @@
     "time": "7:00 PM",
     "title": "",
     "location": "Capitol Theatre",
-    "genre": "Alternative",
+    "genre": "Pop",
     "image": "https://media.bandsintown.com/300x300/12746406.webp"
+  },
+  {
+
+"link": "https://www.bandsintown.com/e/105424161-deafheaven-at-*scape?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "Deafheaven",
+    "date": "Jul 15",
+    "time": "7:00 PM",
+    "title": "",
+    "location": "*Scape",
+    "genre": "Metal",
+    "image": "https://media.bandsintown.com/300x300/11844119.webp"
   },
   {
     "link": "https://www.bandsintown.com/e/105567712-matt-maltese-at-university-cultural-centre-ho-bee-auditorium?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
@@ -109,23 +121,13 @@
     "image": "https://media.bandsintown.com/300x300/16261626.webp"
   },
   {
-    "link": "https://www.bandsintown.com/e/105424161-deafheaven-at-*scape?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "Deafheaven",
-    "date": "Jul 15",
-    "time": "7:00 PM",
-    "title": "",
-    "location": "*Scape",
-    "genre": "Metal",
-    "image": "https://media.bandsintown.com/300x300/11844119.webp"
-  },
-  {
     "link": "https://www.bandsintown.com/e/105457065-porter-robinson-at-the-star-performing-arts-centre?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
     "artist": "Porter Robinson",
     "date": "Nov 27",
     "time": "8:00 PM",
     "title": "",
     "location": "The Star Performing Arts Centre",
-    "genre": "Alternative",
+    "genre": "Electronic",
     "image": "https://media.bandsintown.com/300x300/16652273.webp"
   },
   {
@@ -149,26 +151,6 @@
     "image": "https://media.bandsintown.com/300x300/17183485.webp"
   },
   {
-    "link": "https://www.bandsintown.com/e/105553192-atarashii-gakko!-at-the-theatre-at-mediacorp?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "ATARASHII GAKKO!",
-    "date": "Jun 29",
-    "time": "7:00 PM",
-    "title": "",
-    "location": "The Theatre at Mediacorp",
-    "genre": "Pop",
-    "image": "https://media.bandsintown.com/300x300/17169112.webp"
-  },
-  {
-    "link": "https://www.bandsintown.com/e/105472678-narrow-head-at-lion-studios?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "Narrow Head",
-    "date": "Jun 28",
-    "time": "8:00 PM",
-    "title": "",
-    "location": "Lion Studios",
-    "genre": "Shoegaze",
-    "image": "https://media.bandsintown.com/300x300/8906485.webp"
-  },
-  {
     "link": "https://www.bandsintown.com/e/105524884-the-maine-at-*scape?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
     "artist": "The Maine",
     "date": "Sep 25",
@@ -177,6 +159,25 @@
     "location": "*Scape",
     "genre": "Alternative",
     "image": "https://media.bandsintown.com/300x300/15394766.webp"
+  },
+  {
+    "link": "https://www.bandsintown.com/e/1032239254-girl-in-red-at-esplanade-theatres-on-the-bay-singapore?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "girl in red",
+    "date": "Jul 30",
+    "time": "8:00 PM",
+    "title": "",
+    "location": "Esplanade - Theatres on the Bay, Singapore",
+    "image": "https://media.bandsintown.com/300x300/17412902.webp"
+  },
+  {
+    "link": "https://www.bandsintown.com/e/105694480-madison-beer-at-expo-hall-7?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "Madison Beer",
+    "date": "Aug 22",
+    "time": "7:00 PM",
+    "title": "THE ENCORE",
+    "location": "Expo Hall 7",
+    "genre": "Pop",
+    "image": "https://media.bandsintown.com/300x300/17490969.webp"
   },
   {
     "link": "https://www.bandsintown.com/e/105469731-tilly-birds-at-gateway-theatre?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
@@ -189,25 +190,6 @@
     "image": "https://media.bandsintown.com/300x300/13231926.webp"
   },
   {
-    "link": "https://www.bandsintown.com/e/1032239254-girl-in-red-at-esplanade-theatres-on-the-bay-singapore?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "girl in red",
-    "date": "Jul 30",
-    "time": "8:00 PM",
-    "title": "",
-    "location": "Esplanade - Theatres on the Bay, Singapore",
-    "image": "https://media.bandsintown.com/300x300/17412902.webp"
-  },
-  {
-    "link": "https://www.bandsintown.com/e/105552362-richard-marx-at-town-square-our-tampines-hub?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "Richard Marx",
-    "date": "Sep 14",
-    "time": "8:00 PM",
-    "title": "",
-    "location": "Town Square, Our Tampines Hub",
-    "genre": "Soft Rock",
-    "image": "https://media.bandsintown.com/300x300/13010577.webp"
-  },
-  {
     "link": "https://www.bandsintown.com/e/105577027-sasha-alex-sloan-at-capitol-theatre?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
     "artist": "Sasha Alex Sloan",
     "date": "Aug 17",
@@ -216,6 +198,16 @@
     "location": "Capitol Theatre",
     "genre": "Indie Folk Pop",
     "image": "https://media.bandsintown.com/300x300/17224993.webp"
+  },
+  {
+    "link": "https://www.bandsintown.com/e/105552362-richard-marx-at-town-square-our-tampines-hub?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "Richard Marx",
+    "date": "Sep 14",
+    "time": "8:00 PM",
+    "title": "",
+    "location": "Town Square, Our Tampines Hub",
+    "genre": "Decades",
+    "image": "https://media.bandsintown.com/300x300/13010577.webp"
   },
   {
     "link": "https://www.bandsintown.com/e/105439473-chris-james-at-esplanade-annexe-studio?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
@@ -247,16 +239,6 @@
     "image": "https://media.bandsintown.com/300x300/17061613.webp"
   },
   {
-    "link": "https://www.bandsintown.com/e/105694480-madison-beer-at-expo-hall-7?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "Madison Beer",
-    "date": "Aug 22",
-    "time": "7:00 PM",
-    "title": "THE ENCORE",
-    "location": "Expo Hall 7",
-    "genre": "Pop",
-    "image": "https://media.bandsintown.com/300x300/17490969.webp"
-  },
-  {
     "link": "https://www.bandsintown.com/e/105453036-anyasa-at-tuff-club?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
     "artist": "Anyasa",
     "date": "Jul 20",
@@ -286,14 +268,34 @@
     "image": "https://media.bandsintown.com/300x300/12350152.webp"
   },
   {
+    "link": "https://www.bandsintown.com/e/1032241939-linying-at-esplanade-theatres-on-the-bay-singapore?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "Linying",
+    "date": "Sep 07",
+    "time": "7:30 PM",
+    "title": "",
+    "location": "Esplanade - Theatres on the Bay, Singapore",
+    "genre": "Electronic",
+    "image": "https://media.bandsintown.com/300x300/17414435.webp"
+  },
+  {
     "link": "https://www.bandsintown.com/e/105673249-kream-at-zouk-singapore?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
     "artist": "Kream",
     "date": "Jul 12",
     "time": "10:00 PM",
     "title": "",
     "location": "Zouk Singapore",
-    "genre": "Edm",
+    "genre": "Pop",
     "image": "https://media.bandsintown.com/300x300/12597498.webp"
+  },
+  {
+    "link": "https://www.bandsintown.com/e/1032235029-jazzmeia-horn-at-esplanade-theatres-on-the-bay-singapore?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "Jazzmeia Horn",
+    "date": "Jul 05",
+    "time": "8:00 PM",
+    "title": "",
+    "location": "Esplanade - Theatres on the Bay, Singapore",
+    "genre": "Contemporary Jazz",
+    "image": "https://media.bandsintown.com/300x300/17411441.webp"
   },
   {
     "link": "https://www.bandsintown.com/e/105441307-reserate-at-phil-studio?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
@@ -306,24 +308,14 @@
     "image": "https://media.bandsintown.com/300x300/16908086.webp"
   },
   {
-    "link": "https://www.bandsintown.com/e/1032241939-linying-at-esplanade-theatres-on-the-bay-singapore?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "Linying",
-    "date": "Sep 07",
-    "time": "7:30 PM",
-    "title": "",
-    "location": "Esplanade - Theatres on the Bay, Singapore",
-    "genre": "Electronic",
-    "image": "https://media.bandsintown.com/300x300/17414435.webp"
-  },
-  {
-    "link": "https://www.bandsintown.com/e/1032235029-jazzmeia-horn-at-esplanade-theatres-on-the-bay-singapore?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "Jazzmeia Horn",
-    "date": "Jul 05",
-    "time": "8:00 PM",
-    "title": "",
-    "location": "Esplanade - Theatres on the Bay, Singapore",
-    "genre": "Contemporary Jazz",
-    "image": "https://media.bandsintown.com/300x300/17411441.webp"
+    "link": "https://www.bandsintown.com/e/105456117-laura-story-music-at-adam-road-presbyterian-church-(adam)?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "Laura Story Music",
+    "date": "Nov 22",
+    "time": "7:00 PM",
+    "title": "Women's conference",
+    "location": "Adam Road Presbyterian Church (Adam)",
+    "genre": "Inspirational",
+    "image": "https://media.bandsintown.com/300x300/7050154.webp"
   },
   {
     "link": "https://www.bandsintown.com/e/105671245-hayden-james-at-mdlr?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
@@ -346,13 +338,23 @@
     "image": "https://media.bandsintown.com/300x300/8749677.webp"
   },
   {
-    "link": "https://www.bandsintown.com/e/105456117-laura-story-music-at-adam-road-presbyterian-church-(adam)?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
-    "artist": "Laura Story Music",
-    "date": "Nov 22",
-    "time": "7:00 PM",
-    "title": "Women's conference",
-    "location": "Adam Road Presbyterian Church (Adam)",
-    "genre": "Inspirational",
-    "image": "https://media.bandsintown.com/300x300/7050154.webp"
+    "link": "https://www.bandsintown.com/e/105178056-rodriguez-jr.-at-thugshop?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "Rodriguez Jr.",
+    "date": "Jul 27",
+    "time": "10:00 PM",
+    "title": "",
+    "location": "Thugshop",
+    "genre": "Deep House",
+    "image": "https://media.bandsintown.com/300x300/14815915.webp"
+  },
+  {
+    "link": "https://www.bandsintown.com/e/105615303-reyandkjavik-at-thugshop?came_from=257&utm_medium=web&utm_source=search_result&utm_campaign=event",
+    "artist": "Rey&Kjavik",
+    "date": "Sep 07",
+    "time": "11:00 PM",
+    "title": "",
+    "location": "Thugshop",
+    "genre": "Elektronische Musik",
+    "image": "https://media.bandsintown.com/300x300/17301654.webp"
   }
 ]

@@ -86,7 +86,6 @@ async function main() {
     const url = "https://www.bandsintown.com/?came_from=257&sort_by_filter=Number+of+RSVPs&concerts=true";
     const concerts = await scrapeMainPage(url);
 
-    // Use Promise.all to fetch concert details concurrently
     const detailedConcerts = await Promise.all(concerts.map(concert => scrapeConcertDetails(concert)));
 
     const jsonFilePath = path.join(path.resolve(), 'concerts.json');

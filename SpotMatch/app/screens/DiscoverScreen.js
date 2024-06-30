@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react
 export default function DiscoverScreen() {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Discover Screen</Text>
+            <Text>Coming soon in the next milestone!</Text>
         </View>
     );
 }
