@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         alignItems: 'center',
-        backgroundColor: '#E6F2F4'
+        backgroundColor: '#FAF4EC',
     },
     image: {
         width: 130,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     sectionTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         marginTop: 24,
     },

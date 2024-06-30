@@ -278,6 +278,8 @@ const styles = StyleSheet.create({
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: '#FAF4EC',
+        
     },
     imgBackground: {
         width: "100%",
@@ -293,7 +295,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 0 },
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "lightgrey",
+        backgroundColor: 'lightgrey',
         overflow: "hidden",
       },
     cardImg: {
