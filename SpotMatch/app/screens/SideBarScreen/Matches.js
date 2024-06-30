@@ -85,8 +85,7 @@ export default Matches;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginHorizontal: 25,
     backgroundColor: '#FAF4EC',
 },
   matchContainer: {
@@ -102,6 +101,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginRight: 18,
+
   },
   name: {
     fontSize: 18,
