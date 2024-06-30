@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 0 },
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: 'lightgrey',
+        backgroundColor: '#ECECEC',
         overflow: "hidden",
       },
     cardImg: {
