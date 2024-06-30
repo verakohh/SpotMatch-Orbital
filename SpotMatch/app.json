@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/SpotMatch-icon.png",
-    "scheme": ["SpotMatch"],
+    "scheme": "SpotMatch",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/SpotMatch-splashScreen.png",
