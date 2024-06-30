@@ -7,10 +7,14 @@
         "./*"
       ]
     },
-    "lib": ["dom"]
+    "lib": [
+      "dom"
+    ]
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ]
 }
