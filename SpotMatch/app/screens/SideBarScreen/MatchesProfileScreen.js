@@ -24,24 +24,31 @@ const MatchesProfileScreen = ({ route }) => {
   }, [user]);
 
 
-    const top3artists = userData.topArtists ? userData.topArtists.slice(0, 3).join(', ') : 'N/A';
-    const top3genres = userData.genres ? userData.genres.slice(0, 3).join(', ') : 'N/A';
+    const top3artists = userData.topArtists ? userData.topArtists.slice(0, 3) : 'N/A';
+    const top3genres = userData.genres ? userData.genres.slice(0, 3) : [];
     const topTracks = userData.topTracks ? userData.topTracks.slice(0, 3) : [];
   
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Image source={{ uri: userData.imageUrl }} style={styles.image} />
-      <Text style={styles.name}>{userData.firstName} {userData.lastName}</Text>
-      <Text style={styles.age}>Age: {userData.age}</Text>
-      <Text style={styles.header}>Top 3 Artists: </Text>
-      <Text style={styles.text}>{top3artists}</Text>
-      <Text style={styles.header}>Top 3 Genres: </Text>
-      <Text style={styles.text}>{top3genres}</Text>
-      <Text style={styles.header}>Top Tracks: </Text>
-      {topTracks.map((track, index) => (
-        <Text key={index} style={styles.text}>{track.name} by {track.artist}</Text>
-      ))}
+        <Image source={{ uri: userData.imageUrl }} style={styles.image} />
+        <Text style={styles.name}>{userData.firstName} {userData.lastName}</Text>
+        <Text style={styles.age}>Age: {userData.age}</Text>
+
+        <Text style={styles.header}>Top 3 Artists: </Text>
+        {top3artists.map((artist, index) => (
+                <Text key={index} style={styles.text}>{artist}</Text>
+        ))}
+
+        <Text style={styles.header}>Top 3 Genres: </Text>
+        {top3genres.map((genre, index) => (
+                <Text key={index} style={styles.text}>{genre}</Text>
+        ))}
+
+        <Text style={styles.header}>Top Tracks: </Text>
+        {topTracks.map((track, index) => (
+            <Text key={index} style={styles.text}>{track.name} by {track.artist}</Text>
+        ))}
     </ScrollView>
   );
 };
@@ -73,10 +80,10 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginTop: 20,
+    marginTop: 22,
   },
   text: {
     fontSize: 16,
-    marginVertical: 2,
+    marginVertical: 5,
   },
 });

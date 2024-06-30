@@ -87,7 +87,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
+    backgroundColor: '#FAF4EC',
+},
   matchContainer: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -129,6 +129,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 10,
+        backgroundColor: '#FAF4EC',
+
     },
     requestContainer: {
         flexDirection: 'row',
