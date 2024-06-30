@@ -71,11 +71,12 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         alignItems: 'center',
+        backgroundColor: '#E6F2F4'
     },
     image: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 130,
+        height: 130,
+        borderRadius: 70,
         marginBottom: 20,
     },
     name: {

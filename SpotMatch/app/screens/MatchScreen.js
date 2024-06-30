@@ -311,9 +311,9 @@ const styles = StyleSheet.create({
         fontSize: 25,
         color: "white",
         width: "100%",
-        textShadowColor: "black",
+        textShadowColor: "#171717",
         textShadowOffset: { width: 0, height: 5 },
-        textShadowRadius: 10,
+        textShadowRadius: 8,
         padding: 10,
         textAlign: "center",
     },
@@ -321,6 +321,10 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 16,
         fontWeight: "400",
+        textShadowColor: "#171717",
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 6,
+        shadowOpacity: 0.2,
     },
     headerText: {
         color: "white",
@@ -329,6 +333,11 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         marginBottom: 7,
         marginLeft: 8,
+        textShadowColor: "#171717",
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
+        shadowOpacity: 0.2,
+
         
     },
     textContainer: {
