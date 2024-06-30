@@ -137,10 +137,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
     },
     image: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginRight: 10,
+        width: 55,
+        height: 55,
+        borderRadius: 28,
+        marginRight: 12,
     },
     name: {
         fontSize: 18,

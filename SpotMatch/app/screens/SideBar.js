@@ -3,6 +3,7 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ProfileScreen from './SideBarScreen/ProfileScreen';
 import RequestsScreen from './SideBarScreen/RequestsScreen';
+import Matches from './SideBarScreen/Matches';
 import Settings from './SideBarScreen/Settings';
 import HelpScreen from './SideBarScreen/HelpScreen';
 import LogoutScreen from './SideBarScreen/LogoutScreen';
@@ -16,6 +17,7 @@ import NavigationTab from './NavigationTab';
 import CustomDrawerContent from './CustomDrawerContent';
 import { Feather } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
+import MatchesProfileScreen from './SideBarScreen/MatchesProfileScreen';
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
@@ -82,6 +84,20 @@ const SideBar = () => {
       <Drawer.Screen 
         name="Requests" 
         component={RequestsScreen}
+        options={({ navigation }) => ({
+          headerLeft: () => <HeaderLeftChevron navigation={navigation} />,
+        })}
+      />
+       <Drawer.Screen 
+        name="Matches" 
+        component={Matches}
+        options={({ navigation }) => ({
+          headerLeft: () => <HeaderLeftChevron navigation={navigation} />,
+        })}
+      />
+      <Drawer.Screen 
+        name="MatchesProfileScreen" 
+        component={MatchesProfileScreen}
         options={({ navigation }) => ({
           headerLeft: () => <HeaderLeftChevron navigation={navigation} />,
         })}

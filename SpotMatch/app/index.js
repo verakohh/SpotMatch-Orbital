@@ -7,6 +7,7 @@ import Registration from './screens/Registration';
 import Login from './screens/Login';
 import SideBar from './screens/SideBar';
 import Access from './screens/Access';
+import MatchesProfileScreen from './screens/SideBarScreen/MatchesProfileScreen';
 import ActivitiesScreen from './screens/Events/ActivitiesScreen';
 import ActivityDetails from './screens/Events/ActivityDetails';
 import { useState, useEffect } from 'react';
@@ -48,19 +49,5 @@ export default function App() {
       </Stack.Navigator>
     </UserContext.Provider>
   );
-  // return (
-  //   <UserContext.Provider value={{user, setUser, token, setToken}}>
-  //     <Stack.Navigator>
-  //       {signedUser ? (
-  //         <Stack.Screen name="InsideLayout" component={InsideLayout} options={{ headerShown: false }} />
-  //       ) : (
-  //         <>
-  //           <Stack.Screen name='Access' component={Access} options={{ headerShown: false }} />
-  //           <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-  //           <Stack.Screen name="Registration" component={Registration} options={{ headerShown: false }} />
-  //         </>
-  //       )}
-  //     </Stack.Navigator>
-  //   </UserContext.Provider>
-  // );
+  
 }

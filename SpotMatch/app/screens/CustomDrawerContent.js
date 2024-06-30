@@ -20,6 +20,13 @@ const CustomDrawerContent = (props) => {
             labelStyle={styles.drawerItemLabel} 
 
         />
+         <DrawerItem
+          label="Matches"
+          icon={() => <Feather name="users" size={24} />}
+          onPress={() => props.navigation.navigate('Matches')}
+            labelStyle={styles.drawerItemLabel} 
+
+        />
         <DrawerItem
           label="Settings"
           icon={() => <Feather name="settings" size={24} />}
