@@ -19,7 +19,7 @@ const discovery = {
   };
  
 const clientId = '89d33611962f42ecb9e982ee2b879bb8';
-const redirectUri = 'SpotMatch://callback';
+const redirectUri = 'spotmatch://callback';
 
 
 export default function Access() {

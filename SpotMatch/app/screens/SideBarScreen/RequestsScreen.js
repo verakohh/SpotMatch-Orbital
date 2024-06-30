@@ -34,7 +34,10 @@ export default function RequestsScreen() {
                     })
                 );
 
-                setRequests(requestDocs.filter(doc => doc !== null));
+                const filteredRequests = requestDocs.filter(doc => doc !== null);
+                console.log("Fetched Requests: ", filteredRequests);
+                setRequests(filteredRequests);
+                
                 setLoading(false);
             } else {
                 console.log("no userDocSnap");
@@ -98,25 +101,27 @@ export default function RequestsScreen() {
         );
     }
 
-
     return (
+       
         <View style={styles.container}>
             <FlatList
                 data={requests}
                 keyExtractor={(item) => item.docRef.id}
                 renderItem={({ item }) => (
-                    <View style={styles.requestContainer}>
-                        <Image source={{ uri: item.imageUrl }} style={styles.image} />
-                        <Text style={styles.name}>{item.firstName}</Text>
-                        <View style={styles.iconsContainer}>
-                            <TouchableOpacity onPress={() => handleDecline(item.docRef)} style={styles.button}>
-                                <CircleCrossIcon />
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => handleAccept(item.docRef)} style={styles.button}>
-                                <CircleCheckIcon />
-                            </TouchableOpacity>
+                   
+                        <View style={styles.requestContainer}>
+                            <Image source={{ uri: item.imageUrl }} style={styles.image} />
+                            <Text style={styles.name}>{item.firstName}</Text>
+                            <View style={styles.iconsContainer}>
+                                <TouchableOpacity onPress={() => handleDecline(item.docRef)} style={styles.button}>
+                                    <CircleCrossIcon />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleAccept(item.docRef)} style={styles.button}>
+                                    <CircleCheckIcon />
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
+                    
                 )}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
             />
@@ -129,8 +134,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 10,
-        alignItems: 'center',
-        justifyContent: "center",
         backgroundColor: '#FAF4EC',
 
     },
