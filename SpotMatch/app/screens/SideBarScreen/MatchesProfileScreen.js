@@ -51,7 +51,7 @@ export default MatchesProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#FAF4EC',
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: 20,
   },
   text: {
     fontSize: 16,
