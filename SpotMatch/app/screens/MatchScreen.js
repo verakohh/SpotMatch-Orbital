@@ -5,7 +5,6 @@ import { useNavigation } from '@react-navigation/core';
 import Swiper from "react-native-deck-swiper";
 import { BlurView } from "expo-blur";
 import axios from 'axios';
-import axiosRetry from 'axios-retry';
 import GetSpotifyData from '../../components/GetSpotifyData';
 import { getUser, getToken, getEmail } from '../User';
 import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
@@ -35,33 +34,15 @@ const MatchScreen = () => {
     // console.log("at get spotifydata ")
 
     // const [user, setUser] = useState(null);
-    
-    axiosRetry(axios, { retries: 3 });
 
-    const fetchDataWithRetry = async (url, token) => {
-        try {
-          const response = await axios.get(url, {
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token,
-            },
-          });
-          return response.data;
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          throw error;
-        }
-      };
-
-    
-    async function fetchData() {
-        const token = await getToken();
-        const user = await getUser();
-        // setUser(await getUser());
+    useEffect(() => {
+        async function fetchData() {
+            const token = await getToken();
+            const user = await getUser();
+            // setUser(await getUser());
         console.log(user);
         console.log(token)
-
+       
         console.log("at get spotifydata useEffect")
         const q = query(usersColRef, where("email", "!=", user.email));
         const querySnapshot = await getDocs(q);
@@ -82,61 +63,101 @@ const MatchScreen = () => {
             setUserDocs(filteredDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref })));
             // setUserDocs(filteredDocs.map(doc => doc.data()));
         }
-
         if (token && user) {
             setLoading(true);
             try {
-                console.log('Fetching data from Spotify')
+                console.log('yes')
                 console.log(user)
-                const topArtistsData = await fetchDataWithRetry("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10", token);
-                const names = topArtistsData.items.map(artist => artist.name); 
-                user.setArtists(names);
-                // console.log(res.data.items);
-                console.log(user.artists);
-                console.log(names);
-                            
-                const genre = topArtistsData.items.flatMap(user => user.genres);
-                const uniqueGenres = [...new Set(genre)];
-                user.setGenres(uniqueGenres);
-                console.log(genre); 
-                console.log(uniqueGenres);
+                axios("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10", {
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + token,
+                    },
+                })
+                .then(res => {
+                    if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                        console.log("user: ",user)
+                        const names = res.data.items.map(artist => artist.name); 
+                        user.setArtists(names);
+                        console.log(res.data.items);
+                        console.log(user.artists);
+                        console.log(names);
+
+                        const genre = res.data.items.flatMap(user => user.genres);
+                        const uniqueGenres = [...new Set(genre)];
+                        user.setGenres(uniqueGenres);
+                        console.log(genre); 
+                        console.log(uniqueGenres);
+    
 
                             // console.log(refDoc);
                         
                                 // console.log(artistNames);
-                user.update({topArtists: names, genres: uniqueGenres});
+                                user.update({topArtists: names, genres: uniqueGenres});
                                 // user.update({genres: genre}); 
-                            
-                const userProfileData = await fetchDataWithRetry('https://api.spotify.com/v1/me', token);
-                const displayname = userProfileData.display_name;
-                user.setDisplayName(displayname);
-            
-                const imgUrl = userProfileData.images.map(img => img.url)[0];
-                user.setImgUrl(imgUrl);
-            
-                user.update({ displayName: displayname, imageUrl: imgUrl });
-            
-                const topTracksData = await fetchDataWithRetry("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", token);
-                const topTracks = topTracksData.items.map(track => ({
-                    name: track.name,
-                    artist: track.artists[0].name,
-                }));
-                user.setTopTracksData(topTracks);
-                user.update({ topTracks });
-                console.log(topTracks);
-            } catch (error) {
-            console.error('Error fetching data:', error);
-            } finally {
-            setLoading(false);
-            }
-        } else {
-            console.log("No token available");
-        }
-    };        
+                    } else {
+                        console.error('Invalid response format: ', res.data);
+                    }
+                })       
 
-    useEffect(() => {
-        fetchData();
-      }, [request]);
+                axios('https://api.spotify.com/v1/me', {
+                    method: 'GET',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + token,
+                    },
+                })
+                .then(res => {
+                    console.log(res.data)
+                    const displayname = res.data.display_name;
+                    user.setDisplayName(displayname);
+
+                    console.log(res.data.images)
+                    const imgUrl = res.data.images.map(img => img.url)
+                    const uniqueUrl = imgUrl[0];
+                    console.log('this is imgUrl: ', uniqueUrl)
+                    user.setImgUrl(uniqueUrl);
+
+                    user.update({displayName: displayname, imageUrl: uniqueUrl});
+                })
+
+                axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+                        method: "GET",
+                        headers: {
+                            Accept: "application/json",
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer " + token,
+                        },
+                    })
+                    .then(res => {
+                        if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                            const topTracks = res.data.items.map(track => ({
+                                name: track.name,
+                                artist: track.artists[0].name
+                            }));
+                            user.setTopTracksData(topTracks);
+                            user.update({ topTracks });
+                            console.log(topTracks);
+                        } else {
+                            console.error('Invalid response format: ', res.data);
+                        }
+                    });
+            } catch (error) {
+                    console.error('Error in useEffect: ', error.response);
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+              console.log("no token")
+            }}
+           fetchData();
+
+        }, [request]);
+
+    
                     // .catch(err => {
                     //     console.error('Error fetching top artists: ', err)
                     // })
@@ -330,7 +351,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 0 },
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: '#ECECEC',
+        backgroundColor: 'lightgrey',
         overflow: "hidden",
       },
     cardImg: {

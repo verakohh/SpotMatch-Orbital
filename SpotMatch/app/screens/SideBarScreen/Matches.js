@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from 'react-native';
 import { getUser } from '../../User';
 import { useFocusEffect } from '@react-navigation/native';
-import { ref } from '../../../firebase';
 import { getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 
@@ -27,7 +26,7 @@ const Matches = () => {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
               const docData = docSnap.data();
-              return { ...docData, docRef: docRef.path }; 
+              return { ...docData, docRef: docRef.path }; // Pass path instead of docRef
             }
             return null;
           })
@@ -50,10 +49,12 @@ const Matches = () => {
   );
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.matchContainer} onPress={() => navigation.navigate('MatchesProfileScreen', { user: item })}>
+    // <TouchableOpacity style={styles.matchContainer} onPress={() => navigation.navigate('MatchesProfileScreen', { user: item })}>
+    <View style={styles.matchContainer}>
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
       <Text style={styles.name}>{item.firstName}</Text>
-    </TouchableOpacity>
+      </View>
+    // </TouchableOpacity>
   );
 
   if (loading) {
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 25,
     backgroundColor: '#FAF4EC',
-},
+  },
   matchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -104,7 +105,6 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginRight: 18,
-
   },
   name: {
     fontSize: 18,
