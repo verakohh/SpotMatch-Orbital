@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { getUser, getToken } from '../../User';
 import { getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { ref, usersColRef } from '../../../firebase';
@@ -12,7 +13,7 @@ export default function RequestsScreen() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+   
         async function fetchRequests() {
             const user = await getUser();
             const userDocRef = user.docRef;
@@ -42,10 +43,15 @@ export default function RequestsScreen() {
             } else {
                 console.log("no userDocSnap");
             }
-        }
+        };
 
-        fetchRequests();
-    }, []);
+        useFocusEffect(
+            React.useCallback(() => {
+                fetchRequests();
+            }, [])
+        );
+    
+    
 
     const handleAccept = async (requestDocRef) => {
         const user = await getUser();
