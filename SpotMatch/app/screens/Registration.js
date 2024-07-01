@@ -1,8 +1,7 @@
 import { StyleSheet, Text, View, KeyboardAvoidingView, Image, TextInput, TouchableOpacity } from 'react-native'
-import React, {useContext, useEffect} from 'react'
+import React, { useEffect, useState} from 'react'
 import { FIREBASE_AUTH, db } from '../../firebase';
 import Button from '../../components/navigation/Button';
-import { useState } from 'react';
 import { createUserWithEmailAndPassword , updateProfile} from 'firebase/auth';
 import { ref, set } from '../../firebase';
 import { useNavigation } from '@react-navigation/core';
@@ -18,9 +17,22 @@ import moment from 'moment';
 
 let docRef;
 
+const LabeledInput = ({ label, value, onChangeText, placeholder, secureTextEntry, editable }) => (
+  <View style={styles.labeledInputContainer}>
+    <Text style={styles.label}>{label}</Text>
+    <TextInput
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      style={styles.input}
+      secureTextEntry={secureTextEntry}
+      editable={editable}
+    />
+  </View>
+);
+
 const Registration = () => {
     // const { setUserInfo } = useUserInfo();
-    const {user, setUser} = useContext(UserContext);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -172,77 +184,70 @@ const Registration = () => {
             style={styles.container}
             behavior='padding'
         >
+          <View style={{height: "20%"}}>
             <Image source={require('../../assets/images/SpotMatch-login.png')} />
+          </View>
             <View style ={{alignItems: 'left', width: '100%'}}>
                 <Text style={styles.signUpText}>Sign Up</Text>
             </View>
             <View style= {styles.inputContainer}>
-                <TextInput
-                    value={firstName}
-                    onChangeText={text =>setFirstName(text) }
-                    placeholder="First Name"
-                    style={styles.input}
-                /> 
-
-                <TextInput
-                    value={lastName}
-                    onChangeText={text =>setLastName(text) }
-                    placeholder="Last Name"
-                    style={styles.input}
-                /> 
-                <TextInput
-                    value={email}
-                    onChangeText={text =>setEmail(text) }
-                    placeholder="Email"
-                    style={styles.input}
-                /> 
-        
-                <TextInput
-                    value={password}
-                    onChangeText={text => setPassword(text) }
-                    placeholder="Password"
-                    style={styles.input}
-                    secureTextEntry
-                /> 
-                {/* <Button type='primary' size='s' text='Select your birthdate' onPress={showDatePicker} /> */}
-                <TouchableOpacity onPress={showDatePicker}>
-                  <View pointerEvents="none">
-                    <TextInput
-                      numberOfLines={1}
-                      editable={false}
-                      placeholder= "Select your birthdate"
-                      value={birthdate ? moment(birthdate).format('DD MMMM, YYYY') : ''}
-                      style={styles.input}
-                    />
-                    <DateTimePickerModal
-                      isVisible={isDatePickerVisible}
-                      mode='date'
-                      date={birthdate ? new Date(birthdate) : new Date()}
-                      onConfirm={(date) => {
-                      handleConfirm(date);
-                    }}
-                    onCancel={hideDatePicker}
-                    maximumDate={new Date(moment())}
-                    />
-                    </View>
-                </TouchableOpacity>
-            </View>
-        
-            {/* button code goes here */}
-            <View style= {styles.buttonContainer}>
-                <Button type='secondary' size='m' text='Sign Up' onPress={(handleSignUpWithAge)} />
-            </View>
-            <View style = {{flex: 1, flexDirection: 'row', marginVertical: 25}}>
-                <Text >Already have one?  </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Login')}> 
-                    <Text style={{color: '#2196F3', fontSize: 15}}>Login</Text>
-                </TouchableOpacity>
-            </View>
-        </KeyboardAvoidingView>
-      
-  )
+            <LabeledInput
+          label="First Name"
+          value={firstName}
+          onChangeText={setFirstName}
+          placeholder="First Name"
+        />
+        <LabeledInput
+          label="Last Name"
+          value={lastName}
+          onChangeText={setLastName}
+          placeholder="Last Name"
+        />
+        <LabeledInput
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Email"
+        />
+        <LabeledInput
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Password"
+          secureTextEntry
+        />
+        <TouchableOpacity onPress={showDatePicker}>
+          <View pointerEvents="none">
+            <LabeledInput
+              label="Birthdate"
+              value={birthdate ? moment(birthdate).format('DD MMMM, YYYY') : ''}
+              placeholder="Select your birthdate"
+              editable={false}
+            />
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode='date'
+              date={birthdate ? new Date(birthdate) : new Date()}
+              onConfirm={handleConfirm}
+              onCancel={hideDatePicker}
+              maximumDate={new Date(moment())}
+            />
+          </View>
+          </TouchableOpacity>
+      </View>
+      <View style={styles.buttonContainer}>
+        <Button type='secondary' size='m' text='Sign Up' onPress={handleSignUpWithAge} />
+      </View>
+      <View style={{ flex: 1, flexDirection: 'row', marginVertical: 25 }}>
+        <Text>Already have one?  </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={{ color: '#2196F3', fontSize: 15 }}>Login</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
 }
-// console.log("this is the docRef: ", docRef);
+
 export default Registration
 
 // export const refDoc = docRef;
@@ -251,44 +256,48 @@ export default Registration
 
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      },
-    
-      inputContainer: {
-        width: '80%',
-      },
-    
-      input: {
-        backgroundColor: 'white',
-        paddingHorizontal: 15,
-        paddingVertical: 10,
-        borderRadius: 15,
-        marginTop: 15,
-        borderWidth: 1,
-        borderColor: '#accafc',
-        shadowOffset: {width: 5, height: 8},  
-        shadowColor: '#171717',  
-        shadowOpacity: 0.2,  
-        shadowRadius: 7,
-      },
-    
-      buttonContainer: {
-        width: '60%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 40,
-    
-      },
-
-      signUpText: {
-        fontSize: 20,      
-        fontWeight: '400', 
-        fontFamily: 'Verdana',
-        color: '#212e37',      
-        marginBottom: 8,
-        paddingHorizontal: 42  
-      },
-})
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  inputContainer: {
+    width: '80%',
+  },
+  labeledInputContainer: {
+    marginVertical: 8,
+  },
+  label: {
+    marginBottom: 5,
+    marginHorizontal: 8,
+    fontSize: 16,
+    color: '#333',
+  },
+  input: {
+    backgroundColor: 'white',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#accafc',
+    shadowOffset: { width: 5, height: 8 },
+    shadowColor: '#171717',
+    shadowOpacity: 0.2,
+    shadowRadius: 7,
+  },
+  buttonContainer: {
+    width: '60%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  signUpText: {
+    fontSize: 26,
+    fontWeight: '400',
+    fontFamily: 'Verdana',
+    color: '#212e37',
+    marginBottom: 8,
+    marginTop: 22,
+    paddingHorizontal: 42,
+  },
+});

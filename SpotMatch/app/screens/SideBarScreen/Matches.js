@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from 'react-native';
 import { getUser } from '../../User';
+import { useFocusEffect } from '@react-navigation/native';
 import { ref } from '../../../firebase';
 import { getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
@@ -9,11 +10,7 @@ const Matches = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
-
-  useEffect(() => {
-    fetchMatches();
-  }, []);
-
+  
   const fetchMatches = async () => {
     setLoading(true);
     try {
@@ -45,6 +42,12 @@ const Matches = () => {
       console.error('Error fetching matches:', error);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchMatches();
+    }, [])
+  );
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.matchContainer} onPress={() => navigation.navigate('MatchesProfileScreen', { user: item })}>
