@@ -5,7 +5,6 @@ import { useNavigation } from '@react-navigation/core';
 import Swiper from "react-native-deck-swiper";
 import { BlurView } from "expo-blur";
 import axios from 'axios';
-import axiosRetry from 'axios-retry';
 import GetSpotifyData from '../../components/GetSpotifyData';
 import { getUser, getToken, getEmail } from '../User';
 import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
@@ -19,190 +18,200 @@ const MatchScreen = () => {
 
     const navigation= useNavigation();
     const [userDocs, setUserDocs] = useState(null);
-    const [request, setRequest] = useState(null);
+    const [currentDocs, setCurrentDocs] = useState([]);
+    const [swipedUsers, setSwipedUsers] = useState([]);
+    const [dismissedUsers, setDismissedUsers] = useState([]);
+    // const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
 
 
 
-    // const check = async () => {
-    //     const user = await getUser();
-    //     console.log("artists: ",user.artists)
-    // }
-    // check();
-
-    
-    // const GetSpotifyData= () => {
-    // console.log("at get spotifydata ")
-
-    // const [user, setUser] = useState(null);
-    
-    axiosRetry(axios, { retries: 3 });
-
-    const fetchDataWithRetry = async (url, token) => {
-        try {
-          const response = await axios.get(url, {
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token,
-            },
-          });
-          return response.data;
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          throw error;
-        }
-      };
-
-    
-    async function fetchData() {
-        const token = await getToken();
-        const user = await getUser();
-        // setUser(await getUser());
-        console.log(user);
-        console.log(token)
-
+    // useEffect(() => {
+        const fetchData = async () => {
+            const token = await getToken();
+            const user = await getUser();
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
+        
         console.log("at get spotifydata useEffect")
-        const q = query(usersColRef, where("email", "!=", user.email));
-        const querySnapshot = await getDocs(q);
-        const userDocRef = ref(user.email);
-        const userDocSnap = await getDoc(userDocRef);
-
+       
         if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
             const isMatched = userData.matched || [];
             const sentRequest = userData.sentRequest || [];
+            const dismissed = userData.dismissed || [];
+
+            setLoading(true);
+            setDismissedUsers(dismissed);
             
+            const q = query(usersColRef, where("email", "!=", user.email));
+            const querySnapshot = await getDocs(q);
+
             const filteredDocs = querySnapshot.docs.filter(doc => {
                 const docRefPath = doc.ref.path;
-                console.log(isMatched.some(ref => ref.path === docRefPath));
-                return !(isMatched.some(ref => ref.path === docRefPath)) && !(sentRequest.some(ref => ref.path === docRefPath));
+                // console.log(isMatched.some(ref => ref.path === docRefPath));
+                return !(isMatched.some(ref => ref.path === docRefPath)) && !(sentRequest.some(ref => ref.path === docRefPath))
+                && !(dismissed.some(ref => ref.path === docRefPath));
             });
 
-            setUserDocs(filteredDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref })));
-            // setUserDocs(filteredDocs.map(doc => doc.data()));
-        }
+            const dismissedDocs = querySnapshot.docs.filter(doc => {
+                const docRefPath = doc.ref.path;
+                return dismissed.some(ref => ref.path === docRefPath);
+            });
 
+            const newDocs = filteredDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref }));
+            const newDismissedDocs = dismissedDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref }));
+            setUserDocs([...newDocs, ...newDismissedDocs]);
+            setCurrentDocs([...newDocs, ...newDismissedDocs]);
+
+            // setUserDocs(filteredDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref })));
+           
+        }
         if (token && user) {
-            setLoading(true);
+            
             try {
-                console.log('Fetching data from Spotify')
+                console.log('yes')
                 console.log(user)
-                const topArtistsData = await fetchDataWithRetry("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10", token);
-                const names = topArtistsData.items.map(artist => artist.name); 
-                user.setArtists(names);
-                // console.log(res.data.items);
-                console.log(user.artists);
-                console.log(names);
-                            
-                const genre = topArtistsData.items.flatMap(user => user.genres);
-                const uniqueGenres = [...new Set(genre)];
-                user.setGenres(uniqueGenres);
-                console.log(genre); 
-                console.log(uniqueGenres);
+                axios("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10", {
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + token,
+                    },
+                })
+                .then(res => {
+                    if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                        console.log("user: ",user)
+                        const names = res.data.items.map(artist => artist.name); 
+                        user.setArtists(names);
+                        console.log(user.artists);
+                        console.log(names);
+
+                        const genre = res.data.items.flatMap(user => user.genres);
+                        const uniqueGenres = [...new Set(genre)];
+                        user.setGenres(uniqueGenres);
+                        console.log(genre); 
+                        console.log(uniqueGenres);
+    
 
                             // console.log(refDoc);
                         
                                 // console.log(artistNames);
-                user.update({topArtists: names, genres: uniqueGenres});
+                        user.update({topArtists: names, genres: uniqueGenres});
                                 // user.update({genres: genre}); 
-                            
-                const userProfileData = await fetchDataWithRetry('https://api.spotify.com/v1/me', token);
-                const displayname = userProfileData.display_name;
-                user.setDisplayName(displayname);
-            
-                const imgUrl = userProfileData.images.map(img => img.url)[0];
-                user.setImgUrl(imgUrl);
-            
-                user.update({ displayName: displayname, imageUrl: imgUrl });
-            
-                const topTracksData = await fetchDataWithRetry("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", token);
-                const topTracks = topTracksData.items.map(track => ({
-                    name: track.name,
-                    artist: track.artists[0].name,
-                }));
-                user.setTopTracksData(topTracks);
-                user.update({ topTracks });
-                console.log(topTracks);
+                    } else {
+                        console.error('Invalid response format: ', res.data);
+                    }
+                })       
+
+                axios('https://api.spotify.com/v1/me', {
+                    method: 'GET',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + token,
+                    },
+                })
+                .then(res => {
+                    console.log(res.data)
+                    const displayname = res.data.display_name;
+                    user.setDisplayName(displayname);
+
+                    console.log(res.data.images)
+                    const imgUrl = res.data.images.map(img => img.url)
+                    const uniqueUrl = imgUrl[0];
+                    console.log('this is imgUrl: ', uniqueUrl)
+                    user.setImgUrl(uniqueUrl);
+
+                    user.update({displayName: displayname, imageUrl: uniqueUrl});
+                })
+
+                axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+                        method: "GET",
+                        headers: {
+                            Accept: "application/json",
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer " + token,
+                        },
+                    })
+                    .then(res => {
+                        if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                            const topTracks = res.data.items.map(track => ({
+                                name: track.name,
+                                artist: track.artists[0].name
+                            }));
+                            user.setTopTracksData(topTracks);
+                            user.update({ topTracks });
+                            console.log(topTracks);
+                        } else {
+                            console.error('Invalid response format: ', res.data);
+                        }
+                    });
             } catch (error) {
-            console.error('Error fetching data:', error);
-            } finally {
-            setLoading(false);
+                    console.error('Error in useEffect: ', error.response);
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+              console.log("no token")
+            }}
+        //    fetchData();
+
+        // }, []);
+        useEffect(() => {
+            fetchData();
+        }, []);
+    
+
+    const handleRight = async (cardIndex) => {
+        const currUser = await getUser(); 
+        const swipedUser = currentDocs[cardIndex];
+    
+        if (swipedUser && swipedUser.docRef) {
+            try {
+                await updateDoc(swipedUser.docRef, {
+                                requestedBy: arrayUnion(currUser.docRef)
+                                
+                });
+                await updateDoc(currUser.docRef, {
+                    sentRequest: arrayUnion(swipedUser.docRef),
+                    dismissed: arrayRemove(swipedUser.docRef)
+                    
+                });
+                setSwipedUsers([...swipedUsers, swipedUser]);
+                // setCurrentDocs(currentDocs.slice(cardIndex));
+                // setRequest(arrayUnion(swipedUser.docRef));
+                console.log("Request updated successfully");
+            } catch (error) {
+                console.error("Error updating request: ", error);
             }
         } else {
-            console.log("No token available");
+            console.error("No user docRef or invalid cardIndex");
         }
-    };        
+    };
 
-    useEffect(() => {
-        fetchData();
-      }, [request]);
-                    // .catch(err => {
-                    //     console.error('Error fetching top artists: ', err)
-                    // })
-    
-            //         axios('https://api.spotify.com/v1/me', {
-            //             method: 'GET',
-            //             headers: {
-            //                 Accept: "application/json",
-            //                 "Content-Type": "application/json",
-            //                 Authorization: "Bearer " + token,
-            //             },
-            //         })
-            //         .then(res => {
-            //             console.log(res.data)
-            //             const displayname = res.data.display_name;
-            //             user.setDisplayName(displayname);
+    const handleLeft = async (cardIndex) => {
+        const currUser = await getUser();
+        const swipedUser = currentDocs[cardIndex];
 
-            //             console.log(res.data.images)
-            //             const imgUrl = res.data.images.map(img => img.url)
-            //             const uniqueUrl = imgUrl[0];
-            //             console.log('this is imgUrl: ', uniqueUrl)
-            //             user.setImgUrl(uniqueUrl);
+        if (swipedUser && swipedUser.docRef) {
+            try {
+                await updateDoc(currUser.docRef, {
+                    dismissed: arrayUnion(swipedUser.docRef)
+                });
+                setDismissedUsers([...dismissedUsers, swipedUser]);
+                // setCurrentDocs(currentDocs.slice(cardIndex));
+                console.log(currentDocs.map(doc => doc.firstName))
+                console.log("User dismissed successfully");
+            } catch (error) {
+                console.error("Error dismissing user: ", error);
+            }
+        } else {
+            console.error("No user docRef or invalid cardIndex");
+        }
+    };
 
-            //             user.update({displayName: displayname, imageUrl: uniqueUrl});
-            //         })
-    
-            //         axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
-            //             method: "GET",
-            //             headers: {
-            //                 Accept: "application/json",
-            //                 "Content-Type": "application/json",
-            //                 Authorization: "Bearer " + token,
-            //             },
-            //         })
-            //         .then(res => {
-            //             if (res.data && res.data.items && Array.isArray(res.data.items)) {
-            //                 const topTracks = res.data.items.map(track => ({
-            //                     name: track.name,
-            //                     artist: track.artists[0].name
-            //                 }));
-            //                 user.setTopTracksData(topTracks);
-            //                 user.update({ topTracks });
-            //                 console.log(topTracks);
-            //             } else {
-            //                 console.error('Invalid response format: ', res.data);
-            //             }
-            //         });
-    
-            //     } catch (error) {
-            //         console.error('Error in useEffect: ', error.response);
-            //     } finally {
-            //         setLoading(false);
-            //     }
-            // } else {
-            //   console.log("no token")
-            // }}
-
-            // const getUsers = async () => {
-            //     setUserDocs(await getDocs(usersColRef));
-            // }
-
-           
-        // fetchData();
-
-    
-        // }, [request]);
 
 
     if (loading) {
@@ -221,42 +230,11 @@ const MatchScreen = () => {
         );
     }
 
-    // if( userDocs) {
-    //     userDocs.forEach(doc => {
-    //         console.log(doc.email, "=> ", doc, "here are top Artists:", doc.topArtists)
-    //     })
-    // }
-    // }
 
     const top3artists = card => {
        const sliced = card.topArtists.slice(0,3);
        return sliced.toString();
     }
-
-    const handleRight = async (cardIndex) => {
-        const currUser = await getUser(); 
-        const swipedUser = userDocs[cardIndex];
-    
-        if (swipedUser && swipedUser.docRef) {
-            try {
-                await updateDoc(swipedUser.docRef, {
-                                requestedBy: arrayUnion(currUser.docRef)
-                                
-                });
-                await updateDoc(currUser.docRef, {
-                    sentRequest: arrayUnion(swipedUser.docRef)
-                    
-                });
-                setRequest(arrayUnion(swipedUser.docRef));
-                console.log("Request updated successfully");
-            } catch (error) {
-                console.error("Error updating request: ", error);
-            }
-        } else {
-            console.error("No user docRef or invalid cardIndex");
-        }
-    };
-
 
     const renderCard = (card) => (
         <View style={styles.card}>
@@ -281,7 +259,8 @@ const MatchScreen = () => {
                             <Text style={styles.headerText}>Top Track:  
                             {card.topTracks && card.topTracks.slice(0, 1).map((track, index) => (
                                 <Text key={index} style={styles.text}> {track.name} by {track.artist} </Text>
-                            ))}</Text>
+                            ))}
+                            </Text>
                             <Text style={styles.headerText}>Top 3 Genres: <Text style={styles.text}>{card.genres ? card.genres.slice(0, 3).toString() : "N/A"}</Text></Text>
                         </View>
 
@@ -293,14 +272,17 @@ const MatchScreen = () => {
     return (
         <View style={styles.container}>
             <Swiper
-                cards={userDocs}
+                cards={currentDocs}
                 renderCard={renderCard}
                 onSwipedRight={handleRight}
+                onSwipedLeft={handleLeft}
                 stackSize={3}
                 stackSeparation={15}
                 disableTopSwipe
-                infinite
+                disableBottomSwipe
+                // infinite
                 backgroundColor={"transparent"}
+                onSwipedAll={fetchData}
             />
         </View>
     );
@@ -330,7 +312,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 0 },
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: '#ECECEC',
+        backgroundColor: 'lightgrey',
         overflow: "hidden",
       },
     cardImg: {
