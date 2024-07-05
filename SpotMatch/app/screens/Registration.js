@@ -81,6 +81,7 @@ const Registration = () => {
               // await storeEmail(email);
               // setUser(newUser);
               console.log("registered user Object : ",newUser);
+              navigation.navigate("SideBar")
 
               // setUserInfo(newUser);
 
@@ -102,7 +103,7 @@ const Registration = () => {
 
       } finally {
         setLoading(false);
-        navigation.navigate("SideBar")
+
       }
     }
 

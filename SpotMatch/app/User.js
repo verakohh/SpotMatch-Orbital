@@ -117,7 +117,7 @@ export const getUser = async () => {
   try{
     console.log('reached getUser')
     const userJson = await AsyncStorage.getItem('user', () => console.log('async got user'));
-    console.log("stringified user: ", userJson)
+    // console.log("stringified user: ", userJson)
     if(userJson) {
       const userData = JSON.parse(userJson);
       const user = new User(userData.firstName, userData.lastName, userData.email);
