@@ -18,53 +18,57 @@ const MatchScreen = () => {
 
     const navigation= useNavigation();
     const [userDocs, setUserDocs] = useState(null);
-    const [request, setRequest] = useState(null);
+    const [currentDocs, setCurrentDocs] = useState([]);
+    const [swipedUsers, setSwipedUsers] = useState([]);
+    const [dismissedUsers, setDismissedUsers] = useState([]);
+    // const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
 
 
 
-    // const check = async () => {
-    //     const user = await getUser();
-    //     console.log("artists: ",user.artists)
-    // }
-    // check();
-
-    
-    // const GetSpotifyData= () => {
-    // console.log("at get spotifydata ")
-
-    // const [user, setUser] = useState(null);
-
-    useEffect(() => {
-        async function fetchData() {
+    // useEffect(() => {
+        const fetchData = async () => {
             const token = await getToken();
             const user = await getUser();
-            // setUser(await getUser());
-        console.log(user);
-        console.log(token)
-       
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
+        
         console.log("at get spotifydata useEffect")
-        const q = query(usersColRef, where("email", "!=", user.email));
-        const querySnapshot = await getDocs(q);
-        const userDocRef = ref(user.email);
-        const userDocSnap = await getDoc(userDocRef);
-
+       
         if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
             const isMatched = userData.matched || [];
             const sentRequest = userData.sentRequest || [];
+            const dismissed = userData.dismissed || [];
+
+            setLoading(true);
+            setDismissedUsers(dismissed);
             
+            const q = query(usersColRef, where("email", "!=", user.email));
+            const querySnapshot = await getDocs(q);
+
             const filteredDocs = querySnapshot.docs.filter(doc => {
                 const docRefPath = doc.ref.path;
-                console.log(isMatched.some(ref => ref.path === docRefPath));
-                return !(isMatched.some(ref => ref.path === docRefPath)) && !(sentRequest.some(ref => ref.path === docRefPath));
+                // console.log(isMatched.some(ref => ref.path === docRefPath));
+                return !(isMatched.some(ref => ref.path === docRefPath)) && !(sentRequest.some(ref => ref.path === docRefPath))
+                && !(dismissed.some(ref => ref.path === docRefPath));
             });
 
-            setUserDocs(filteredDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref })));
-            // setUserDocs(filteredDocs.map(doc => doc.data()));
+            const dismissedDocs = querySnapshot.docs.filter(doc => {
+                const docRefPath = doc.ref.path;
+                return dismissed.some(ref => ref.path === docRefPath);
+            });
+
+            const newDocs = filteredDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref }));
+            const newDismissedDocs = dismissedDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref }));
+            setUserDocs([...newDocs, ...newDismissedDocs]);
+            setCurrentDocs([...newDocs, ...newDismissedDocs]);
+
+            // setUserDocs(filteredDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref })));
+           
         }
         if (token && user) {
-            setLoading(true);
+            
             try {
                 console.log('yes')
                 console.log(user)
@@ -81,7 +85,6 @@ const MatchScreen = () => {
                         console.log("user: ",user)
                         const names = res.data.items.map(artist => artist.name); 
                         user.setArtists(names);
-                        console.log(res.data.items);
                         console.log(user.artists);
                         console.log(names);
 
@@ -95,7 +98,7 @@ const MatchScreen = () => {
                             // console.log(refDoc);
                         
                                 // console.log(artistNames);
-                                user.update({topArtists: names, genres: uniqueGenres});
+                        user.update({topArtists: names, genres: uniqueGenres});
                                 // user.update({genres: genre}); 
                     } else {
                         console.error('Invalid response format: ', res.data);
@@ -153,77 +156,62 @@ const MatchScreen = () => {
             } else {
               console.log("no token")
             }}
-           fetchData();
+        //    fetchData();
 
-        }, [request]);
-
+        // }, []);
+        useEffect(() => {
+            fetchData();
+        }, []);
     
-                    // .catch(err => {
-                    //     console.error('Error fetching top artists: ', err)
-                    // })
+
+    const handleRight = async (cardIndex) => {
+        const currUser = await getUser(); 
+        const swipedUser = currentDocs[cardIndex];
     
-            //         axios('https://api.spotify.com/v1/me', {
-            //             method: 'GET',
-            //             headers: {
-            //                 Accept: "application/json",
-            //                 "Content-Type": "application/json",
-            //                 Authorization: "Bearer " + token,
-            //             },
-            //         })
-            //         .then(res => {
-            //             console.log(res.data)
-            //             const displayname = res.data.display_name;
-            //             user.setDisplayName(displayname);
+        if (swipedUser && swipedUser.docRef) {
+            try {
+                await updateDoc(swipedUser.docRef, {
+                                requestedBy: arrayUnion(currUser.docRef)
+                                
+                });
+                await updateDoc(currUser.docRef, {
+                    sentRequest: arrayUnion(swipedUser.docRef),
+                    dismissed: arrayRemove(swipedUser.docRef)
+                    
+                });
+                setSwipedUsers([...swipedUsers, swipedUser]);
+                // setCurrentDocs(currentDocs.slice(cardIndex));
+                // setRequest(arrayUnion(swipedUser.docRef));
+                console.log("Request updated successfully");
+            } catch (error) {
+                console.error("Error updating request: ", error);
+            }
+        } else {
+            console.error("No user docRef or invalid cardIndex");
+        }
+    };
 
-            //             console.log(res.data.images)
-            //             const imgUrl = res.data.images.map(img => img.url)
-            //             const uniqueUrl = imgUrl[0];
-            //             console.log('this is imgUrl: ', uniqueUrl)
-            //             user.setImgUrl(uniqueUrl);
+    const handleLeft = async (cardIndex) => {
+        const currUser = await getUser();
+        const swipedUser = currentDocs[cardIndex];
 
-            //             user.update({displayName: displayname, imageUrl: uniqueUrl});
-            //         })
-    
-            //         axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
-            //             method: "GET",
-            //             headers: {
-            //                 Accept: "application/json",
-            //                 "Content-Type": "application/json",
-            //                 Authorization: "Bearer " + token,
-            //             },
-            //         })
-            //         .then(res => {
-            //             if (res.data && res.data.items && Array.isArray(res.data.items)) {
-            //                 const topTracks = res.data.items.map(track => ({
-            //                     name: track.name,
-            //                     artist: track.artists[0].name
-            //                 }));
-            //                 user.setTopTracksData(topTracks);
-            //                 user.update({ topTracks });
-            //                 console.log(topTracks);
-            //             } else {
-            //                 console.error('Invalid response format: ', res.data);
-            //             }
-            //         });
-    
-            //     } catch (error) {
-            //         console.error('Error in useEffect: ', error.response);
-            //     } finally {
-            //         setLoading(false);
-            //     }
-            // } else {
-            //   console.log("no token")
-            // }}
+        if (swipedUser && swipedUser.docRef) {
+            try {
+                await updateDoc(currUser.docRef, {
+                    dismissed: arrayUnion(swipedUser.docRef)
+                });
+                setDismissedUsers([...dismissedUsers, swipedUser]);
+                // setCurrentDocs(currentDocs.slice(cardIndex));
+                console.log(currentDocs.map(doc => doc.firstName))
+                console.log("User dismissed successfully");
+            } catch (error) {
+                console.error("Error dismissing user: ", error);
+            }
+        } else {
+            console.error("No user docRef or invalid cardIndex");
+        }
+    };
 
-            // const getUsers = async () => {
-            //     setUserDocs(await getDocs(usersColRef));
-            // }
-
-           
-        // fetchData();
-
-    
-        // }, [request]);
 
 
     if (loading) {
@@ -242,42 +230,11 @@ const MatchScreen = () => {
         );
     }
 
-    // if( userDocs) {
-    //     userDocs.forEach(doc => {
-    //         console.log(doc.email, "=> ", doc, "here are top Artists:", doc.topArtists)
-    //     })
-    // }
-    // }
 
     const top3artists = card => {
        const sliced = card.topArtists.slice(0,3);
        return sliced.toString();
     }
-
-    const handleRight = async (cardIndex) => {
-        const currUser = await getUser(); 
-        const swipedUser = userDocs[cardIndex];
-    
-        if (swipedUser && swipedUser.docRef) {
-            try {
-                await updateDoc(swipedUser.docRef, {
-                                requestedBy: arrayUnion(currUser.docRef)
-                                
-                });
-                await updateDoc(currUser.docRef, {
-                    sentRequest: arrayUnion(swipedUser.docRef)
-                    
-                });
-                setRequest(arrayUnion(swipedUser.docRef));
-                console.log("Request updated successfully");
-            } catch (error) {
-                console.error("Error updating request: ", error);
-            }
-        } else {
-            console.error("No user docRef or invalid cardIndex");
-        }
-    };
-
 
     const renderCard = (card) => (
         <View style={styles.card}>
@@ -302,7 +259,8 @@ const MatchScreen = () => {
                             <Text style={styles.headerText}>Top Track:  
                             {card.topTracks && card.topTracks.slice(0, 1).map((track, index) => (
                                 <Text key={index} style={styles.text}> {track.name} by {track.artist} </Text>
-                            ))}</Text>
+                            ))}
+                            </Text>
                             <Text style={styles.headerText}>Top 3 Genres: <Text style={styles.text}>{card.genres ? card.genres.slice(0, 3).toString() : "N/A"}</Text></Text>
                         </View>
 
@@ -314,14 +272,17 @@ const MatchScreen = () => {
     return (
         <View style={styles.container}>
             <Swiper
-                cards={userDocs}
+                cards={currentDocs}
                 renderCard={renderCard}
                 onSwipedRight={handleRight}
+                onSwipedLeft={handleLeft}
                 stackSize={3}
                 stackSeparation={15}
                 disableTopSwipe
-                infinite
+                disableBottomSwipe
+                // infinite
                 backgroundColor={"transparent"}
+                onSwipedAll={fetchData}
             />
         </View>
     );
