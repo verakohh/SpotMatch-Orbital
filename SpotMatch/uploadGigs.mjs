@@ -1,10 +1,20 @@
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import fs from 'fs/promises'; // Import fs/promises
-import path from 'path';
+import fs from 'fs/promises';
+import dotenv from 'dotenv';
 
-// Load your service account key JSON file.
-const serviceAccount = JSON.parse(await fs.readFile(new URL('./config/serviceAccountKey.json', import.meta.url)));
+// Load environment variables from .env file
+dotenv.config();
+
+// Verify the environment variable
+const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
+
+if (!serviceAccountKey) {
+  throw new Error('SERVICE_ACCOUNT_KEY environment variable is not set.');
+}
+
+// Parse service account key from environment variable
+const serviceAccount = JSON.parse(serviceAccountKey);
 
 // Initialize Firebase Admin SDK
 initializeApp({
@@ -13,19 +23,19 @@ initializeApp({
 
 const db = getFirestore();
 
-// Read messages.json file
-const messages = JSON.parse(await fs.readFile('./messages.json', 'utf8'));
+// Function to fetch gigs in descending order
+async function fetchGigs() {
+  const gigsRef = db.collection('gigs');
+  const snapshot = await gigsRef.orderBy('id', 'desc').get();
 
-async function uploadGigs() {
-  const batch = db.batch();
+  if (snapshot.empty) {
+    console.log('No matching documents.');
+    return;
+  }
 
-  messages.forEach((msg) => {
-    const docRef = db.collection('gigs').doc(msg.id.toString());
-    batch.set(docRef, msg);
+  snapshot.forEach(doc => {
+    console.log(doc.id, '=>', doc.data());
   });
-
-  await batch.commit();
-  console.log('Gigs uploaded to Firestore');
 }
 
-uploadGigs().catch(console.error);
+fetchGigs().catch(console.error);
