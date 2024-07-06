@@ -1,60 +1,36 @@
+// //spotmatch/screens/Events/GigsScreen.js
 // import React, { useEffect, useState } from 'react';
 // import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Linking, Platform, ActivityIndicator } from 'react-native';
+// import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
 // const GigsScreen = () => {
 //   const [gigs, setGigs] = useState([]);
-//   const [baseUrl, setBaseUrl] = useState('');
 //   const [isLoading, setIsLoading] = useState(false);
 
 //   useEffect(() => {
-//     const fetchBaseUrl = async () => {
-//       const url = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
-//       console.log('Base URL set to:', url); // Debugging log
-//       setBaseUrl(url);
-//     };
-
-//     fetchBaseUrl();
-//   }, []);
-
-//   useEffect(() => {
-//     const fetchData = async () => {
+//     const fetchGigs = async () => {
 //       setIsLoading(true);
 //       try {
-//         const response = await fetch(`${baseUrl}/messages.json`);
-//         if (!response.ok) {
-//           throw new Error(`HTTP error! status: ${response.status}`);
-//         }
-
-//         const responseText = await response.text();
-//         console.log('messages.json response text:', responseText); // Debugging log
-
-//         let imageData;
-//         try {
-//           imageData = JSON.parse(responseText);
-//         } catch (error) {
-//           console.error('Error parsing JSON from messages.json:', error);
-//           throw error;
-//         }
-
-//         setGigs(imageData);
-//         console.log('Gigs fetched:', imageData.length);
-
+//         const db = getFirestore();
+//         const gigsCollection = collection(db, 'gigs');
+//         const gigsSnapshot = await getDocs(gigsCollection);
+//         const gigsList = gigsSnapshot.docs.map(doc => doc.data());
+//         setGigs(gigsList);
 //       } catch (error) {
-//         console.error('Error fetching gigs or images:', error);
+//         console.error('Error fetching gigs:', error);
 //       } finally {
 //         setIsLoading(false);
 //       }
 //     };
 
-//     if (baseUrl) {
-//       fetchData();
-//     }
-//   }, [baseUrl]);
+//     fetchGigs();
+//   }, []);
 
 //   const renderMessageText = (text) => {
+//     if (!text) return null; // Return null if text is undefined or empty
 //     const parts = text.split(/(\s+)/); // Split by spaces
 //     return parts.map((part, index) => {
-//       if (part.includes('.com')) {
+//       if (part.includes('.com') || part.startsWith('https://') || part.startsWith('http://')) {
 //         return (
 //           <TouchableOpacity key={index} onPress={() => Linking.openURL(part.startsWith('http') ? part : `http://${part}`)}>
 //             <Text style={styles.link}>{part}</Text>
@@ -70,7 +46,7 @@
 //     <View style={styles.gigContainer}>
 //       {item.media_url ? (
 //         <Image 
-//           source={{ uri: `${baseUrl}/${item.media_url}` }}
+//           source={{ uri: item.media_url }}
 //           style={styles.image} 
 //           resizeMode="contain"
 //           onError={(error) => console.log('Image failed to load:', item.media_url, error.nativeEvent.error)}
@@ -149,9 +125,15 @@
 
 // export default GigsScreen;
 
+
+
+
+
+
+
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Linking, Platform, ActivityIndicator } from 'react-native';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import { getFirestore, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 
 const GigsScreen = () => {
   const [gigs, setGigs] = useState([]);
@@ -163,7 +145,13 @@ const GigsScreen = () => {
       try {
         const db = getFirestore();
         const gigsCollection = collection(db, 'gigs');
-        const gigsSnapshot = await getDocs(gigsCollection);
+        const now = new Date().toISOString(); // Get current date in ISO format
+        const gigsQuery = query(
+          gigsCollection,
+          where('gig_date', '>=', now), // Filter for gig dates on or after today
+          orderBy('gig_date', 'desc') // Fetch gigs in descending order
+        );
+        const gigsSnapshot = await getDocs(gigsQuery);
         const gigsList = gigsSnapshot.docs.map(doc => doc.data());
         setGigs(gigsList);
       } catch (error) {
