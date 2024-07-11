@@ -81,16 +81,18 @@ const Login = () => {
         const data = docSnap.data()
         console.log("Document data:", data);
         const newUser = new User(data.firstName, data.lastName, data.email);
-        newUser.setArtists(data.artists);
+        newUser.setArtists(data.topArtists);
         newUser.setGenres(data.genres);
         newUser.setDisplayName(data.displayName);
-        newUser.setTopTracksData(data.tracks); 
+        newUser.setTopTracksData(data.topTracks); 
+        newUser.setAge(data.age);
         newUser.setBirthdate(data.birthdate);
-        newUser.setImgUrl(data.imgageUrl)
+        newUser.setImgUrl(data.imageUrl)
         newUser.setRequestedBy(data.requestedBy);
         newUser.setMatched(data.matched);
         newUser.setSentRequest(data.sentRequest);
         newUser.setRejected(data.rejected);
+        newUser.setDismissed(data.dismissed);
 
         await storeUser(newUser);
 
