@@ -33,6 +33,10 @@ export default class User {
       this.tracks = tracks;
     }
 
+    setAge(age) {
+      this.age = age;
+    }
+    
     setImgUrl(url) {
       this.imgUrl = url
     }
@@ -55,6 +59,10 @@ export default class User {
 
     setRejected(user) {
       this.rejected = user;
+    }
+
+    setDismissed(user) {
+      this.dismissed = user;
     }
 
      userInstance() {
