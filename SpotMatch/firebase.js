@@ -45,3 +45,4 @@ export const FIREBASE_AUTH = auth;
 export const set = (id, data) => { setDoc(doc(db, 'users', id), data)}
 export const ref = id => doc(usersColRef, id);
 export const usersColRef = collection(db, 'users');
+export const chatsColRef = collection(db, 'chats');
