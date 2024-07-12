@@ -8,10 +8,9 @@ import Settings from './SideBarScreen/Settings';
 import HelpScreen from './SideBarScreen/HelpScreen';
 import LogoutScreen from './SideBarScreen/LogoutScreen';
 import DeleteAccScreen from './SideBarScreen/DeleteAccScreen';
-import Login from './Login';
 import MatchScreen from './MatchScreen';
 import DiscoverScreen from './DiscoverScreen';
-import ChatScreen from './ChatScreen';
+import ChatListScreen from './ChatListScreen';
 import EventsScreen from './EventsScreen';
 import NavigationTab from './NavigationTab';
 import CustomDrawerContent from './CustomDrawerContent';
@@ -49,7 +48,7 @@ function InsideLayout({ navigation }) {
     >
       <Tab.Screen name="Match" component={MatchScreen} />
       <Tab.Screen name="Discover" component={DiscoverScreen} />
-      <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Chat" component={ChatListScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
     </Tab.Navigator>
   );
