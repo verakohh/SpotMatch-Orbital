@@ -1,10 +1,230 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Image } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
+import { FIREBASE_AUTH, db } from '../../firebase';
+import { collection, doc, onSnapshot, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { useChat } from './context/ChatContext';
 
-export default function ChatScreen() {
+const ChatScreen = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { user } = route.params;
+  const currentUser = FIREBASE_AUTH.currentUser;
+  const flatListRef = useRef(null);
+  const { messages, setMessages } = useChat();
+
+  const [newMessage, setNewMessage] = useState('');
+
+  useEffect(() => {
+    if (!user) {
+      console.error('User is undefined');
+      return;
+    }
+
+    console.log("Current User: ", currentUser);
+    console.log("Matched User: ", user);
+
+    const combinedId = currentUser.uid > user.userId ? `${currentUser.uid}_${user.userId}` : `${user.userId}_${currentUser.uid}`;
+    
+    // Log the chatId derived from both user IDs
+    console.log("Derived Chat ID: ", combinedId);
+
+    const chatRef = doc(db, 'chats', combinedId);
+    const messagesRef = collection(chatRef, 'messages');
+    const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
+
+    console.log("Setting up snapshot listener for chatId:", combinedId);
+
+    const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+      const messagesList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp ? doc.data().timestamp.toDate() : null,
+      }));
+      console.log("Messages received:", messagesList);
+      setMessages(messagesList);
+    });
+
+    return () => unsubscribe();
+  }, [currentUser?.uid, user?.userId]);
+
+  const handleSend = async () => {
+    if (newMessage.trim()) {
+      const combinedId = currentUser.uid > user.userId ? `${currentUser.uid}_${user.userId}` : `${user.userId}_${currentUser.uid}`;
+      const chatRef = doc(db, 'chats', combinedId);
+      const messagesRef = collection(chatRef, 'messages');
+
+      console.log("Sending message to chatId:", combinedId);
+
+      try {
+        await addDoc(messagesRef, {
+          sender: currentUser.uid,
+          text: newMessage,
+          timestamp: serverTimestamp()
+        });
+        setNewMessage('');
+        flatListRef.current.scrollToEnd({ animated: true });
+        console.log("Message sent successfully");
+      } catch (error) {
+        console.error("Error sending message: ", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: false });
+    }
+  }, [messages]);
+
+  const renderItem = ({ item }) => {
+    const messageTimestamp = item.timestamp ? item.timestamp.toLocaleTimeString() : '...';
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Coming soon in the next milestone!</Text>
-        </View>
+      <View style={[
+        styles.messageBubble,
+        item.sender === currentUser.uid ? styles.myMessage : styles.theirMessage
+      ]}>
+        <Text style={item.sender === currentUser.uid ? styles.myMessageText : styles.theirMessageText}>{item.text}</Text>
+        <Text style={item.sender === currentUser.uid ? styles.myMessageTimestampText : styles.theirMessageTimestampText}>
+          {messageTimestamp}
+        </Text>
+      </View>
     );
-}
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Feather name="chevron-left" size={24} color="black" />
+        </TouchableOpacity>
+        <Image source={{ uri: user.imageUrl }} style={styles.profileImage} />
+        <Text style={styles.headerText}>{user.firstName}</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity>
+            <Feather name="headphones" size={24} color="black" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('MatchesProfileScreen', { user })}>
+            <Feather name="more-vertical" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        style={styles.messagesContainer}
+        onContentSizeChange={() => flatListRef.current.scrollToEnd({ animated: true })}
+      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Message..."
+          value={newMessage}
+          onChangeText={setNewMessage}
+        />
+        {newMessage.trim() !== '' && (
+          <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
+            <Feather name="send" size={18} color="white" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.imageButton}>
+          <Feather name="image" size={24} style={styles.imageIcon} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FAF4EC',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+  },
+  messagesContainer: {
+    flex: 1,
+  },
+  messageBubble: {
+    padding: 12,
+    margin: 5,
+    borderRadius: 20,
+    maxWidth: '90%',
+  },
+  myMessage: {
+    backgroundColor: '#3F78D8',
+    alignSelf: 'flex-end',
+  },
+  theirMessage: {
+    backgroundColor: '#BAD6EB',
+    alignSelf: 'flex-start',
+  },
+  myMessageText: {
+    color: '#FAF4EC',
+  },
+  theirMessageText: {
+    color: '#000',
+  },
+  myMessageTimestampText: {
+    fontSize: 10,
+    color: '#FAF4EC',
+    marginTop: 2,
+    textAlign: 'right',
+  },
+  theirMessageTimestampText: {
+    fontSize: 10,
+    color: '#000',
+    marginTop: 2,
+    textAlign: 'right',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+  },
+  input: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  sendButton: {
+    backgroundColor: '#2196F3',
+    padding: 10,
+    borderRadius: 20,
+  },
+  imageButton: {
+    padding: 10,
+  },
+  imageIcon: {
+    color: '#2196F3',
+  },
+});
+
+export default ChatScreen;
