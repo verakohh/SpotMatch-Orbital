@@ -6,7 +6,7 @@ import Swiper from "react-native-deck-swiper";
 import { BlurView } from "expo-blur";
 import axios from 'axios';
 import GetSpotifyData from '../../components/GetSpotifyData';
-import { getUser, getToken, getEmail } from '../User';
+import { getUser, getToken, getEmail, storeSubscription } from '../User';
 import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
 import { ref, set, usersColRef } from '../../firebase';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -78,23 +78,27 @@ const MatchScreen = () => {
                 try {
                     setLoading(true);
                     console.log('yes')
-                    console.log(user)
-                    axios("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=20", {
-                        method: "GET",
+                    console.log("user: ",user)
+                    axios("https://api.spotify.com/v1/me/top/artists", {
                         headers: {
                             Accept: "application/json",
                             "Content-Type": "application/json",
                             Authorization: "Bearer " + token,
                         },
+                        params: {
+                            time_range: "medium_term",
+                            limit: 20
+                        }
                     })
                     .then(async res => {
+                        console.log(res.data)
                         if (res.data && res.data.items && Array.isArray(res.data.items)) {
-                            console.log("user: ",user)
                             const names = res.data.items.map(artist => artist.name); 
                             user.setArtists(names);
                             console.log(user.artists);
                             console.log(names);
 
+                            console.log("res data items: ", res.data.items)
                             const genre = res.data.items.flatMap(user => user.genres);
                             const uniqueGenres = [...new Set(genre)];
                             user.setGenres(uniqueGenres);
@@ -131,7 +135,15 @@ const MatchScreen = () => {
                         console.log('this is imgUrl: ', uniqueUrl)
                         user.setImgUrl(uniqueUrl);
 
-                        await user.update({displayName: displayname, imageUrl: uniqueUrl});
+                        console.log(res.data.product);
+                        const productsubs = res.data.product;
+                        await storeSubscription(productsubs);
+
+                        console.log(res.data.id);
+                        const userId = res.data.id;
+                        
+
+                        await user.update({displayName: displayname, imageUrl: uniqueUrl, subscription: productsubs, spotifyId: userId });
                     })
 
                     axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {

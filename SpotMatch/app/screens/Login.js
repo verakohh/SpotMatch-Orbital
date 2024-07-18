@@ -79,7 +79,6 @@ const Login = () => {
 
       if (docSnap.exists()) {
         const data = docSnap.data()
-        console.log("Document data:", data);
         const newUser = new User(data.firstName, data.lastName, data.email);
         newUser.setArtists(data.topArtists);
         newUser.setGenres(data.genres);
@@ -93,6 +92,7 @@ const Login = () => {
         newUser.setSentRequest(data.sentRequest);
         newUser.setRejected(data.rejected);
         newUser.setDismissed(data.dismissed);
+
 
         await storeUser(newUser);
 

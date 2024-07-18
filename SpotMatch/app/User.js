@@ -113,6 +113,10 @@ export const removeToken = async () => {
 
 }
 
+export const removeSubscription = async () => {
+  await AsyncStorage.removeItem('subscription');
+}
+
 export const storeUser = async user => {
   const stringified = JSON.stringify(user);
   await AsyncStorage.setItem('user', stringified, () => console.log('async set user'));
@@ -134,6 +138,10 @@ export const storeEmail = async email => {
   await AsyncStorage.setItem('email', stringified, () => console.log('async set email'));
 };
 
+export const storeSubscription = async subs => {
+  const stringified = JSON.stringify(subs);
+  await AsyncStorage.setItem('subscription', stringified, () => console.log('async subscription'))
+}
 
 export const getUser = async () => {
   try{
@@ -190,6 +198,18 @@ export const getEmail = async () => {
   
   } catch (error) {
     console.error("Failed to load email: ", error)
+  } 
+}
+
+export const getSubscription = async () => {
+  try{
+    console.log('reached getSubscription')
+    const subsJson = await AsyncStorage.getItem('subscription', () => console.log('async got subscription'));
+    console.log("stringified subscription: ", subsJson)
+    return subsJson;
+  
+  } catch (error) {
+    console.error("Failed to load subscription: ", error)
   } 
 }
 // export const store = (data) => {
