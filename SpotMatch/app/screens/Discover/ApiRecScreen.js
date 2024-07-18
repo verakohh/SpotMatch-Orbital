@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ImageBackground, Image, StyleSheet, Activ
 import Swiper from 'react-native-deck-swiper';
 import { getUser, getToken, getTokenExpiration, removeToken } from '../../User';
 import { useNavigation , useFocusEffect} from '@react-navigation/core';
-import { getDoc, getDocs, query, where} from 'firebase/firestore';
+import { getDoc, getDocs, query, where, arrayUnion} from 'firebase/firestore';
 import { ref, usersColRef } from '../../../firebase';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +11,7 @@ import SpotifyWebApi from "spotify-web-api-node";
 import { BlurView } from 'expo-blur';
 import Feather from 'react-native-vector-icons/Feather';
 import { Audio } from 'expo-av';
+import DiscoverInstructionImage from '../../../assets/images/Discover-Instruction-Image.png';
 
 
 export default function ApiRecScreen() {
@@ -37,17 +38,55 @@ export default function ApiRecScreen() {
         const userDocSnap = await getDoc(userDocRef);
 
         if (!await checkTokenValidity(token)) {
+            alert("Token of 1 hour has expired! Kindly refresh it")
             navigation.navigate('Access');
             return;
         }
 
         if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
+            const spotifyId = userData.spotifyId;
+            const discPlaylistSongs = userData.discPlaylistSongs;
             const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.id) : [];
 
             const seedTracksIds = userTopTracks.slice(0, 5).join(',');
             setSeedTracks(seedTracksIds);
             console.log("seed tracks ids: ", seedTracksIds);
+
+            const userTrack = userData.topTracks[0].uri;
+            const userTrackId = userData.topTracks[0].id;
+            console.log("userTrack: ", userTrack);
+            const instruction = [({
+                albumImg: DiscoverInstructionImage,
+                name: 'Instructions',
+                artist: 'Swipe LEFT for dismissal / RIGHT to add the song to a playlist in Spotify! \n Press the button below to stop / rewind a song \n Note: Refrain from spamming right swipes to avoid exceeding Spotify API rate limits',
+                names: ["SpotMatch"], 
+                uri: userTrack, 
+                id: userTrackId, 
+                flag: true})];
+            console.log("instruction object: ", instruction)
+            
+            if (!userData.discPlaylistId && spotifyId) {
+                try {
+                    const playlistResponse = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
+                        name: "SpotMatch Discover Playlist",
+                        description: "Playlist for songs discovered via SpotMatch :)",
+                        public: false
+                    }, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const playlistId = playlistResponse.data.id;
+                    console.log('playlist id: ', playlistId)
+                    await user.update({ discPlaylistId: playlistId , discPlaylistSongs: []});
+                } catch (error) {
+                    console.error("Error creating playlist: ", error);
+                    if(error.status === 429) {
+                        alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                    }
+                }
+            }
 
             const options = {
                 seed_tracks: seedTracksIds,
@@ -67,12 +106,18 @@ export default function ApiRecScreen() {
                     artist: track.artists[0].name,
                     albumImg: track.album.images[0].url
                 }))
-                setRecommendedTracks(tracks);
+
+                const filteredTracks = discPlaylistSongs ? tracks.filter(track => !discPlaylistSongs.includes(track.id)) : tracks;
+
+                setRecommendedTracks([...instruction, ...filteredTracks]);
                 setLoading(false);
                 console.log("tracks:", recommendedTracks)
-                console.log("tracks : ", tracks)
+                console.log("tracks length : ", recommendedTracks.length)
             } catch (error) {
                 console.error("Error fetching recommendations: ", error);
+                if(error.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                }
             }
         } else {
             alert("Error! No userDoc");
@@ -83,16 +128,52 @@ export default function ApiRecScreen() {
     useFocusEffect(
         React.useCallback(() => {
           fetchApiRecommendations();
+
+          const checkIfPlayingAndPause = async () => {
+            const currentlyPlaying = await isPlaying();
+            if (currentlyPlaying) {
+              await pauseTrack();
+            }
+          };
+      
+            return async () => {
+                await checkIfPlayingAndPause();
+            };
         }, [])
       );
 
+    const isPlaying = async () => {
+        const token = await getToken();
+        if (!await checkTokenValidity(token)) {
+            alert("Token of 1 hour has expired! Kindly refresh it")
+            navigation.navigate('Access');
+            return;
+        }
+        try {
+            const response = await axios.get('https://api.spotify.com/v1/me/player', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            console.log('response is playing: ', response.data.is_playing)
+
+            return response.data.is_playing;
+        } catch (error) {
+            console.error("Error fetching is_playing: ", error);
+            if(error.status === 429) {
+                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+            }
+        }
+
+    };
 
        
     const getAvailableDevices = async () => {
         const token = await getToken();
         if (!await checkTokenValidity(token)) {
+            alert("Token of 1 hour has expired! Kindly refresh it")
             navigation.navigate('Access');
-            return [];
+            return;
         }
 
             try {
@@ -107,13 +188,23 @@ export default function ApiRecScreen() {
                 return response.data.devices;
             } catch (error) {
                 console.error("Error fetching devices: ", error);
-                return [];
+                if(error.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                }
             }
         
     };
     
     const playTrack = async (uri) => {
-       
+        
+        if (!await checkTokenValidity(token)) {
+            alert("Token of 1 hour has expired! Kindly refresh it")
+            navigation.navigate('Access');
+            return;
+        }
+        if (!uri) {
+            alert("No top track uri! Unable to play");
+        }
         const token = await getToken();
         const devices = await getAvailableDevices();
         console.log('devices: ', devices)
@@ -137,6 +228,9 @@ export default function ApiRecScreen() {
 
             } catch (error) {
                 console.error("Error playing track: ", error);
+                if(error.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                }
             }
         } else {
             alert("No devices available");
@@ -146,6 +240,7 @@ export default function ApiRecScreen() {
     const pauseTrack = async () => {
         const token = await getToken();
         if (!await checkTokenValidity(token)) {
+            alert("Token of 1 hour has expired! Kindly refresh it")
             navigation.navigate('Access');
             return;
         }
@@ -161,6 +256,9 @@ export default function ApiRecScreen() {
             
         } catch (error) {
             console.error("Error pausing track: ", error);
+            if(error.status === 429) {
+                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+            }
         }
     };
 
@@ -194,7 +292,63 @@ export default function ApiRecScreen() {
             }
         } else {
             await removeToken();
+            alert("Token of 1 hour has expired! Kindly refresh it")
             navigation.navigate('Access');
+        }
+    };
+
+
+    const onSwiped = async (cardIndex) => {
+        if (cardIndex < recommendedTracks.length - 1) {
+            await playTrack(recommendedTracks[cardIndex + 1].uri);
+            return;
+        }
+        await pauseTrack();
+
+    }
+
+    const handleRight = async (cardIndex) => {
+        const user = await getUser();
+        const userDocRef = ref(user.email);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            const playlistId = userData.discPlaylistId;
+            const discPlaylistSongs = userData.discPlaylistSongs;
+            const trackUri = recommendedTracks[cardIndex].uri;
+            const trackId = recommendedTracks[cardIndex].id;
+            const token = await getToken();
+            const isTokenValid = await checkTokenValidity();
+
+            if (isTokenValid) {
+                if (trackUri && trackId && !discPlaylistSongs.includes(trackId)) {
+
+                    try {
+                        await axios.post(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+                            uris: [trackUri]
+                        }, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        await user.update({
+                            discPlaylistSongs: arrayUnion(trackId)
+                        });
+                    } catch (error) {
+                        console.error("Error adding track to playlist: ", error);
+                        if(error.status === 429) {
+                            alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                        }
+                    }
+                } else {
+                    alert("Either no top track or the song has been added before! Not added to the Spotify playlist")
+                }
+            } else {
+                await removeToken();
+                alert("Token of 1 hour has expired! Kindly refresh it")
+                navigation.navigate('Access');
+            }
         }
     };
 
@@ -203,7 +357,7 @@ export default function ApiRecScreen() {
             <ImageBackground
                 style={styles.imgBackground}
                 resizeMode="cover"
-                source={{ uri: card.albumImg }}
+                source={card.flag ? card.albumImg : { uri: card.albumImg }}
             >
                 <BlurView
                     intensity={150}
@@ -212,11 +366,15 @@ export default function ApiRecScreen() {
 
                         <Image
                             style={styles.cardImg}
-                            source={{ uri: card.albumImg }}
+                            source={card.flag ? card.albumImg : { uri: card.albumImg }}
                         />
 
-                        <Text style={styles.title}>{card.name}</Text>
-                        <Text style={styles.artist}>{card.artist}</Text>
+                       
+                            <Text style={styles.title}>{card.name}</Text>
+                            {card.flag ? 
+                            <Text style={styles.instruction}>{card.artist}</Text>
+                                :<Text style={styles.artist}>{card.artist}</Text>
+                            }       
 
                         <View style={{ alignItems: 'center'}}>
                         <TouchableOpacity 
@@ -225,7 +383,9 @@ export default function ApiRecScreen() {
                             ]}  
                             onPress={() => handlePlayPause(card.uri)}
                             >
-                        <Feather name='play' size={30}/>
+                        <Feather name='music' size={30}/>
+
+                        {/* {isPlaying() ? <Feather name='stop-circle' size={30}/> : <Feather name='rewind' size={30}/>} */}
 
                     {/* {playing && currentTrack === card.uri ? <Feather name='pause' size={30}/> : <Feather name='play' size={30}/>} */}
 
@@ -268,8 +428,18 @@ export default function ApiRecScreen() {
         <LinearGradient colors={["#3a5e91", "transparent"]} style={{flex:1}} >
             <Swiper
                 cards={recommendedTracks}
-                renderCard={renderCard}
-                onSwiped={(cardIndex) => {console.log(cardIndex)}}
+                renderCard={(card) => {
+                    if (card.flag) {
+                        playTrack(card.uri);
+                        return renderCard(card);
+                    } else {
+                        return renderCard(card);
+                    }
+                }}
+                onSwiped={(cardIndex) => {
+                    onSwiped(cardIndex);
+                    console.log(cardIndex);}}                
+                onSwipedRight={handleRight}
                 onSwipedAll={() => {fetchApiRecommendations()}}
                 stackSize= {3}
                 stackSeparation={15}
@@ -351,6 +521,18 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 18,
         margin: 15,
+
+    },
+    instruction: {
+        color: "white",
+        textAlign: "center",
+        fontSize: 17,
+        fontWeight: '500',
+        textShadowColor: "black",
+        textShadowOffset: { width: 1, height: 2 },
+        textShadowRadius: 5,
+        marginBottom: 10,
+        paddingHorizontal: 10,
 
     },
    
