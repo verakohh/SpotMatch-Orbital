@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Image, Linking } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
-import { FIREBASE_AUTH, db } from '../../firebase';
+import { FIREBASE_AUTH, db, storage } from '../../firebase';
 import { collection, doc, onSnapshot, addDoc, serverTimestamp, query, orderBy, updateDoc, getDoc, setDoc } from 'firebase/firestore';
-import { useChat } from './context/ChatContext';
+import { getUser } from '../User';
+import * as ImagePicker from 'expo-image-picker';
 
 const ChatScreen = () => {
   const route = useRoute();
@@ -12,8 +13,7 @@ const ChatScreen = () => {
   const { user } = route.params;
   const currentUser = FIREBASE_AUTH.currentUser;
   const flatListRef = useRef(null);
-  const { messages, setMessages } = useChat();
-
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
@@ -104,27 +104,112 @@ const ChatScreen = () => {
     }
   };
 
-  useEffect(() => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: false });
+  const handleImagePick = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.cancelled) {
+      const { uri } = result;
+      const imageUrl = await uploadImage(uri);
+      sendImageMessage(imageUrl);
     }
-  }, [messages]);
+  };
+
+  const uploadImage = async (uri) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const ref = storage.ref().child(`images/${Date.now()}`);
+    await ref.put(blob);
+    const downloadURL = await ref.getDownloadURL();
+    return downloadURL;
+  };
+
+  const sendImageMessage = async (imageUrl) => {
+    const combinedId = currentUser.uid > user.userId ? `${currentUser.uid}_${user.userId}` : `${user.userId}_${currentUser.uid}`;
+    const chatRef = doc(db, 'chats', combinedId);
+    const messagesRef = collection(chatRef, 'messages');
+
+    try {
+      await addDoc(messagesRef, {
+        sender: currentUser.uid,
+        imageUrl,
+        timestamp: serverTimestamp()
+      });
+
+      // Update latest message and unread count
+      const chatData = (await getDoc(chatRef)).data();
+      const unreadCount = chatData.unreadCount || {};
+      unreadCount[user.userId] = (unreadCount[user.userId] || 0) + 1;
+
+      await updateDoc(chatRef, {
+        latestMessage: 'Image',
+        [`unreadCount.${user.userId}`]: unreadCount[user.userId],
+      });
+
+      flatListRef.current.scrollToEnd({ animated: true });
+    } catch (error) {
+      console.error("Error sending image message: ", error);
+    }
+  };
+
+  const shareConcert = async (concert) => {
+    const combinedId = currentUser.uid > user.userId ? `${currentUser.uid}_${user.userId}` : `${user.userId}_${currentUser.uid}`;
+    const chatRef = doc(db, 'chats', combinedId);
+    const messagesRef = collection(chatRef, 'messages');
+
+    try {
+      // Send concert image
+      await addDoc(messagesRef, {
+        sender: currentUser.uid,
+        imageUrl: concert.image,
+        timestamp: serverTimestamp()
+      });
+
+      // Send concert details
+      await addDoc(messagesRef, {
+        sender: currentUser.uid,
+        text: `Check out this concert with me!\n${concert.artist}\n${concert.date}, ${concert.time}, at ${concert.location}\n[Click here for tickets](${concert.link})`,
+        timestamp: serverTimestamp()
+      });
+
+      // Update latest message and unread count
+      const chatData = (await getDoc(chatRef)).data();
+      const unreadCount = chatData.unreadCount || {};
+      unreadCount[user.userId] = (unreadCount[user.userId] || 0) + 1;
+
+      await updateDoc(chatRef, {
+        latestMessage: 'Shared a concert',
+        [`unreadCount.${user.userId}`]: unreadCount[user.userId],
+      });
+
+      flatListRef.current.scrollToEnd({ animated: true });
+    } catch (error) {
+      console.error("Error sharing concert: ", error);
+    }
+  };
 
   const renderItem = ({ item }) => {
     const messageTimestamp = item.timestamp ? item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
+
     return (
       <View style={[
         styles.messageBubble,
         item.sender === currentUser.uid ? styles.myMessage : styles.theirMessage
       ]}>
-        <Text style={item.sender === currentUser.uid ? styles.myMessageText : styles.theirMessageText}>{item.text}</Text>
+        {item.imageUrl ? (
+          <Image source={{ uri: item.imageUrl }} style={styles.messageImage} />
+        ) : (
+          <Text style={item.sender === currentUser.uid ? styles.myMessageText : styles.theirMessageText}>{item.text}</Text>
+        )}
         <Text style={item.sender === currentUser.uid ? styles.myMessageTimestampText : styles.theirMessageTimestampText}>
           {messageTimestamp}
         </Text>
       </View>
     );
   };
-  
 
   return (
     <View style={styles.container}>
@@ -163,7 +248,7 @@ const ChatScreen = () => {
             <Feather name="send" size={18} color="white" />
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.imageButton}>
+        <TouchableOpacity onPress={handleImagePick} style={styles.imageButton}>
           <Feather name="image" size={24} style={styles.imageIcon} />
         </TouchableOpacity>
       </View>
@@ -232,6 +317,12 @@ const styles = StyleSheet.create({
     color: '#000',
     marginTop: 1,
     textAlign: 'right',
+  },
+  messageImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 5,
   },
   inputContainer: {
     flexDirection: 'row',
