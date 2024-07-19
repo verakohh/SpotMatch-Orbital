@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { db, FIREBASE_AUTH } from '../../firebase';
 import { getUser } from '../User';
@@ -28,24 +28,34 @@ const ChatListScreen = () => {
               const docSnap = await getDoc(doc(db, 'users', docRef.id));
               if (docSnap.exists()) {
                 const userData = docSnap.data();
-                const matchedUser = {
-                  userId: userData.userId, // Updated to use userData.userId
+                return {
+                  userId: userData.userId,
                   firstName: userData.firstName,
                   imageUrl: userData.imageUrl,
                   email: userData.email
                 };
-
-                // Log the matched user data
-                console.log("Matched User Data: ", matchedUser);
-
-                return matchedUser;
               }
               return null;
             })
           );
 
-          setMatches(matchDocs.filter((doc) => doc !== null));
-          console.log("Matches: ", matchDocs.map(match => match.firstName));
+          const filteredMatches = matchDocs.filter((doc) => doc !== null);
+
+          // Add snapshot listeners for each match to get latest messages and unread counts
+          filteredMatches.forEach(async (match) => {
+            const combinedId = currentUser.uid > match.userId ? `${currentUser.uid}_${match.userId}` : `${match.userId}_${currentUser.uid}`;
+            const chatRef = doc(db, 'chats', combinedId);
+
+            onSnapshot(chatRef, (doc) => {
+              const chatData = doc.data();
+              match.latestMessage = chatData?.latestMessage || '';
+              match.unreadCount = chatData?.unreadCount?.[currentUser.uid] || 0;
+              setMatches([...filteredMatches]);
+            });
+          });
+
+          setMatches(filteredMatches);
+          console.log("Matches: ", filteredMatches.map(match => match.firstName));
         }
       } catch (error) {
         console.error('Error fetching matches:', error);
@@ -65,7 +75,13 @@ const ChatListScreen = () => {
       <Image source={{ uri: item.imageUrl }} style={styles.profileImage} />
       <View style={styles.matchInfo}>
         <Text style={styles.name}>{item.firstName}</Text>
+        <Text style={styles.latestMessage}>{item.latestMessage}</Text>
       </View>
+      {item.unreadCount > 0 && (
+        <View style={styles.unreadBadge}>
+          <Text style={styles.unreadCount}>{item.unreadCount}</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -121,6 +137,19 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  latestMessage: {
+    color: '#888',
+  },
+  unreadBadge: {
+    backgroundColor: '#3F78D8',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
+  unreadCount: {
+    color: 'white',
     fontWeight: 'bold',
   },
 });

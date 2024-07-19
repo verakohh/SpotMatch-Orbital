@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Image } 
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
 import { FIREBASE_AUTH, db } from '../../firebase';
-import { collection, doc, onSnapshot, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, doc, onSnapshot, addDoc, serverTimestamp, query, orderBy, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { useChat } from './context/ChatContext';
 
 const ChatScreen = () => {
@@ -22,21 +22,14 @@ const ChatScreen = () => {
       return;
     }
 
-    console.log("Current User: ", currentUser);
-    console.log("Matched User: ", user);
-
     const combinedId = currentUser.uid > user.userId ? `${currentUser.uid}_${user.userId}` : `${user.userId}_${currentUser.uid}`;
-    
-    // Log the chatId derived from both user IDs
-    console.log("Derived Chat ID: ", combinedId);
-
     const chatRef = doc(db, 'chats', combinedId);
     const messagesRef = collection(chatRef, 'messages');
     const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
 
     console.log("Setting up snapshot listener for chatId:", combinedId);
 
-    const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+    const unsubscribe = onSnapshot(messagesQuery, async (snapshot) => {
       const messagesList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -44,6 +37,16 @@ const ChatScreen = () => {
       }));
       console.log("Messages received:", messagesList);
       setMessages(messagesList);
+
+      // Mark messages as read
+      if (messagesList.length > 0) {
+        const lastMessage = messagesList[messagesList.length - 1];
+        if (lastMessage.sender !== currentUser.uid) {
+          await updateDoc(chatRef, {
+            [`unreadCount.${currentUser.uid}`]: 0,
+          });
+        }
+      }
     });
 
     return () => unsubscribe();
@@ -58,11 +61,40 @@ const ChatScreen = () => {
       console.log("Sending message to chatId:", combinedId);
 
       try {
+        // Check if the chat document exists
+        const chatDoc = await getDoc(chatRef);
+        if (!chatDoc.exists()) {
+          // If it doesn't exist, create it
+          await setDoc(chatRef, {
+            latestMessage: '',
+            unreadCount: {
+              [currentUser.uid]: 0,
+              [user.userId]: 0
+            }
+          });
+          console.log("Created new chat document with ID:", combinedId);
+        }
+
         await addDoc(messagesRef, {
           sender: currentUser.uid,
           text: newMessage,
           timestamp: serverTimestamp()
         });
+
+        // Update latest message and unread count
+        const chatData = (await getDoc(chatRef)).data();
+        const unreadCount = chatData.unreadCount || {};
+        unreadCount[user.userId] = (unreadCount[user.userId] || 0) + 1;
+
+        console.log("Updating latestMessage and unreadCount");
+        console.log("latestMessage:", newMessage);
+        console.log("unreadCount:", unreadCount);
+
+        await updateDoc(chatRef, {
+          latestMessage: newMessage,
+          [`unreadCount.${user.userId}`]: unreadCount[user.userId],
+        });
+
         setNewMessage('');
         flatListRef.current.scrollToEnd({ animated: true });
         console.log("Message sent successfully");
@@ -79,7 +111,7 @@ const ChatScreen = () => {
   }, [messages]);
 
   const renderItem = ({ item }) => {
-    const messageTimestamp = item.timestamp ? item.timestamp.toLocaleTimeString() : '...';
+    const messageTimestamp = item.timestamp ? item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
     return (
       <View style={[
         styles.messageBubble,
@@ -92,6 +124,7 @@ const ChatScreen = () => {
       </View>
     );
   };
+  
 
   return (
     <View style={styles.container}>
@@ -168,9 +201,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messageBubble: {
-    padding: 12,
+    padding: 9,
     margin: 5,
-    borderRadius: 20,
+    borderRadius: 18,
     maxWidth: '90%',
   },
   myMessage: {
@@ -183,6 +216,7 @@ const styles = StyleSheet.create({
   },
   myMessageText: {
     color: '#FAF4EC',
+    fontFamily: 'IBM-Plex-Sans',
   },
   theirMessageText: {
     color: '#000',
@@ -190,13 +224,13 @@ const styles = StyleSheet.create({
   myMessageTimestampText: {
     fontSize: 10,
     color: '#FAF4EC',
-    marginTop: 2,
+    marginTop: 1,
     textAlign: 'right',
   },
   theirMessageTimestampText: {
     fontSize: 10,
     color: '#000',
-    marginTop: 2,
+    marginTop: 1,
     textAlign: 'right',
   },
   inputContainer: {
