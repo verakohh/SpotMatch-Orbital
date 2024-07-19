@@ -1,3 +1,4 @@
+//screens/User.js
 import {doc, getDoc, setDoc} from 'firebase/firestore'
 import { db, ref } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';

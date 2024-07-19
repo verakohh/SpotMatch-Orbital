@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { db, FIREBASE_AUTH } from '../../firebase';
 import { getUser } from '../User';
 
@@ -11,61 +11,63 @@ const ChatListScreen = () => {
   const navigation = useNavigation();
   const currentUser = FIREBASE_AUTH.currentUser;
 
-  useEffect(() => {
-    const fetchMatches = async () => {
-      setLoading(true);
-      try {
-        const user = await getUser();
-        const userDocRef = user.docRef;
-        const userDocSnap = await getDoc(userDocRef);
+  const fetchMatches = async () => {
+    setLoading(true);
+    try {
+      const user = await getUser();
+      const userDocRef = user.docRef;
+      const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          const matchedUsers = userData.matched || [];
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const matchedUsers = userData.matched || [];
 
-          const matchDocs = await Promise.all(
-            matchedUsers.map(async (docRef) => {
-              const docSnap = await getDoc(doc(db, 'users', docRef.id));
-              if (docSnap.exists()) {
-                const userData = docSnap.data();
-                return {
-                  userId: userData.userId,
-                  firstName: userData.firstName,
-                  imageUrl: userData.imageUrl,
-                  email: userData.email
-                };
-              }
-              return null;
-            })
-          );
+        const matchDocs = await Promise.all(
+          matchedUsers.map(async (docRef) => {
+            const docSnap = await getDoc(doc(db, 'users', docRef.id));
+            if (docSnap.exists()) {
+              const userData = docSnap.data();
+              return {
+                userId: userData.userId,
+                firstName: userData.firstName,
+                imageUrl: userData.imageUrl,
+                email: userData.email
+              };
+            }
+            return null;
+          })
+        );
 
-          const filteredMatches = matchDocs.filter((doc) => doc !== null);
+        const filteredMatches = matchDocs.filter((doc) => doc !== null);
 
-          // Add snapshot listeners for each match to get latest messages and unread counts
-          filteredMatches.forEach(async (match) => {
-            const combinedId = currentUser.uid > match.userId ? `${currentUser.uid}_${match.userId}` : `${match.userId}_${currentUser.uid}`;
-            const chatRef = doc(db, 'chats', combinedId);
+        // Add snapshot listeners for each match to get latest messages and unread counts
+        filteredMatches.forEach(async (match) => {
+          const combinedId = currentUser.uid > match.userId ? `${currentUser.uid}_${match.userId}` : `${match.userId}_${currentUser.uid}`;
+          const chatRef = doc(db, 'chats', combinedId);
 
-            onSnapshot(chatRef, (doc) => {
-              const chatData = doc.data();
-              match.latestMessage = chatData?.latestMessage || '';
-              match.unreadCount = chatData?.unreadCount?.[currentUser.uid] || 0;
-              setMatches([...filteredMatches]);
-            });
+          onSnapshot(chatRef, (doc) => {
+            const chatData = doc.data();
+            match.latestMessage = chatData?.latestMessage || '';
+            match.unreadCount = chatData?.unreadCount?.[currentUser.uid] || 0;
+            setMatches([...filteredMatches]);
           });
+        });
 
-          setMatches(filteredMatches);
-          console.log("Matches: ", filteredMatches.map(match => match.firstName));
-        }
-      } catch (error) {
-        console.error('Error fetching matches:', error);
-      } finally {
-        setLoading(false);
+        setMatches(filteredMatches);
+        console.log("Matches: ", filteredMatches.map(match => match.firstName));
       }
-    };
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchMatches();
-  }, [currentUser.uid]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchMatches();
+    }, [currentUser.uid])
+  );
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
