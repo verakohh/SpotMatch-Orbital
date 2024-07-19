@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, Image, StyleSheet, Settings, ActivityIndicator, Dimensions, Modal, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ImageBackground, Image, StyleSheet, ActivityIndicator, Dimensions, Modal, ScrollView } from 'react-native';
 import { useNavigation , useFocusEffect} from '@react-navigation/core';
 import Swiper from 'react-native-deck-swiper';
 import { getUser, getToken } from '../../User';
@@ -16,6 +16,7 @@ const BothMatchScreen = () => {
     const [dismissedUsers, setDismissedUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [tapUser, setTapUser] = useState(null);
+    const [dataUpdated, setDataUpdated] = useState(false);
    
     const fetchData = async () => {
         const token = await getToken();
@@ -61,12 +62,12 @@ const BothMatchScreen = () => {
             const calculatedDocs = querySnapshot.docs.map(doc => {
                 const docData = doc.data();
                 const docRefPath = doc.ref.path;
-    
-                const userGenres = user.genres ? user.genres.slice(0, medianGenreSize) : [];
+
+                const userGenres = userData.genres ? userData.genres.slice(0, medianGenreSize) : [];
                 const docGenres = docData.genres ? docData.genres.slice(0, medianGenreSize) : [];
-                const userArtists = user.artists ? user.artists.slice(0, medianArtistSize) : [];
+                const userArtists = userData.topArtists ? userData.topArtists.slice(0, medianArtistSize) : [];
                 const docArtists = docData.topArtists ? docData.topArtists.slice(0, medianArtistSize) : [];
-                const userTracks = user.tracks ? user.tracks.map(track => `${track.name} by ${track.artist}`) : [];
+                const userTracks = userData.topTracks ? userData.topTracks.map(track => `${track.name} by ${track.artist}`) : [];
                 const docTracks = docData.topTracks ? docData.topTracks.map(track => `${track.name} by ${track.artist}`) : [];
                 console.log("tracks: ", userTracks)
                 console.log("doc tracks: ", docTracks)
@@ -180,15 +181,13 @@ const BothMatchScreen = () => {
             // });
 
             const newDocs = topNMatches.map(item => ({ id: item.doc.id, ...item.doc.data(), docRef: item.doc.ref, overallSimilarity: item.overallSimilarity, commonGenre: item.commonGenre, commonArtists: item.commonArtists, commonTracks: item.commonTracks, docTracks: item.docTracks}));
-            // const newDocs = filteredDocs.map(doc => ({ id: doc.id, ...doc.data(), docRef: doc.ref }));
             const newDismissedDocs = dismissedDocs.map(item => ({ id: item.doc.id, ...item.doc.data(), docRef: item.doc.ref, overallSimilarity: item.overallSimilarity, commonGenre: item.commonGenre, commonArtists: item.commonArtists, commonTracks: item.commonTracks,  docTracks: item.docTracks }));
             setUserDocs([...newDocs, ...newDismissedDocs]);
             
             setCurrentDocs([...newDocs, ...newDismissedDocs]);
-            // console.log("the displayed users: ",currentDocs.map(doc => doc.firstName));
+            console.log("the displayed users: ",currentDocs.map(doc => doc.firstName));
             
             setLoading(false);
-            console.log("the displayed users: ",currentDocs.map(doc => doc.firstName));
 
         } else {
             alert("Error! No userDoc");
@@ -198,7 +197,14 @@ const BothMatchScreen = () => {
 
     useFocusEffect(
         React.useCallback(() => {
-            fetchData();
+            // fetchData();
+            const updateAndFetch = async () => {
+                await fetchData();
+                setDataUpdated(true); // Update state to reflect that data is ready
+            };
+            updateAndFetch();
+            // console.log("the displayed users: ",currentDocs.map(doc => doc.firstName));
+
         }, [])
     );
 
@@ -279,7 +285,9 @@ const BothMatchScreen = () => {
 
     if (loading) {
         return (
-            <View style={styles.container}>
+            <View style={{flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',}}>
                 <ActivityIndicator size="large" color="#0000ff" />
             </View>
         );
@@ -313,7 +321,7 @@ const BothMatchScreen = () => {
             >
                 <BlurView
                     intensity={150}
-                    style={[styles.nonBlurredContent, StyleSheet.absoluteFill]}
+                    style={[StyleSheet.absoluteFill]}
                 >
 
                         <Image
@@ -323,15 +331,16 @@ const BothMatchScreen = () => {
                         <Text style={styles.title}>{card.firstName}</Text>
                         <View style={styles.textContainer}>
                             <Text style={styles.headerText}>Age: <Text style={styles.text}>{card.age ? card.age : "N/A"}</Text></Text>
+                            <Text style={styles.headerText}>Top Artist: <Text style={styles.text}>{card.topArtists ? card.topArtists.slice(0, 1) : "N/A"}</Text></Text>
+
                             {/* <Text style={styles.headerText}>Top 3 Artists: <Text style={styles.text}>{card.topArtists ? top3artists(card) : "N/A"}</Text></Text> */}
                             <View style={styles.common}>
+                                <Text style={styles.commonHeader}>Similarity: <Text style={styles.commonText}>{(card.overallSimilarity * 100).toFixed(0)}%</Text></Text>
                                 <Text style={styles.commonHeader}>Shared artists: <Text style={styles.commonText}>{card.commonArtists ? card.commonArtists : "none yet :("}</Text></Text> 
                                 <Text style={styles.commonHeader}>Common genre: <Text style={styles.commonText}>{card.commonGenre ? card.commonGenre : "none yet :("}</Text></Text>
                                 <Text style={styles.commonHeader}>Common song: <Text style={styles.commonText}>{card.commonTracks ? card.commonTracks : "none yet :("}</Text></Text>
-                                <Text style={styles.commonHeader}>Similarity: <Text style={styles.commonText}>{(card.overallSimilarity * 100).toFixed(0)}%</Text></Text>
                             
                             </View>
-                            <Text style={styles.headerText}>Top Track: <Text style={styles.text}>{card.docTracks ? card.docTracks.slice(0, 1) : "N/A"}</Text></Text>
                             
                             {/* <Text style={styles.headerText}>Top 3 Genres: <Text style={styles.text}>{card.genres ? card.genres.slice(0, 3).join(', ') : "N/A"}</Text></Text> */}
                         </View>
@@ -372,23 +381,25 @@ const BothMatchScreen = () => {
                             <Text style={styles.modalTitle}>{tapUser.firstName}</Text>
                             <ScrollView contentContainerStyle={styles.modalScrollView}>
                             {/* <View style={styles.modalTextContainer}> */}
-                                <Text style={styles.modalHeader}>Age: <Text style={styles.modalText}>{tapUser.age}</Text></Text>
+                            <Text style={styles.modalHeader}>Age: <Text style={styles.modalText}>{tapUser.age ? tapUser.age : "N/A"}</Text></Text>
                                 <Text style={styles.modalHeader}>Spotify display name:</Text>
-                                <Text style={styles.modalText}>{tapUser.displayName}</Text>
+                                <Text style={styles.modalText}>{tapUser.displayName ? tapUser.displayName : "N/A"}</Text>
                                 
                                 <Text style={styles.modalHeader}>Top 3 Artists: </Text>
-                                {tapUser.topArtists && tapUser.topArtists.slice(0, 3).map((artist, index) => (
-                                    <Text key={index} style={styles.modalText}>{artist}</Text>
-                                ))}
+                                {tapUser.topArtists ? tapUser.topArtists && tapUser.topArtists.slice(0, 3).map((artist, index) => (
+                                    <Text key={index} style={styles.modalText}>{artist ? artist : "N/A"}</Text>
+                                )) : <Text style={styles.modalText}>N/A</Text>}
+
                                 <Text style={styles.modalHeader}>Top Tracks: </Text>
-                                {tapUser.topTracks && tapUser.topTracks.slice(0, 3).map((track, index) => (
-                                    <Text key={index} style={styles.modalText}>{track.name} by {track.artist}</Text>
-                                ))}
+                                {tapUser.topTracks ? tapUser.topTracks && tapUser.topTracks.slice(0, 3).map((track, index) => (
+                                    <Text key={index} style={styles.modalText}>{track.name ? track.name : "N/A"} by {track.artist ? track.artist : "N/A"}</Text>
+                                )) :  <Text style={styles.modalText}>N/A</Text>}
                                 {/* <Text style={styles.modalText}> {tapUser.docTracks.slice(0, 3).join(', ')}</Text></Text> */}
+
                                 <Text style={styles.modalHeader}>Top 3 Genres: </Text>
-                                {tapUser.genres && tapUser.genres.slice(0, 3).map((genre, index) => (
+                                {tapUser.genres ? tapUser.genres && tapUser.genres.slice(0, 3).map((genre, index) => (
                                     <Text key={index} style={styles.modalText}>{genre}</Text>
-                                ))}
+                                )) :  <Text style={styles.modalText}>N/A</Text>}
                                 {/* <Text style={styles.modalText}>{tapUser.genres.slice(0, 3).join(', ')}</Text> */}
                             </ScrollView>
                             {/* </View> */}
@@ -409,7 +420,7 @@ export default BothMatchScreen;
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      justifyContent: 'center',
+      justifyContent: 'flex-start',
       alignItems: 'center',
       backgroundColor: '#FAF4EC',
         
@@ -420,26 +431,31 @@ const styles = StyleSheet.create({
         flex: 1,
       },
     card: {
-        flex: Dimensions.get("window").height < 700 ? 0.5 : 0.6,
+        flex: Dimensions.get("window").height < 700 ? 0.55 : 0.65,
+        // flex: 1,
+        // width: "100%",
+        // height: "100%",
         borderRadius: 8,
         shadowRadius: 25,
         shadowColor: '#171717',  
         shadowOpacity: 0.2,
         shadowOffset: { width: 0, height: 0 },
-        justifyContent: "center",
+        justifyContent: "flex-start",
         alignItems: "center",
         backgroundColor: 'lightgrey',
         overflow: "hidden",
+        marginTop: 0,
+
       },
     cardImg: {
-        flex: 1,
-        width: "70%",
-        height: 220,
-        resizeMode: "contain",
+        // flex: 1,
+        width: "55%",
+        height: 200,
+        // resizeMode: "contain",
         borderRadius: 8,
         marginTop: 15,
         marginbottom: 8,
-        marginLeft: '15%',
+        marginLeft: '22%',
     },
     title: {
         // marginTop: 2,
@@ -450,12 +466,13 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 0, height: 5 },
         textShadowRadius: 8,
         padding: 10,
+        paddingBottom: 8,
         textAlign: "center",
     },
     text: {
         color: "white",
         fontSize: 16,
-        fontWeight: "400",
+        fontWeight: "500",
         textShadowColor: "#171717",
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 6,
@@ -464,9 +481,9 @@ const styles = StyleSheet.create({
     headerText: {
         color: "white",
         textAlign: "left",
-        fontSize: 18,
+        fontSize: 17,
         fontWeight: "600",
-        marginBottom: 7,
+        marginBottom: 6,
         marginLeft: 8,
         textShadowColor: "#171717",
         textShadowOffset: { width: 0, height: 2 },
@@ -478,14 +495,14 @@ const styles = StyleSheet.create({
     textContainer: {
         color: "white",
         textAlign: "left",
-        fontSize: 18,
+        // fontSize: 18,
         marginHorizontal: 15,
         marginBottom: 15,
         fontWeight: "600",
     },
     common: {
         backgroundColor: "rgba(65, 83, 127, 0.5)",
-        padding: 5,
+        padding: 4,
         borderRadius: 12,
 
     },
@@ -493,7 +510,7 @@ const styles = StyleSheet.create({
         // color: "#33537f",
         color: "#d3deed",
         fontSize: 16,
-        fontWeight: "400",
+        // fontWeight: "400",
         // textShadowColor: "#eaeff6",
         textShadowColor: "#171717",
 
