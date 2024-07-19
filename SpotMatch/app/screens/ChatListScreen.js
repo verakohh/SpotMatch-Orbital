@@ -69,23 +69,30 @@ const ChatListScreen = () => {
     }, [currentUser.uid])
   );
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.matchContainer}
-      onPress={() => navigation.navigate('ChatScreen', { user: item })}
-    >
-      <Image source={{ uri: item.imageUrl }} style={styles.profileImage} />
-      <View style={styles.matchInfo}>
-        <Text style={styles.name}>{item.firstName}</Text>
-        <Text style={styles.latestMessage}>{item.latestMessage}</Text>
-      </View>
-      {item.unreadCount > 0 && (
-        <View style={styles.unreadBadge}>
-          <Text style={styles.unreadCount}>{item.unreadCount}</Text>
+  const renderItem = ({ item }) => {
+    const latestMessage = item.latestMessage || '';
+    const previewMessage = latestMessage.length > 25
+      ? latestMessage.slice(0, 25) + '...'
+      : latestMessage;
+
+    return (
+      <TouchableOpacity
+        style={styles.matchContainer}
+        onPress={() => navigation.navigate('ChatScreen', { user: item })}
+      >
+        <Image source={{ uri: item.imageUrl }} style={styles.profileImage} />
+        <View style={styles.matchInfo}>
+          <Text style={styles.name}>{item.firstName}</Text>
+          <Text style={styles.latestMessage}>{previewMessage}</Text>
         </View>
-      )}
-    </TouchableOpacity>
-  );
+        {item.unreadCount > 0 && (
+          <View style={styles.unreadBadge}>
+            <Text style={styles.unreadCount}>{item.unreadCount}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
