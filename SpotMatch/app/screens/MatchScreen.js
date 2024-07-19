@@ -6,12 +6,13 @@ import Swiper from "react-native-deck-swiper";
 import { BlurView } from "expo-blur";
 import axios from 'axios';
 import GetSpotifyData from '../../components/GetSpotifyData';
-import { getUser, getToken, getEmail } from '../User';
+import { getUser, getToken, getEmail, storeSubscription } from '../User';
 import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
 import { ref, set, usersColRef } from '../../firebase';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import BothMatchScreen from './Matches/BothMatchScreen';
 import AllScreen from './Matches/AllScreen';
+import InstructionsScreen from './Matches/Instruction';
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -27,6 +28,7 @@ const MatchScreen = () => {
     // const [dismissedUsers, setDismissedUsers] = useState([]);
     // // const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [dataUpdated, setDataUpdated] = useState(false);
 
 
     // useEffect(() => {
@@ -76,23 +78,27 @@ const MatchScreen = () => {
                 try {
                     setLoading(true);
                     console.log('yes')
-                    console.log(user)
-                    axios("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=20", {
-                        method: "GET",
+                    console.log("user: ",user)
+                    axios("https://api.spotify.com/v1/me/top/artists", {
                         headers: {
                             Accept: "application/json",
                             "Content-Type": "application/json",
                             Authorization: "Bearer " + token,
                         },
+                        params: {
+                            time_range: "medium_term",
+                            limit: 20
+                        }
                     })
-                    .then(res => {
+                    .then(async res => {
+                        console.log(res.data)
                         if (res.data && res.data.items && Array.isArray(res.data.items)) {
-                            console.log("user: ",user)
                             const names = res.data.items.map(artist => artist.name); 
                             user.setArtists(names);
                             console.log(user.artists);
                             console.log(names);
 
+                            console.log("res data items: ", res.data.items)
                             const genre = res.data.items.flatMap(user => user.genres);
                             const uniqueGenres = [...new Set(genre)];
                             user.setGenres(uniqueGenres);
@@ -103,7 +109,7 @@ const MatchScreen = () => {
                                 // console.log(refDoc);
                             
                                     // console.log(artistNames);
-                            user.update({topArtists: names, genres: uniqueGenres});
+                            await user.update({topArtists: names, genres: uniqueGenres});
                                     // user.update({genres: genre}); 
                         } else {
                             console.error('Invalid response format: ', res.data);
@@ -118,7 +124,7 @@ const MatchScreen = () => {
                             Authorization: "Bearer " + token,
                         },
                     })
-                    .then(res => {
+                    .then(async res => {
                         console.log(res.data)
                         const displayname = res.data.display_name;
                         user.setDisplayName(displayname);
@@ -129,7 +135,15 @@ const MatchScreen = () => {
                         console.log('this is imgUrl: ', uniqueUrl)
                         user.setImgUrl(uniqueUrl);
 
-                        user.update({displayName: displayname, imageUrl: uniqueUrl});
+                        console.log(res.data.product);
+                        const productsubs = res.data.product;
+                        await storeSubscription(productsubs);
+
+                        console.log(res.data.id);
+                        const userId = res.data.id;
+                        
+
+                        await user.update({displayName: displayname, imageUrl: uniqueUrl, subscription: productsubs, spotifyId: userId });
                     })
 
                     axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
@@ -140,14 +154,17 @@ const MatchScreen = () => {
                                 Authorization: "Bearer " + token,
                             },
                     })
-                    .then(res => {
+                    .then(async res => {
                         if (res.data && res.data.items && Array.isArray(res.data.items)) {
                             const topTracks = res.data.items.map(track => ({
+                                id: track.id,
+                                uri: track.uri,
                                 name: track.name,
-                                artist: track.artists[0].name
+                                artist: track.artists[0].name,
+                                albumImg: track.album.images[0].url
                             }));
                             user.setTopTracksData(topTracks);
-                            user.update({ topTracks });
+                            await user.update({ topTracks });
                             console.log(topTracks);
                         } else {
                             console.error('Invalid response format: ', res.data);
@@ -156,6 +173,7 @@ const MatchScreen = () => {
                 } catch (error) {
                         console.error('Error in useEffect: ', error.response);
                 } finally {
+                    setDataUpdated(true);
                     setLoading(false);
                 }
             } else {
@@ -226,14 +244,16 @@ const MatchScreen = () => {
                 <ActivityIndicator size="large" color="#0000ff" />
             </View>
         );
-    }
+    } else {
 
-    return (
-        <Tab.Navigator screenOptions={{swipeEnabled: false}}>
-          <Tab.Screen name="by Genre & Artists" component={BothMatchScreen} />
-          <Tab.Screen name="Discover All" component={AllScreen} />
-        </Tab.Navigator>
-    );
+        return (
+            <Tab.Navigator screenOptions={{swipeEnabled: false, tabBarStyle: {marginBottom: 0, paddingBottom: 0}}}>
+            <Tab.Screen name="Instructions" component={InstructionsScreen} />
+            <Tab.Screen name="by Genre & Artists" component={BothMatchScreen} />
+            <Tab.Screen name="Discover All" component={AllScreen} />
+            </Tab.Navigator>
+        );
+    }
 
     
 

@@ -14,6 +14,8 @@ const AllScreen = () => {
     const [swipedUsers, setSwipedUsers] = useState([]);
     const [dismissedUsers, setDismissedUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [tapUser, setTapUser] = useState(null);
+
    
     const fetchData = async () => {
         const token = await getToken();
@@ -139,6 +141,11 @@ const AllScreen = () => {
        return sliced.toString();
     }
 
+    const handleTapCard = (cardIndex) => {
+        const tappedUser = currentDocs[cardIndex];
+        setTapUser(tappedUser);
+    };
+
     const renderCard = (card) => (
         <View style={styles.card}>
             <ImageBackground
@@ -185,7 +192,53 @@ const AllScreen = () => {
                 disableBottomSwipe
                 backgroundColor={"transparent"}
                 onSwipedAll={fetchData}
+             onTapCard={handleTapCard}
             />
+             {tapUser && (
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={!!tapUser}
+                    onRequestClose={() => setTapUser(null)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Image
+                                style={styles.modalImg}
+                                source={{ uri: tapUser.imageUrl }}
+                            />
+                            <Text style={styles.modalTitle}>{tapUser.firstName}</Text>
+                            <ScrollView contentContainerStyle={styles.modalScrollView}>
+                            {/* <View style={styles.modalTextContainer}> */}
+                                <Text style={styles.modalHeader}>Age: <Text style={styles.modalText}>{tapUser.age ? tapUser.age : "N/A"}</Text></Text>
+                                <Text style={styles.modalHeader}>Spotify display name:</Text>
+                                <Text style={styles.modalText}>{tapUser.displayName ? tapUser.displayName : "N/A"}</Text>
+                                
+                                <Text style={styles.modalHeader}>Top 3 Artists: </Text>
+                                {tapUser.topArtists ? tapUser.topArtists && tapUser.topArtists.slice(0, 3).map((artist, index) => (
+                                    <Text key={index} style={styles.modalText}>{artist ? artist : "N/A"}</Text>
+                                )) : <Text style={styles.modalText}>N/A</Text>}
+
+                                <Text style={styles.modalHeader}>Top Tracks: </Text>
+                                {tapUser.topTracks ? tapUser.topTracks && tapUser.topTracks.slice(0, 3).map((track, index) => (
+                                    <Text key={index} style={styles.modalText}>{track.name ? track.name : "N/A"} by {track.artist ? track.artist : "N/A"}</Text>
+                                )) :  <Text style={styles.modalText}>N/A</Text>}
+                                {/* <Text style={styles.modalText}> {tapUser.docTracks.slice(0, 3).join(', ')}</Text></Text> */}
+
+                                <Text style={styles.modalHeader}>Top 3 Genres: </Text>
+                                {tapUser.genres ? tapUser.genres && tapUser.genres.slice(0, 3).map((genre, index) => (
+                                    <Text key={index} style={styles.modalText}>{genre}</Text>
+                                )) :  <Text style={styles.modalText}>N/A</Text>}
+                                {/* <Text style={styles.modalText}>{tapUser.genres.slice(0, 3).join(', ')}</Text> */}
+                            </ScrollView>
+                            {/* </View> */}
+                            <TouchableOpacity onPress={() => setTapUser(null)} style={styles.closeButton}>
+                                <Text style={styles.closeButtonText}>X</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            )}
         </View>
     );
 }
@@ -206,7 +259,7 @@ const styles = StyleSheet.create({
         flex: 1,
       },
     card: {
-        flex: Dimensions.get("window").height < 700 ? 0.5 : 0.6,
+        flex: Dimensions.get("window").height < 700 ? 0.55 : 0.65,
         borderRadius: 8,
         shadowRadius: 25,
         shadowColor: '#171717',  
@@ -221,7 +274,7 @@ const styles = StyleSheet.create({
         flex: 1,
         width: "70%",
         height: 220,
-        resizeMode: "contain",
+        // resizeMode: "contain",
         borderRadius: 8,
         marginTop: 15,
         marginbottom: 8,
@@ -268,8 +321,76 @@ const styles = StyleSheet.create({
         margin: 15,
         fontWeight: "600",
     },
-    scrollViewContent: {
+    modalContainer: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalScrollView: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '80%',
+        height: "80%",
+        padding: 25,
+        backgroundColor: '#bccce4',
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        color: "#101a28",
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        marginTop: 8,
+    },
+    modalText: {
+        fontSize: 18,
+        marginBottom: 10,
+        color: "#e4ebf4",
+        textShadowColor: "#171717",
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 6,
+        shadowOpacity: 0.2,
+        fontWeight: '500',
+    },
+    modalHeader: {
+        color: "#1e314b",
+        textAlign: "left",
+        fontSize: 20,
+        fontWeight: "600",
+        marginBottom: 2,
+        marginTop: 14,
+        // marginLeft: 8,
+        textShadowColor: "#c1d1e6",
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
+        shadowOpacity: 0.2,
+    },
+    modalTextContainer: {
+        textAlign: "left",
+        marginHorizontal: 0,
+    },
+    modalImg: {
+        // flex: 1,
+        width: "65%",
+        height: 190,
+        // resizeMode: "contain",
+        borderRadius: 20,
+    },
+    closeButton: {
+        marginTop: 20,
+        padding: 8,
+        paddingHorizontal: 12,
+        backgroundColor: '#708090',
+        borderRadius: 8,
+    },
+    closeButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });

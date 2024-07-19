@@ -41,6 +41,10 @@ export default function Access() {
             'user-top-read',
             'user-read-private',
             'user-read-email',
+            'user-modify-playback-state',
+            'user-read-playback-state',
+            'playlist-modify-public',
+            'playlist-modify-private'
           ],
           usePKCE: false,
           responseType: ResponseType.Token,
@@ -50,10 +54,11 @@ export default function Access() {
     
     useEffect(() => {
         if (response?.type === "success") {
-          const { access_token } = response.params;
-          console.log(response)
+          const { access_token, expires_in } = response.params;
+          console.log("response: ", response)
+          console.log("response params: ", response.params)
           console.log(access_token)
-          storeToken(access_token);
+          storeToken(access_token, expires_in);
           setToken(access_token);
           navigation.navigate("Login");
         }
