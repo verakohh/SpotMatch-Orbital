@@ -106,14 +106,27 @@ export const removeUser = async () => {
   await AsyncStorage.removeItem('user');
 }
 
+export const removeToken = async () => {
+  await AsyncStorage.removeItem('token');
+  await AsyncStorage.removeItem('tokenExpiration');
+  console.log("removed token")
+
+}
+
 export const storeUser = async user => {
   const stringified = JSON.stringify(user);
   await AsyncStorage.setItem('user', stringified, () => console.log('async set user'));
 };
 
-export const storeToken = async token => {
+export const storeToken = async (token, expiresIn) => {
+  const expirationTime = new Date().getTime() + expiresIn * 1000;
   const stringified = JSON.stringify(token);
-  await AsyncStorage.setItem('token', token, () => console.log('async set token'));
+  try {   
+    await AsyncStorage.setItem('token', token, () => console.log('async set token'));
+    await AsyncStorage.setItem('tokenExpiration', expirationTime.toString(), () => console.log('async set tokenExpiration :', expirationTime.toString()));
+  } catch (error) {
+    console.error('Error storing token', error);
+  }
 };
 
 export const storeEmail = async email => {
@@ -150,6 +163,18 @@ export const getToken = async () => {
     const tokenJson = await AsyncStorage.getItem('token', () => console.log('async got token'));
     console.log("stringified token: ", tokenJson)
     return tokenJson;
+  
+  } catch (error) {
+    console.error("Failed to load user: ", error)
+  } 
+}
+
+export const getTokenExpiration = async () => {
+  try{
+    console.log('reached getTokenExpiration')
+    const expirationJson = await AsyncStorage.getItem('tokenExpiration', () => console.log('async got token Expiration'));
+    console.log("stringified token: ", expirationJson)
+    return expirationJson;
   
   } catch (error) {
     console.error("Failed to load user: ", error)
