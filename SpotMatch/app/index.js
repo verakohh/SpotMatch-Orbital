@@ -18,6 +18,7 @@ import MatchScreen from './screens/MatchScreen';
 import DiscoverScreen from './screens/DiscoverScreen';
 import EventsScreen from './screens/EventsScreen';
 import NavigationTab from './screens/NavigationTab';
+import ChatMusicScreen from './screens/ChatMusicScreen';
 import { ChatProvider } from './screens/context/ChatContext';
 
 const Stack = createNativeStackNavigator();
@@ -50,6 +51,7 @@ export default function App() {
             <Stack.Screen name="ActivityDetails" component={ActivityDetails} options={{ headerShown: false }} />
             <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
             <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="ChatMusicScreen" component={ChatMusicScreen} options={{ headerShown: false }} />
             <Stack.Screen name="MatchesProfileScreen" component={MatchesProfileScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
       </UserContext.Provider>
