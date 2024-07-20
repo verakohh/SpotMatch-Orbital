@@ -15,6 +15,8 @@ const ChatScreen = () => {
   const flatListRef = useRef(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const combinedId = currentUser.uid > user.userId ? `${currentUser.uid}_${user.userId}` : `${user.userId}_${currentUser.uid}`;
+
 
   useEffect(() => {
     if (!user) {
@@ -22,7 +24,6 @@ const ChatScreen = () => {
       return;
     }
 
-    const combinedId = currentUser.uid > user.userId ? `${currentUser.uid}_${user.userId}` : `${user.userId}_${currentUser.uid}`;
     const chatRef = doc(db, 'chats', combinedId);
     const messagesRef = collection(chatRef, 'messages');
     const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
@@ -217,15 +218,17 @@ const ChatScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color="black" />
         </TouchableOpacity>
-        <Image source={{ uri: user.imageUrl }} style={styles.profileImage} />
+        <TouchableOpacity onPress={() => navigation.navigate('MatchesProfileScreen', { user })}>
+          <Image source={{ uri: user.imageUrl }} style={styles.profileImage} />
+        </TouchableOpacity>
+
         <Text style={styles.headerText}>{user.firstName}</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity>
+          <TouchableOpacity  onPress={() => navigation.navigate('ChatMusicScreen', { combinedId })}>
             <Feather name="headphones" size={24} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('MatchesProfileScreen', { user })}>
-            <Feather name="more-vertical" size={24} color="black" />
-          </TouchableOpacity>
+          
+            {/* <Feather name="more-vertical" size={24} color="black" /> */}
         </View>
       </View>
       <FlatList
