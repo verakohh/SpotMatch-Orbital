@@ -80,6 +80,7 @@ const MatchScreen = () => {
                     console.log('yes')
                     console.log("user: ",user)
                     axios("https://api.spotify.com/v1/me/top/artists", {
+                        method: 'GET',
                         headers: {
                             Accept: "application/json",
                             "Content-Type": "application/json",
@@ -160,9 +161,11 @@ const MatchScreen = () => {
                                 id: track.id,
                                 uri: track.uri,
                                 name: track.name,
+                                previewUrl: track.preview_url,
                                 artist: track.artists[0].name,
                                 albumImg: track.album.images[0].url
                             }));
+                            // console.log("top tracks preview url: ", topTracks.previewUrl);
                             user.setTopTracksData(topTracks);
                             await user.update({ topTracks });
                             console.log(topTracks);
