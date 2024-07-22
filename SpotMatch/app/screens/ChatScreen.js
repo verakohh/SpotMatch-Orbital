@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Image, Linking } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
 import { FIREBASE_AUTH, db, storage } from '../../firebase';
 import { collection, doc, onSnapshot, addDoc, serverTimestamp, query, orderBy, updateDoc, getDoc, setDoc } from 'firebase/firestore';
@@ -18,24 +18,25 @@ const ChatScreen = () => {
   const combinedId = currentUser.uid > user.userId ? `${currentUser.uid}_${user.userId}` : `${user.userId}_${currentUser.uid}`;
 
 
-  useEffect(() => {
-    if (!user) {
-      console.error('User is undefined');
-      return;
-    }
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!user) {
+        console.error('User is undefined');
+        return;
+      }
 
-    const chatRef = doc(db, 'chats', combinedId);
-    const messagesRef = collection(chatRef, 'messages');
-    const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
+      const chatRef = doc(db, 'chats', combinedId);
+      const messagesRef = collection(chatRef, 'messages');
+      const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
 
-    console.log("Setting up snapshot listener for chatId:", combinedId);
+      console.log("Setting up snapshot listener for chatId:", combinedId);
 
-    const unsubscribe = onSnapshot(messagesQuery, async (snapshot) => {
-      const messagesList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp ? doc.data().timestamp.toDate() : null,
-      }));
+      const unsubscribe = onSnapshot(messagesQuery, async (snapshot) => {
+        const messagesList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp ? doc.data().timestamp.toDate() : null,
+        }));
       console.log("Messages received:", messagesList);
       setMessages(messagesList);
 
@@ -50,8 +51,10 @@ const ChatScreen = () => {
       }
     });
 
-    return () => unsubscribe();
-  }, [currentUser?.uid, user?.userId]);
+      return () => unsubscribe();
+    }, [currentUser?.uid, user?.userId])
+  );
+
 
   const handleSend = async () => {
     if (newMessage.trim()) {
