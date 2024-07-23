@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import Button from '../../../components/navigation/Button';
 import { useNavigation } from '@react-navigation/core';
 
+
+
 const SignUpScreen = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -15,11 +17,17 @@ const SignUpScreen = () => {
   const navigation = useNavigation();
 
   const handleNext = () => {
+    
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      alert('Error', 'Passwords do not match');
       return;
     }
-    navigation.navigate('SignUpStep2Screen', { firstName, lastName, email, password });
+    if (firstName && lastName && email && password && confirmPassword) {
+
+      navigation.navigate('SignUpStep2Screen', { firstName, lastName, email, password });
+    } else {
+      alert("You must fill in all fields before proceeding!")
+    }
   };
 
   return (

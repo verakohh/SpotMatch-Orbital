@@ -196,16 +196,16 @@ export default function ApiRecScreen() {
     };
     
     const playTrack = async (uri) => {
-        
+        if (!uri) {
+            alert("No top track uri! Unable to play");
+            return;
+        }
+        const token = await getToken();
         if (!await checkTokenValidity(token)) {
             alert("Token of 1 hour has expired! Kindly refresh it")
             navigation.navigate('Access');
             return;
         }
-        if (!uri) {
-            alert("No top track uri! Unable to play");
-        }
-        const token = await getToken();
         const devices = await getAvailableDevices();
         console.log('devices: ', devices)
         if (devices.length > 0) {

@@ -22,12 +22,13 @@ const ChatMusicScreen = ({route}) => {
     const currentUser = FIREBASE_AUTH.currentUser;
     const [playingSong, setPlayingSong] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [progress, setProgress] = useState(0);
     const navigation = useNavigation();
     const flatListRef = useRef(null);
     const deviceIdRef = useRef(null);
     const playingRef = useRef(false);
     const playingIndexRef = useRef(0);
-
+    const intervalRef = useRef(null);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -41,20 +42,28 @@ const ChatMusicScreen = ({route}) => {
                   await pauseTrack();
                 }
             };
+
+            // interval = setInterval(checkSongCompletion, 10000); // Check first 10 sec by default
+
+
             const unsubscribe = onSnapshot(chatDocRef, async (doc) => {
                 const data = doc.data();
                 setPlayingSong(data.currentSong);
-                if (data.playing && data.currentSong && playingSong?.id !== data.currentSong.id) {
+                if (data.playing && !playingRef.current && data.currentSong) {
+                    //if matched user is playing, current user not playing, current song exists 
                     console.log("came in the unsubscribe")
+                    setProgress(0);
                     playTrack(data.currentSong);
                     
                 } else if (!data.playing && await isPlaying()) {
                     await pauseTrack();
                 } 
             });
-    
+
             return async () => {
                 await checkIfPlayingAndPause();
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
                 unsubscribe();
             };
         }, [combinedId])
@@ -82,13 +91,13 @@ const ChatMusicScreen = ({route}) => {
         if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
             const spotifyId = userData.spotifyId;
-            const matchedPlaylistId = userData.matchedPlaylistId;
+            const chatPlaylistId = userData.chatPlaylistId;
 
-            if (!matchedPlaylistId && spotifyId) {
+            if (!chatPlaylistId && spotifyId) {
                 try {
                     const response = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
-                        name: "SpotMatch Matched Playlist",
-                        description: "Playlist for matched songs",
+                        name: "SpotMatch Chat Playlist",
+                        description: "Playlist for matched chat users' songs",
                         public: false,
                     }, {
                         headers: {
@@ -96,7 +105,7 @@ const ChatMusicScreen = ({route}) => {
                         },
                     });
                     const playlistId = response.data.id;
-                    await user.update({ matchedPlaylistId: playlistId, matchedPlaylistSongs: []});
+                    await user.update({ chatPlaylistId: playlistId, chatPlaylistSongs: []});
                 } catch (error) {
                     console.error("Error creating playlist: ", error);
                     if(error.status === 429) {
@@ -188,15 +197,34 @@ const ChatMusicScreen = ({route}) => {
                 });
                 
                 const progress = response.data.progress_ms;
+                setProgress(progress);
                 const duration = response.data.item.duration_ms;
                 console.log('progress', progress)
                 console.log('duration', duration)
-                
-                if (progress >= duration) {
-                    await handleNextSong();
-                    return true;
+                const remainingTime = ((duration / 1000) - (progress / 1000)).toFixed(0);
+                console.log("remaining time: ", remainingTime)
+                if (remainingTime <= 2) {
+                    console.log('time to play next song ')
+                    clearInterval(intervalRef.current);
+                    intervalRef.current = null;
+                    setProgress(0);
+                    await playNextSong();
+                    
                 } else {
-                    return false;
+                    console.log("Progress has not reached duration!");
+                    let newInterval = 20000; // Default 20 seconds
+                    if (remainingTime >= 60 && ((duration / 1000) - remainingTime) >= 30 ) {
+                        newInterval = 30000; //Increase to 30 seconds if > 1 min of end
+                    } else if (remainingTime <= 30 && remainingTime > 10) {
+                        newInterval = 10000; // Reduce to 10 seconds within 30 seconds of end
+                    } else if (remainingTime <= 10) {
+                        newInterval = 1000; // Reduce to 1 second within 10 seconds of end
+                    }
+                    //  else if (remainingTime <= 5) {
+                    //     newInterval = 1000; // Reduce to 1 second within 5 seconds of end
+                    // }
+                    clearInterval(intervalRef.current);
+                    intervalRef.current = setInterval(checkSongCompletion, newInterval);
                 }
             } catch (error) {
                 console.error("Error checking song completion: ", error);
@@ -206,26 +234,33 @@ const ChatMusicScreen = ({route}) => {
             }
         } else {
             console.log("No song playing yet to check!")
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+
         }
     };
 
     const playTrack = async (song) => {
-        
+        if (!song) {
+            alert("No song! Unable to play");
+        }
+        const token = await getToken();
         if (!await checkTokenValidity(token)) {
             alert("Token of 1 hour has expired! Kindly refresh it")
             navigation.navigate('Access');
             return;
         }
-        if (!song) {
-            alert("No song! Unable to play");
-        }
-        const token = await getToken();
+
         const devices = await getAvailableDevices();
         console.log('devices: ', devices)
         if (devices.length > 0) {
             const selectedDevice = devices[0].id; // Select the first device
             setDeviceId(selectedDevice);
             deviceIdRef.current = selectedDevice;
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+            intervalRef.current = setInterval(checkSongCompletion, 10000);
             try {
                 await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice}`, 
                 { uris: [song.uri] },
@@ -244,6 +279,8 @@ const ChatMusicScreen = ({route}) => {
 
 
             } catch (error) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
                 console.error("Error playing track: ", error);
                 if(error.status === 429) {
                     alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
@@ -261,7 +298,12 @@ const ChatMusicScreen = ({route}) => {
             navigation.navigate('Access');
             return;
         }
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
         try {
+            
             console.log("device id: ", deviceIdRef.current)
             await axios.put(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceIdRef.current}`, {}, {
                 headers: {
@@ -285,7 +327,7 @@ const ChatMusicScreen = ({route}) => {
     const playNextSong = async () => {
         // const currentIndex = chatMusic.findIndex((song) => song.id === playingSong.id);
         // const currentIndex = playingIndexRef.current;
-        if (isDebounced) return;
+        if (isDebounced) {return;}
         setIsDebounced(true);
         setTimeout(() => setIsDebounced(false), 500);
 
@@ -300,12 +342,15 @@ const ChatMusicScreen = ({route}) => {
 
                 // const nextIndex = playingIndexRef.current + 1;
                 if (nextIndex < chatMusic.length) {
+                    console.log('at play next song success')
                     const nextSong = chatMusic[nextIndex];
                     await playTrack(nextSong);
                     await updateFirestore({ playing: true , currentSong: nextSong});
 
         
                 } else {
+                    console.log('at play next song fail')
+
                     await pauseTrack();
                     await updateFirestore({ playing: false , currentSong: null});
 
@@ -337,6 +382,7 @@ const ChatMusicScreen = ({route}) => {
                 // const nextIndex = playingIndexRef.current + 1;
                 if (prevIndex < chatMusic.length) {
                     const prevSong = chatMusic[prevIndex];
+                    setProgress(0);
                     await playTrack(prevSong);
                     await updateFirestore({ playing: true , currentSong: prevSong});
 
@@ -368,6 +414,7 @@ const ChatMusicScreen = ({route}) => {
                 await pauseTrack();
 
             } else {
+                setProgress(0);
                 await playTrack(song);
             }
         } else {
@@ -466,13 +513,10 @@ const ChatMusicScreen = ({route}) => {
        
         setChatMusic((prev) => prev.filter((item) => item.id !== song.id));
         if (playingSong?.id === song.id && playingRef.current) {
-            // await pauseTrack();
+            setProgress(0);
             await playNextSong();
         }
-        
 
-
-        
     };
 
     const addSongToPlaylist = async (song) => {
@@ -480,8 +524,8 @@ const ChatMusicScreen = ({route}) => {
         const userDocRef = user.docRef;
         const userDocSnap = await getDoc(userDocRef);
         const userData = userDocSnap.data();
-        const matchedPlaylistId = userData.matchedPlaylistId
-        const matchedPlaylistSongs = userData.matchedPlaylistSongs;
+        const chatPlaylistId = userData.chatPlaylistId
+        const chatPlaylistSongs = userData.chatPlaylistSongs;
         const token = await getToken();
 
         if (!await checkTokenValidity(token)) {
@@ -490,8 +534,8 @@ const ChatMusicScreen = ({route}) => {
             return;
         }
 
-        if( userDocSnap.exists() && song.uri && !matchedPlaylistSongs.includes(song.id)) {
-            await axios.post(`https://api.spotify.com/v1/playlists/${matchedPlaylistId}/tracks`, {
+        if( userDocSnap.exists() && song.uri && !chatPlaylistSongs.includes(song.id)) {
+            await axios.post(`https://api.spotify.com/v1/playlists/${chatPlaylistId}/tracks`, {
                 uris: [song.uri],
             }, {
                 headers: {
@@ -499,7 +543,7 @@ const ChatMusicScreen = ({route}) => {
                 },
             });
 
-            await user.update({ matchedPlaylistSongs: arrayUnion(song.id)});
+            await user.update({ chatPlaylistSongs: arrayUnion(song.id)});
         } else {
             alert("Song has been added before! Not added to the Spotify playlist")
         }
@@ -618,15 +662,22 @@ const ChatMusicScreen = ({route}) => {
                         <Image source={{ uri: playingSong.albumImg }} style={styles.modalImage} />
                         <Text style={styles.modalSongName}>{playingSong.name}</Text>
                         <Text style={styles.modalArtistName}>{playingSong.artist}</Text>
+                        <View style={styles.progressBarContainer}>
+                            <Text style={styles.progressTime}>0:00</Text>
+                            <View style={styles.progressBar}>
+                                <View style={{ ...styles.progress, width: `${(progress / playingSong.durationMs) * 100}%` }} />
+                            </View>
+                            <Text style={styles.progressTime}>{playingSong.duration}</Text>
+                        </View>
                         <View style={styles.modalControls}>
                             <TouchableOpacity onPress={() => playPreviousSong()}>
-                                <Feather name="skip-back" size={30} color="#e5e4e2" />
+                                <Feather name="skip-back" size={34} color="#e5e4e2" />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => pauseTrack()}>
-                                <Feather name={playingRef.current ? "pause" : "play"} size={30} color="#e5e4e2" />
+                                <Feather name={playingRef.current ? "pause" : "play"} size={35} color="#e5e4e2" />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => playNextSong()}>
-                                <Feather name="skip-forward" size={30} color="#e5e4e2" />
+                                <Feather name="skip-forward" size={34} color="#e5e4e2" />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -918,12 +969,34 @@ const styles = StyleSheet.create({
         textShadowRadius: 5,
         paddingHorizontal: 10,
     },
+    progressBarContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '80%',
+        marginBottom: 20,
+    },
+    progressBar: {
+        flex: 1,
+        height: 4,
+        backgroundColor: '#ccc',
+        borderRadius: 2,
+        marginHorizontal: 10,
+    },
+    progress: {
+        height: 4,
+        backgroundColor: '#1db954',
+        borderRadius: 2,
+    },
+    progressTime: {
+        fontSize: 12,
+        color: '#ccc',
+    },
     modalControls: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: '80%',
         paddingHorizontal: 40,
-        marginVertical: 12 
+        marginVertical: 18 
     },
     modalCloseButton: {
         position: 'absolute',

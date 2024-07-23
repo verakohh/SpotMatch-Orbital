@@ -1,155 +1,92 @@
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../../firebase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Button from '../../../components/navigation/Button';
+import { ResponseType, useAuthRequest } from 'expo-auth-session';
+import { useNavigation, useRoute } from '@react-navigation/core';
+import { UserContext } from '../../UserContext';
+import { storeToken } from '../../User';
+import Feather from 'react-native-vector-icons/Feather';
 
-export default class User {
-  constructor(firstName, lastName, email) {
-    this.firstName = firstName;
-    this.lastName = lastName;
-    this.email = email;
-    this.docRefPath = `users/${email}`;
-    this.docRef = this.docRefPath ? doc(db, this.docRefPath) : null;
-  }
 
-  setArtists(artists) {
-    this.artists = artists;
-  }
-
-  setGenres(genres) {
-    this.genres = genres;
-  }
-
-  setDisplayName(name) {
-    this.displayName = name;
-  }
-
-  setTopTracksData(tracks) {
-    this.tracks = tracks;
-  }
-
-  setAge(age) {
-    this.age = age;
-  }
-  
-  setImgUrl(url) {
-    this.imgUrl = url;
-  }
-
-  setBirthdate(date) {
-    this.birthdate = date;
-  }
-
-  setRequestedBy(users) {
-    this.requestedBy = users;
-  }
-
-  setMatched(users) {
-    this.matched = users;
-  }
-
-  setSentRequest(user) {
-    this.sentRequest = user;
-  }
-
-  setRejected(user) {
-    this.rejected = user;
-  }
-
-  setDismissed(user) {
-    this.dismissed = user;
-  }
-
-  userInstance() {
-    return this;
-  }
-
-  async update(data) {
-    if (this.docRef) {
-      try {
-        await setDoc(this.docRef, data, { merge: true });
-        console.log("Document updated successfully");
-      } catch (error) {
-        console.error("Error updating document: ", error);
-      }
-    } else {
-      console.error("No user docRef");
-    }
-  }
-}
-
-export const removeUser = async () => {
-  await AsyncStorage.removeItem('user');
+const discovery = {
+    authorizationEndpoint: 'https://accounts.spotify.com/authorize',
+    tokenEndpoint: 'https://accounts.spotify.com/api/token',
 };
 
-export const removeToken = async () => {
-  await AsyncStorage.removeItem('token');
-  await AsyncStorage.removeItem('tokenExpiration');
+const clientId = '89d33611962f42ecb9e982ee2b879bb8';
+const redirectUri = 'spotmatch://callback';
+
+const SpotifyAuthScreen = ({route}) => {
+    const navigation = useNavigation();
+    const { firstName, lastName, email, password, birthdate, age } = route.params;
+
+    const [request, response, promptAsync] = useAuthRequest(
+        {
+            clientId,
+            redirectUri,
+            scopes: [
+                'user-top-read',
+                'user-read-private',
+                'user-read-email',
+                'user-modify-playback-state',
+                'user-read-playback-state',
+                'playlist-modify-public',
+                'playlist-modify-private'
+            ],
+            usePKCE: false,
+            responseType: ResponseType.Token,
+        },
+        discovery
+    );
+
+    useEffect(() => {
+        if (response?.type === "success") {
+            const { access_token, expires_in } = response.params;
+            console.log("response: ", response)
+          console.log("response params: ", response.params)
+          console.log(access_token)
+            storeToken(access_token, expires_in);
+            navigation.navigate("WelcomeScreen", { firstName, lastName, email, password, birthdate, age });
+        }
+    }, [response]);
+
+    return (
+        <View style={styles.container}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Feather name="chevron-left" size={24} color="black" />
+            </TouchableOpacity>
+            <Text style={styles.text}>
+                Connect your Spotify account to start matching!
+            </Text>
+            <Button
+                disabled={!request}
+                type='primary'
+                size='m'
+                text="Connect my Spotify account"
+                onPress={() => {
+                    promptAsync();
+                }}
+            />
+        </View>
+    );
 };
 
-export const storeUser = async user => {
-  const stringified = JSON.stringify(user);
-  await AsyncStorage.setItem('user', stringified);
-};
+const styles = StyleSheet.create({
+    container: {
+        flex: 1, 
+        justifyContent: 'space-evenly', 
+        alignItems: 'center',
+    },
 
-export const storeToken = async (token, expiresIn) => {
-  const expirationTime = new Date().getTime() + expiresIn * 1000;
-  try {
-    await AsyncStorage.setItem('token', token);
-    await AsyncStorage.setItem('tokenExpiration', expirationTime.toString());
-  } catch (error) {
-    console.error('Error storing token', error);
-  }
-};
+    text: {  
+        fontSize: 25,      
+        fontWeight: '400', 
+        textAlign: 'left',
+        fontFamily: 'Verdana',
+        color: '#212e37',      
+        marginBottom: 0,
+        paddingHorizontal: 40   
+    },
+});
 
-export const getUser = async () => {
-  try {
-    const userJson = await AsyncStorage.getItem('user');
-    if (userJson) {
-      const userData = JSON.parse(userJson);
-      const user = new User(userData.firstName, userData.lastName, userData.email);
-      user.setArtists(userData.artists);
-      user.setGenres(userData.genres);
-      user.setDisplayName(userData.displayName);
-      user.setTopTracksData(userData.tracks);
-      return user.userInstance();
-    }
-  } catch (error) {
-    console.error("Failed to load user: ", error);
-  }
-};
-
-export const getToken = async () => {
-  try {
-    const tokenJson = await AsyncStorage.getItem('token');
-    return tokenJson;
-  } catch (error) {
-    console.error("Failed to load token: ", error);
-  }
-};
-
-export const getTokenExpiration = async () => {
-  try {
-    const expirationJson = await AsyncStorage.getItem('tokenExpiration');
-    return expirationJson;
-  } catch (error) {
-    console.error("Failed to load token expiration: ", error);
-  }
-};
-
-export const getEmail = async () => {
-  try {
-    const emailJson = await AsyncStorage.getItem('email');
-    return emailJson;
-  } catch (error) {
-    console.error("Failed to load email: ", error);
-  }
-};
-
-export const getSubscription = async () => {
-  try {
-    const subsJson = await AsyncStorage.getItem('subscription');
-    return subsJson;
-  } catch (error) {
-    console.error("Failed to load subscription: ", error);
-  }
-};
+export default SpotifyAuthScreen;
