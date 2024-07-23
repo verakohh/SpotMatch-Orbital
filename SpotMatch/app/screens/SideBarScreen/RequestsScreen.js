@@ -492,6 +492,8 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 10,
         backgroundColor: '#FAF4EC',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     requestContainer: {
         flexDirection: 'row',

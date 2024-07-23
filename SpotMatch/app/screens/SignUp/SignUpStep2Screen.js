@@ -36,7 +36,7 @@ const SignUpStep2Screen = () => {
       Alert.alert('Error', 'You must be a minimum of 16 years of age to have a SpotMatch account.');
       return;
     }
-    navigation.navigate('SpotifyAuthScreen', { firstName, lastName, email, password, birthdate });
+    navigation.navigate('SpotifyAuthScreen', { firstName, lastName, email, password, birthdate, age });
   };
 
   return (

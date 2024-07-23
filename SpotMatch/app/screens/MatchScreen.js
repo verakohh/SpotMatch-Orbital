@@ -6,7 +6,7 @@ import Swiper from "react-native-deck-swiper";
 import { BlurView } from "expo-blur";
 import axios from 'axios';
 import GetSpotifyData from '../../components/GetSpotifyData';
-import { getUser, getToken, getEmail, storeSubscription } from '../User';
+import { getUser, getToken, getEmail, storeSubscription, getTokenExpiration } from '../User';
 import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
 import { ref, set, usersColRef } from '../../firebase';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -34,6 +34,11 @@ const MatchScreen = () => {
     // useEffect(() => {
         const fetchData = async () => {
             const token = await getToken();
+            if (!await checkTokenValidity(token)) {
+                alert("Token of 1 hour has expired! Kindly refresh it")
+                navigation.navigate('Access');
+                return;
+            }
             const user = await getUser();
         //     const userDocRef = ref(user.email);
         //     const userDocSnap = await getDoc(userDocRef);
@@ -189,6 +194,19 @@ const MatchScreen = () => {
         useEffect(() => {
             fetchData();
         }, []);
+    
+        const checkTokenValidity = async () => {
+            try {
+                const expiration = await getTokenExpiration();
+                if (expiration && new Date().getTime() < parseInt(expiration)) {
+                    console.log("token is okay")
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error checking token validity', error);
+            }
+            return false;
+        };
     
 
     // const handleRight = async (cardIndex) => {

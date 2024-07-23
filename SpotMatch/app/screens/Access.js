@@ -25,7 +25,7 @@ const redirectUri = 'spotmatch://callback';
 export default function Access() {
 
     // const [token, setToken] = useState("");
-    const { user, setUser, token, setToken } = useContext(UserContext);
+    // const { user, setUser, token, setToken } = useContext(UserContext);
     // const [artistNames, setArtistNames] = useState([""]);
     // const [genres, setGenres] = useState([""]);
     // const [displayName, setDisplayName] = useState("");
@@ -59,7 +59,7 @@ export default function Access() {
           console.log("response params: ", response.params)
           console.log(access_token)
           storeToken(access_token, expires_in);
-          setToken(access_token);
+          // setToken(access_token);
           navigation.navigate("Login");
         }
       }, [response]);

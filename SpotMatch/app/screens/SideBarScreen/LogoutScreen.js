@@ -34,8 +34,8 @@ export default function LogoutScreen() {
     return (
 
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Log Out Screen</Text>
-            <Button type='danger' size='m' text='Sign Out' onPress={handleSignOut} style={{flex: 1, justifyContent: 'space-between'}}></Button>
+            <Text style={{marginVertical: 20, fontSize: 14, fontWeight: 'bold'}}>Sure you want to log out? </Text>
+            <Button type='danger' size='m' text='Log Out' onPress={handleSignOut} />
 
         </View>
     );

@@ -1,67 +1,104 @@
-import React, { useEffect, useContext } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useContext, useState} from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import Button from '../../../components/navigation/Button';
 import { ResponseType, useAuthRequest } from 'expo-auth-session';
 import { useNavigation, useRoute } from '@react-navigation/core';
 import { UserContext } from '../../UserContext';
-import { storeToken } from '../../User';
+import User , { storeUser} from '../../User';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { FIREBASE_AUTH, db, ref, set } from '../../../firebase';
+import { doc, addDoc, setDoc, updateDoc } from 'firebase/firestore';
+import Feather from 'react-native-vector-icons/Feather';
 
-const discovery = {
-    authorizationEndpoint: 'https://accounts.spotify.com/authorize',
-    tokenEndpoint: 'https://accounts.spotify.com/api/token',
-};
 
-const clientId = '89d33611962f42ecb9e982ee2b879bb8';
-const redirectUri = 'spotmatch://callback';
 
-const SpotifyAuthScreen = () => {
-    const { user, setUser, token, setToken } = useContext(UserContext);
-    const navigation = useNavigation();
-    const route = useRoute();
-    const { firstName, lastName, email, password, birthdate } = route.params;
 
-    const [request, response, promptAsync] = useAuthRequest(
-        {
-            clientId,
-            redirectUri,
-            scopes: [
-                'user-top-read',
-                'user-read-private',
-                'user-read-email',
-                'user-modify-playback-state',
-                'user-read-playback-state',
-                'playlist-modify-public',
-                'playlist-modify-private'
-            ],
-            usePKCE: false,
-            responseType: ResponseType.Token,
-        },
-        discovery
-    );
 
-    useEffect(() => {
-        if (response?.type === "success") {
-            const { access_token, expires_in } = response.params;
-            storeToken(access_token, expires_in);
-            setToken(access_token);
-            navigation.navigate("WelcomeScreen", { firstName, lastName, email, birthdate });
+const WelcomeScreen = ({route}) => {
+    const { firstName, lastName, email, password, birthdate, age } = route.params;
+    const [loading, setLoading] = useState(false);
+
+    const navigation= useNavigation();
+    const auth = FIREBASE_AUTH;
+
+
+    const handleSignUp = async () => {
+        setLoading(true);
+        try {
+          const response = await createUserWithEmailAndPassword(auth, email, password);
+          console.log(response);  
+          if(response.user) {
+            const userId = response.user.uid;
+            set(email, {
+                  firstName,
+                  lastName,
+                  email,
+                  age,
+                  birthdate,
+                  userId: response.user.uid
+                  }
+                );
+  
+                const docRef = doc(db, 'users', email);
+                const docRefPath = `users/${email}`;
+                console.log('the ref is: ', docRef)
+            
+                const newUser = new User(firstName, lastName, email, age);
+                newUser.setBirthdate(birthdate);
+                // user = newUser;
+                await storeUser(newUser);
+                // await storeEmail(email);
+                // setUser(newUser);
+                console.log("registered user Object : ",newUser);
+
+                navigation.navigate("SideBar")
+  
+                // setUserInfo(newUser);
+  
+                // const newDocRef = ref(response.user.uid)
+            // setUserInfo(userId, newDocRef);
+  
+  
+            // setID(response.user.uid);
+            // console.log(id);
+            
+            // console.log('the ref is: ', newDocRef)
+  
+            alert('Created Successfully!')
+          }
+        } catch (error) {
+          console.log(error);
+          alert('Sign Up failed: ' + error.message);
+         
+  
+        } finally {
+          setLoading(false);
+  
         }
-    }, [response]);
+      }
+
+
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
+
 
     return (
         <View style={styles.container}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Feather name="chevron-left" size={24} color="black" />
+            </TouchableOpacity>
             <Text style={styles.text}>
-                Connect your Spotify account to start matching!
+                Welcome! 
+                {firstName}
             </Text>
-            <Button
-                disabled={!request}
-                type='primary'
-                size='m'
-                text="Connect my Spotify account"
-                onPress={() => {
-                    promptAsync();
-                }}
-            />
+            
+            <Button type='primary' size='m' text='Tuning in, friending out!' onPress={handleSignUp} />
+            
         </View>
     );
 };
@@ -84,4 +121,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default SpotifyAuthScreen;
+export default WelcomeScreen;
