@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { db, FIREBASE_AUTH } from '../../firebase';
@@ -96,15 +96,15 @@ const ChatListScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
+      <View style={[styles.container, {alignItems: 'center', justifyContent: 'center'}]}>
+         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
 
   if (!matches || matches.length === 0) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, {alignItems: 'center', justifyContent: 'center'}]}>
         <Text>Start matching to chat with people!</Text>
       </View>
     );
@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAF4EC',
+    
   },
   matchContainer: {
     flexDirection: 'row',

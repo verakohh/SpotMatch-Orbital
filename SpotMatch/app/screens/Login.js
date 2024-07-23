@@ -215,8 +215,10 @@
 import React, { useState } from 'react';
 import { Text, TextInput, Image, View, StyleSheet, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import Button from '../../components/navigation/Button';
-import { FIREBASE_AUTH } from '../../firebase';
+import { FIREBASE_AUTH, ref } from '../../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import User, { storeUser, getToken , storeEmail } from '../User';
+import { getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/core';
 
 const Login = () => {
@@ -231,7 +233,33 @@ const Login = () => {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log(response);
-      navigation.navigate("SideBar");
+      const userDoc = ref(email);
+      const docSnap = await getDoc(userDoc);
+      console.log(docSnap);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        const newUser = new User(data.firstName, data.lastName, data.email);
+        newUser.setArtists(data.topArtists);
+        newUser.setGenres(data.genres);
+        newUser.setDisplayName(data.displayName);
+        newUser.setTopTracksData(data.topTracks); 
+        newUser.setAge(data.age);
+        newUser.setBirthdate(data.birthdate);
+        newUser.setImgUrl(data.imageUrl)
+        newUser.setRequestedBy(data.requestedBy);
+        newUser.setMatched(data.matched);
+        newUser.setSentRequest(data.sentRequest);
+        newUser.setRejected(data.rejected);
+        newUser.setDismissed(data.dismissed);
+
+
+        await storeUser(newUser);
+
+        navigation.navigate("SideBar");
+      } else {
+        alert("Login failed! Try again");
+      }
     } catch (error) {
       console.log(error);
       alert('Login failed: ' + error.message);

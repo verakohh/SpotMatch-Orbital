@@ -330,6 +330,11 @@ export const storeToken = async (token, expiresIn) => {
   }
 };
 
+export const storeSubscription = async (subs) => {
+  const stringified = JSON.stringify(subs);
+  await AsyncStorage.setItem('subscription', stringified);
+};
+
 export const getUser = async () => {
   try {
     const userJson = await AsyncStorage.getItem('user');
