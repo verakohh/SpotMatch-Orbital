@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
-import { FIREBASE_AUTH, db } from '../../../firebase';
+import { FIREBASE_AUTH, db, ref } from '../../../firebase';
 import Feather from 'react-native-vector-icons/Feather';
+import { getUser } from '../../User';
+
 
 const Settings = () => {
   const [userData, setUserData] = useState({});
@@ -14,15 +16,15 @@ const Settings = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userDocRef = doc(db, 'users', currentUser.email);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
+      const user = await getUser();
+      const userDocRef = ref(user.email);
+      const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setUserData(userDocSnap.data());
         } else {
           console.log('No such document!');
         }
-      }
+      
     };
 
     fetchUserData();
