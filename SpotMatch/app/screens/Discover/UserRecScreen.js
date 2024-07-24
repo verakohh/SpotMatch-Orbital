@@ -42,6 +42,8 @@ export default function UserRecScreen() {
             setLoading(true);
 
             const user = await getUser();
+            console.log(user)
+            console.log(user.email)
             const userDocRef = ref(user.email);
             const userDocSnap = await getDoc(userDocRef);
 
@@ -388,6 +390,7 @@ export default function UserRecScreen() {
         console.log('devices: ', devices)
         if (devices.length > 0) {
             const selectedDevice = devices[0].id; // Select the first device
+            console.log("device phone?? :", devices[1])
             setDeviceId(selectedDevice);
             deviceIdRef.current = selectedDevice;
             try {
