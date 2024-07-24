@@ -346,7 +346,7 @@
 
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { getUser } from '../../User';
 import { getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
@@ -441,15 +441,15 @@ export default function Requests() {
 
     if (loading) {
         return (
-            <View style={styles.container}>
-                <Text>Loading...</Text>
+            <View style={styles.wait}>
+                <ActivityIndicator size="large" color="#0000ff" />
             </View>
         );
     }
 
     if (!requests || requests.length === 0) {
         return (
-            <View style={styles.container}>
+            <View style={styles.wait}>
                 <Text>No users yet!</Text>
             </View>
         );
@@ -468,7 +468,7 @@ export default function Requests() {
                             <TouchableOpacity onPress={() => handleDecline(item.docRef)} style={styles.button}>
                                 <CircleCrossIcon />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => handleAccept(item.docRef)} style={styles.button}>
+                            <TouchableOpacity onPress={() => handleAccept(item.docRef)} style={styles.acceptButton}>
                                 <CircleCheckIcon />
                             </TouchableOpacity>
                         </View>
@@ -483,7 +483,13 @@ export default function Requests() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 10,
+        marginHorizontal: 18,
+        backgroundColor: '#FAF4EC',
+        justifyContent: 'center'
+    },
+    wait: {
+        flex: 1,
+        marginHorizontal: 25,
         backgroundColor: '#FAF4EC',
         alignItems: 'center',
         justifyContent: 'center'
@@ -491,14 +497,14 @@ const styles = StyleSheet.create({
     requestContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
+        paddingVertical: 13,
         paddingHorizontal: 15,
     },
     image: {
-        width: 55,
-        height: 55,
-        borderRadius: 28,
-        marginRight: 12,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        marginRight: 16,
     },
     name: {
         fontSize: 18,
@@ -510,6 +516,10 @@ const styles = StyleSheet.create({
     },
     button: {
         marginHorizontal: 12,
+    },
+    acceptButton: {
+        marginLeft: 16,
+        marginRight: 8
     },
     separator: {
         height: 1,

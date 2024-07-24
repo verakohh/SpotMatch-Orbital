@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { getUser } from '../../User';
 import { useFocusEffect } from '@react-navigation/native';
 import { getDoc } from 'firebase/firestore';
@@ -59,15 +59,15 @@ const Matches = () => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
+      <View style={styles.wait}>
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
 
   if (!matches || matches.length === 0) {
     return (
-      <View style={styles.container}>
+      <View style={styles.wait}>
         <Text>No matches yet!</Text>
       </View>
     );
@@ -89,6 +89,13 @@ export default Matches;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginHorizontal: 18,
+    backgroundColor: '#FAF4EC',
+    // alignItems: 'center',
+    justifyContent: 'center'
+  },
+  wait: {
+    flex: 1,
     marginHorizontal: 25,
     backgroundColor: '#FAF4EC',
     alignItems: 'center',
@@ -97,19 +104,22 @@ const styles = StyleSheet.create({
   matchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
-    paddingVertical: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 15,
+
   },
   image: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    marginRight: 18,
+    marginRight: 16,
   },
   name: {
     fontSize: 18,
     fontWeight: 'bold',
+    flex: 1,
+
   },
 });
