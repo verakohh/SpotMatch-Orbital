@@ -4,7 +4,7 @@ import { getUser, getToken } from '../../User';
 import { getDoc } from 'firebase/firestore';
 import { ref } from '../../../firebase';
 
-export default function ProfileScreen() {
+export default function Profile() {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
 

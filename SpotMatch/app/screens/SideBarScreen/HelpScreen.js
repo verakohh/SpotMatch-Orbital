@@ -34,7 +34,7 @@ const faqs = [
   }
 ];
 
-const HelpScreen = () => {
+const Help = () => {
   const [expanded, setExpanded] = useState({});
 
   const handlePress = (index) => {
@@ -156,5 +156,5 @@ const styles = StyleSheet.create({
 },
 });
 
-export default HelpScreen;
+export default Help;
 

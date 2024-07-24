@@ -1,10 +1,9 @@
 
 
 export const FONTS ={
-    black: require('../assets/fonts/Montserrat-Black.ttf'),
-    bold: require("../assets/fonts/Montserrat-Bold.ttf"),
-    regular: require("../assets/fonts/Montserrat-Regular.ttf"),
-    medium: require("../assets/fonts/Montserrat-Medium.ttf"),
+    bold: require("../assets/fonts/IBMPlexSans-Bold.ttf"),
+    regular: require("../assets/fonts/IBMPlexSans-Regular.ttf"),
+    medium: require("../assets/fonts/IBMPlexSans-Medium.ttf"),
     light: require("../assets/fonts/Montserrat-Light.ttf")
 
 };

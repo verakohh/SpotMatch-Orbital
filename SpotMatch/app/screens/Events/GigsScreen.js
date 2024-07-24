@@ -134,7 +134,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Linking, ActivityIndicator, Modal, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { collection, getDoc, getDocs, doc, setDoc, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, getDoc, getDocs, doc, setDoc, serverTimestamp, addDoc, query, orderBy, where } from 'firebase/firestore';
 import { getUser } from '../../User'; // Update the path as needed
 import { db, FIREBASE_AUTH } from '@/firebase'; // Update with the correct relative path to your firebase.js file
 
@@ -240,7 +240,7 @@ const GigsScreen = () => {
       // Send the gig details
       const gigDetailsMessage = {
         sender: currentUser.uid,
-        text: `Check out this gig with me!\n\n${selectedGig.message}\n${selectedGig.gig_date}\n📍 ${selectedGig.location}\n[Click here for tickets](${selectedGig.link})`,
+        text: `Check out this gig with me!\n\n${selectedGig.message}`,
         timestamp: serverTimestamp(),
       };
 
@@ -259,6 +259,22 @@ const GigsScreen = () => {
     setSelectedMatches([]);
   };
 
+  const renderMessageText = (text) => {
+    if (!text) return null; // Return null if text is undefined or empty
+    const parts = text.split(/(\s+)/); // Split by spaces
+    return parts.map((part, index) => {
+      if (part.includes('.com') || part.startsWith('https://') || part.startsWith('http://')) {
+        return (
+          <TouchableOpacity key={index} onPress={() => Linking.openURL(part.startsWith('http') ? part : `http://${part}`)}>
+            <Text style={styles.link}>{part}</Text>
+          </TouchableOpacity>
+        );
+      } else {
+        return <Text key={index} style={styles.messageText}>{part}</Text>;
+      }
+    });
+  };
+
   const renderGig = ({ item }) => (
     <View style={styles.gigContainer}>
       {item.media_url ? (
@@ -272,10 +288,6 @@ const GigsScreen = () => {
         <Text>Image not available</Text>
       )}
       <Text style={styles.messageText}>{renderMessageText(item.message)}</Text>
-      <Text style={styles.messageText}>{item.gig_date}</Text>
-      <TouchableOpacity onPress={() => openLink(item.link)} style={styles.linkContainer}>
-        <Text style={styles.link}>Get tickets here!</Text>
-      </TouchableOpacity>
       <TouchableOpacity onPress={() => handleSharePress(item)} style={styles.shareButton}>
         <Feather name="share" size={24} color="black" />
       </TouchableOpacity>
@@ -283,7 +295,7 @@ const GigsScreen = () => {
   );
 
   const renderFooter = () => {
-    if (!isLoading) return null;
+    if (!loading) return null;
     return (
       <View style={styles.loadingFooter}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -300,7 +312,7 @@ const GigsScreen = () => {
         keyExtractor={(item, index) => index.toString()}
         ListFooterComponent={renderFooter}
       />
-      {!isLoading && gigs.length === 0 && (
+      {!loading && gigs.length === 0 && (
         <Text style={styles.noMoreGigsText}>No gigs available</Text>
       )}
       <Modal
