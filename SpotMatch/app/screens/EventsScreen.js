@@ -1,6 +1,6 @@
 import React from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet } from 'react-native';
 import GigsScreen from './Events/GigsScreen';
 import ConcertsScreen from './Events/ConcertsScreen';
 import ActivitiesScreen from './Events/ActivitiesScreen';
@@ -9,14 +9,14 @@ const Tab = createMaterialTopTabNavigator();
 
 const EventsScreen = () => {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Tab.Navigator
-         screenOptions={{
+        screenOptions={{
           tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' },
           tabBarIndicatorStyle: { backgroundColor: 'transparent', height: 0 },
-          tabBarStyle: { backgroundColor: '#FAF4EC', shadowOpacity: 0, elevation: 0, paddingBottom: 0, marginBottom:0, height:50},
+          tabBarStyle: { backgroundColor: '#FAF4EC', shadowOpacity: 0, elevation: 0 },
           tabBarPressColor: '#D3D3D3',
-          tabBarItemStyle: { borderRadius: 20, marginHorizontal: 0, paddingVertical:0,marginBottom:0, height:50},
+          tabBarItemStyle: { borderRadius: 20, marginHorizontal: 0, height: 50 },
           tabBarScrollEnabled: false,
           tabBarInactiveTintColor: '#212E37',
           tabBarActiveTintColor: '#FAF4EC',
@@ -56,7 +56,7 @@ const EventsScreen = () => {
           }}
         />
       </Tab.Navigator>
-    </View>
+    </SafeAreaView>
   );
 };
 
