@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, Image, StyleSheet, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
 import Swiper from 'react-native-deck-swiper';
-import { getUser, getToken, getTokenExpiration, removeToken } from '../../User';
+import { getUser, getToken, getTokenExpiration, removeToken, getSubscription } from '../../User';
 import { useNavigation , useFocusEffect} from '@react-navigation/core';
 import { getDoc, getDocs, query, where, arrayUnion} from 'firebase/firestore';
 import { ref, usersColRef } from '../../../firebase';
@@ -27,177 +27,170 @@ export default function UserRecScreen() {
     const [exit, setExit] = useState(false);
     const [api, setApi] = useState(null);
     const [isDebounced, setIsDebounced] = useState(false);
+    const [premium, setPremium] = useState(true);
     const playingRef = useRef(false);
     const currentTrackRef = useRef(null);
     const deviceIdRef = useRef(null);
 
     const fetchData = async () => {
-        const token = await getToken();
-        const spotifyApi = new SpotifyWebApi({ 
-            clientId : '89d33611962f42ecb9e982ee2b879bb8',
-            redirectUri : 'spotmatch://callback',
-            accessToken: token});
-        setApi(spotifyApi);
-        console.log("spotify api: ", spotifyApi);
-        console.log("token: ", token)
-        try {
-            // spotifyApi.setAccessToken(token);
-            // console.log("spotify api: ", spotifyApi);
+        await checkPremium();
+        
+        if (premium) {
+            const token = await getToken();
+            console.log("token: ", token)
 
-            console.log("set the token in fetchdata")
-        } catch (err) {
-            console.error("error in set token", err.message)
-        }
+            setLoading(true);
 
-        setLoading(true);
+            const user = await getUser();
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
 
-        const user = await getUser();
-        const userDocRef = ref(user.email);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (!await checkTokenValidity(token)) {
-            alert("Token of 1 hour has expired! Kindly refresh it")
-            navigation.navigate('Access');
-            return;
-        }
-
-        if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            const userGenres = userData.genres || [];
-            const previousMatched = userData.previousMatched || [];
-            const userMatched = userData.matched || [];
-            const userTrack = userData.topTracks[0].uri || '';
-            const userTrackId = userData.topTracks[0].id;
-            const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.id) : [];
-            console.log("userTrack: ", userTrack);
-            const instruction = [({
-                albumImg: DiscoverInstructionImage,
-                name: 'Instructions',
-                artist: 'Swipe LEFT for dismissal / RIGHT to add the song to a playlist in Spotify! \n Press the button below to stop / rewind a song \n Note: Refrain from spamming right swipes to avoid exceeding Spotify API rate limits',
-                names: ["SpotMatch"], 
-                uri: userTrack, 
-                id: userTrackId, 
-                flag: true})];
-            console.log("instruction object: ", instruction)
-            const spotifyId = userData.spotifyId;
-            const discPlaylistSongs = userData.discPlaylistSongs;
-            // const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.uri) : [];
-            
-            // if (trackIndex >= allTracks.length || trackIndex === 0) {
-                // console.log("index: ", trackIndex);
-                // const q = query(usersColRef, where("genres", "array-contains-any", userGenres));
-                // const querySnapshot = await getDocs(q);
-
-                // console.log("querySnapshot docs : ", querySnapshot.docs)
-            if (!userData.discPlaylistId && spotifyId) {
-                try {
-                    const playlistResponse = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
-                        name: "SpotMatch Discover Playlist",
-                        description: "Playlist for songs discovered via SpotMatch :)",
-                        public: false
-                    }, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    const playlistId = playlistResponse.data.id;
-                    console.log('playlist id: ', playlistId)
-                    await user.update({ discPlaylistId: playlistId , discPlaylistSongs: []});
-                } catch (error) {
-                    console.error("Error creating playlist: ", error);
-                    if(error.status === 429) {
-                        alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-                    }
-                }
-            }
-            
-            if(userMatched.length === 0) {
-                setRecommendedTracks([]);
-                setLoading(false);
+            if (!await checkTokenValidity(token)) {
+                alert("Token of 1 hour has expired! Kindly refresh it")
+                navigation.navigate('Access');
                 return;
             }
 
-            const previousMatchedPaths = previousMatched.map(ref => ref.path);
-            const userMatchedPaths = userMatched.map(ref => ref.path);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const userGenres = userData.genres || [];
+                const previousMatched = userData.previousMatched || [];
+                const userMatched = userData.matched || [];
+                const userTrack = userData.topTracks[0].uri || '';
+                const userTrackId = userData.topTracks[0].id;
+                const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.id) : [];
+                console.log("userTrack: ", userTrack);
+                const instruction = [({
+                    albumImg: DiscoverInstructionImage,
+                    name: 'Instructions',
+                    artist: 'Swipe LEFT for dismissal / RIGHT to add the song to a playlist in Spotify! \n Press the button below to stop / rewind a song \n Note: Refrain from spamming right swipes to avoid exceeding Spotify API rate limits',
+                    names: ["SpotMatch"], 
+                    uri: userTrack, 
+                    id: userTrackId, 
+                    flag: true})];
+                console.log("instruction object: ", instruction)
+                const spotifyId = userData.spotifyId;
+                const discPlaylistSongs = userData.discPlaylistSongs;
+                // const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.uri) : [];
+                
+                // if (trackIndex >= allTracks.length || trackIndex === 0) {
+                    // console.log("index: ", trackIndex);
+                    // const q = query(usersColRef, where("genres", "array-contains-any", userGenres));
+                    // const querySnapshot = await getDocs(q);
+
+                    // console.log("querySnapshot docs : ", querySnapshot.docs)
+                if (!userData.discPlaylistId && spotifyId) {
+                    try {
+                        const playlistResponse = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
+                            name: "SpotMatch Discover Playlist",
+                            description: "Playlist for songs discovered via SpotMatch :)",
+                            public: false
+                        }, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        const playlistId = playlistResponse.data.id;
+                        console.log('playlist id: ', playlistId)
+                        await user.update({ discPlaylistId: playlistId , discPlaylistSongs: []});
+                    } catch (error) {
+                        console.error("Error creating playlist: ", error);
+                        if(error.status === 429) {
+                            alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                        }
+                    }
+                }
+                
+                if(userMatched.length === 0) {
+                    setRecommendedTracks([]);
+                    setLoading(false);
+                    return;
+                }
+
+                const previousMatchedPaths = previousMatched.map(ref => ref.path);
+                const userMatchedPaths = userMatched.map(ref => ref.path);
 
 
-            console.log("previous matched: ", previousMatchedPaths)
-            console.log("user matched: ", userMatchedPaths)
+                console.log("previous matched: ", previousMatchedPaths)
+                console.log("user matched: ", userMatchedPaths)
 
-            const newlyMatchedPaths = userMatchedPaths.filter(path => !previousMatchedPaths.includes(path));
-            const newlyMatched = userMatched.filter(ref => newlyMatchedPaths.includes(ref.path));
-            const relevantTracks = await fetchRelevantTracks(userMatched, newlyMatched, userGenres);
-            const filteredTracks = discPlaylistSongs ? relevantTracks.filter(track => !discPlaylistSongs.includes(track.id) && !userTopTracks.includes(track.id)) : relevantTracks;
+                const newlyMatchedPaths = userMatchedPaths.filter(path => !previousMatchedPaths.includes(path));
+                const newlyMatched = userMatched.filter(ref => newlyMatchedPaths.includes(ref.path));
+                const relevantTracks = await fetchRelevantTracks(userMatched, newlyMatched, userGenres);
+                const filteredTracks = discPlaylistSongs ? relevantTracks.filter(track => !discPlaylistSongs.includes(track.id) && !userTopTracks.includes(track.id)) : relevantTracks;
+                
+                
+                console.log("new matched: ", newlyMatched)
+
+                
+                if(newlyMatched.length > 0) {
+                    await user.update({previousMatched: userMatched});
+                }
+
+
+                setRecommendedTracks([...instruction, ...filteredTracks]);
+                console.log("tracks length : ", recommendedTracks.length)
+
+                setLoading(false);
+                // querySnapshot.forEach(doc => {
+                //     const docData = doc.data();
+                //     if (!previousMatchedUsers.includes(doc.id) && docData.topTracks && docData.topTracks.length > 0) {
+                //         tracks = [
+                //             ...tracks, 
+                //             ...docData.topTracks.filter(track => track.uri && track.uri !== null)
+                //         ];
+                //         discoveredUsers.push(doc.id);
+                //     }
+                                    
+                // });
+                // console.log("user top tracks: ", userTopTracks);
+
+                // console.log("tracks: ", tracks);
+                // console.log(tracks.length)
+
+
+                // const uniqueTracks = tracks.filter(track => track.uri
+                //     //  && !userTopTracks.includes(track.uri) // commented bcs dont have other users with uri yet other than self accs
+                //     );
             
-            
-            console.log("new matched: ", newlyMatched)
+                // console.log('unique tracks: ', uniqueTracks);
+                // console.log(uniqueTracks.length)
 
-            
-            if(newlyMatched.length > 0) {
-                await user.update({previousMatched: userMatched});
+                // const rankedTracks = uniqueTracks.sort((a, b) => {
+                //     const aGenreMatch = a.genres ? a.genres.filter(genre => userGenres.includes(genre)).length : 0;
+                //     const bGenreMatch = b.genres ? b.genres.filter(genre => userGenres.includes(genre)).length : 0;
+                //     return bGenreMatch - aGenreMatch;
+                // });
+
+                // console.log("rankedTracks : ", rankedTracks)
+
+                // // setAllTracks(rankedTracks);
+                // setRecommendedTracks(rankedTracks.slice(0, 20));
+                // // setTrackIndex(20);
+                // setLoading(false);
+
+                // } else {
+                //     console.log("at else")
+                //     console.log("initial index: ",trackIndex)
+                //     console.log(allTracks[trackIndex])
+
+                //     setRecommendedTracks(allTracks.slice(trackIndex, trackIndex + 20));
+                //     const newTrackIndex = trackIndex + 20;
+                //     setTrackIndex(newTrackIndex);
+                //     console.log("recommended tracks: ", recommendedTracks)
+                //     console.log("after the slicing index: ",trackIndex) // supposed to be 40 after updating but remains as 20
+                //     console.log("new track index: ", newTrackIndex) //correctly shows 40
+                //     console.log(allTracks[trackIndex])// supposed to be 40 element but shows the 20 one due to the above
+                //     console.log(allTracks[trackIndex + 19])// supposed to be undefined bcs trackIndex updated to 40, so it would be 59 but shows the element at 39
+
+                //     setLoading(false);
+                // }
+            } else {
+                alert("Error! No userDoc");
+                return;
             }
-
-
-            setRecommendedTracks([...instruction, ...filteredTracks]);
-            console.log("tracks length : ", recommendedTracks.length)
-
-            setLoading(false);
-            // querySnapshot.forEach(doc => {
-            //     const docData = doc.data();
-            //     if (!previousMatchedUsers.includes(doc.id) && docData.topTracks && docData.topTracks.length > 0) {
-            //         tracks = [
-            //             ...tracks, 
-            //             ...docData.topTracks.filter(track => track.uri && track.uri !== null)
-            //         ];
-            //         discoveredUsers.push(doc.id);
-            //     }
-                                
-            // });
-            // console.log("user top tracks: ", userTopTracks);
-
-            // console.log("tracks: ", tracks);
-            // console.log(tracks.length)
-
-
-            // const uniqueTracks = tracks.filter(track => track.uri
-            //     //  && !userTopTracks.includes(track.uri) // commented bcs dont have other users with uri yet other than self accs
-            //     );
-        
-            // console.log('unique tracks: ', uniqueTracks);
-            // console.log(uniqueTracks.length)
-
-            // const rankedTracks = uniqueTracks.sort((a, b) => {
-            //     const aGenreMatch = a.genres ? a.genres.filter(genre => userGenres.includes(genre)).length : 0;
-            //     const bGenreMatch = b.genres ? b.genres.filter(genre => userGenres.includes(genre)).length : 0;
-            //     return bGenreMatch - aGenreMatch;
-            // });
-
-            // console.log("rankedTracks : ", rankedTracks)
-
-            // // setAllTracks(rankedTracks);
-            // setRecommendedTracks(rankedTracks.slice(0, 20));
-            // // setTrackIndex(20);
-            // setLoading(false);
-
-            // } else {
-            //     console.log("at else")
-            //     console.log("initial index: ",trackIndex)
-            //     console.log(allTracks[trackIndex])
-
-            //     setRecommendedTracks(allTracks.slice(trackIndex, trackIndex + 20));
-            //     const newTrackIndex = trackIndex + 20;
-            //     setTrackIndex(newTrackIndex);
-            //     console.log("recommended tracks: ", recommendedTracks)
-            //     console.log("after the slicing index: ",trackIndex) // supposed to be 40 after updating but remains as 20
-            //     console.log("new track index: ", newTrackIndex) //correctly shows 40
-            //     console.log(allTracks[trackIndex])// supposed to be 40 element but shows the 20 one due to the above
-            //     console.log(allTracks[trackIndex + 19])// supposed to be undefined bcs trackIndex updated to 40, so it would be 59 but shows the element at 39
-
-            //     setLoading(false);
-            // }
         } else {
-            alert("Error! No userDoc");
-            return;
+            console.log("not premium")
         }
 
     }
@@ -263,18 +256,42 @@ export default function UserRecScreen() {
         React.useCallback(() => {
             fetchData();
 
-          const checkIfPlayingAndPause = async () => {
-            const currentlyPlaying = await isPlaying();
-            if (currentlyPlaying) {
-              await pauseTrack();
-            }
-          };
-      
-            return async () => {
-                await checkIfPlayingAndPause();
+            if (premium) {
+            const checkIfPlayingAndPause = async () => {
+                const currentlyPlaying = await isPlaying();
+                if (currentlyPlaying) {
+                await pauseTrack();
+                }
             };
+        
+                return async () => {
+                    await checkIfPlayingAndPause();
+                };
+            }
         }, [])
     );
+
+    const checkPremium = async () => {
+        const subs = await getSubscription();
+        console.log( subs)
+        if (subs !== "premium") {
+            console.log("in here!")
+            setPremium(false);
+            
+        } else {
+            console.log("user is premium! everything okay!")
+
+        }
+
+    }
+
+    if (!premium) {
+        return (
+            <View style={styles.containerNonPremium}>
+                <Text style={styles.containerNonPremiumText}>Sorry, the playing of songs using the Spotify API is only for Spotify Premium users..</Text>
+            </View>
+        );
+    }
 
     const isPlaying = async () => {
         const token = await getToken();
@@ -424,56 +441,6 @@ export default function UserRecScreen() {
         }
     };
 
-
-    // const playTrack = async (uri) => {
-    //     try {
-    //         console.log("at play track")
-    //         console.log("api: ", api)
-    //         console.log('The access token is ' + api.getAccessToken());
-
-    //         await api.play({ uris: [uri] , position_ms: 50000,})
-    //         .then(
-    //             function () {
-    //               setPlaying(true);
-    //               console.log("playing");
-    //             },
-    //             function (err) {
-    //               //if the user making the request is non-premium, a 403 FORBIDDEN response code will be returned
-    //               console.log("Something went wrong!", err.message);
-    //             }
-    //         );
-    //         // setPlaying(true);
-    //         setCurrentTrack(uri);
-    //     } catch (error) {
-    //         console.error("Error playing track: ", error);
-    //     }
-    // };
-
-    // const pauseTrack = async () => {
-    //     try {
-    //         console.log("at pause track")
-    //         console.log("api: ", api)
-
-    //         // console.log("spotify api: ", spotifyApi);
-
-    //         console.log('The access token is ' + api.getAccessToken());
-
-    //         await api.pause()
-    //         .then(
-    //             function () {
-    //               setPlaying(false);
-    //               console.log("Playback paused");
-    //             },
-    //             function (err) {
-    //               //if the user making the request is non-premium, a 403 FORBIDDEN response code will be returned
-    //               console.log("Something went wrong!", err);
-    //             }
-    //           );
-    //         // setPlaying(false);
-    //     } catch (error) {
-    //         console.error("Error pausing track: ", error);
-    //     }
-    // };
     const checkTokenValidity = async () => {
         try {
             const expiration = await getTokenExpiration();
@@ -672,6 +639,25 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+       
+    },
+    containerNonPremium: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 10, 
+        padding: 10,
+        marginHorizontal: 25,
+    },
+    containerNonPremiumText: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 10, 
+        padding: 10,
+        fontSize: 25,
+        fontWeight: '500',
+        color: "#777696"
+
     },
     imgBackground: {
         flex: 1,

@@ -217,7 +217,7 @@ import { Text, TextInput, Image, View, StyleSheet, KeyboardAvoidingView, Touchab
 import Button from '../../components/navigation/Button';
 import { FIREBASE_AUTH, ref } from '../../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import User, { storeUser, getToken , storeEmail } from '../User';
+import User, { storeUser, getToken , storeEmail, storeSubscription } from '../User';
 import { getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/core';
 
@@ -253,7 +253,7 @@ const Login = () => {
         newUser.setRejected(data.rejected);
         newUser.setDismissed(data.dismissed);
 
-
+        await storeSubscription(data.subscription);
         await storeUser(newUser);
 
         navigation.navigate("SideBar");

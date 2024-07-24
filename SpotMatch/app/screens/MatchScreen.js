@@ -84,8 +84,8 @@ const MatchScreen = () => {
                     setLoading(true);
                     console.log('yes')
                     console.log("user: ",user)
-                    axios("https://api.spotify.com/v1/me/top/artists", {
-                        method: 'GET',
+                    axios.get("https://api.spotify.com/v1/me/top/artists", {
+                        // method: 'GET',
                         headers: {
                             Accept: "application/json",
                             "Content-Type": "application/json",
@@ -122,8 +122,8 @@ const MatchScreen = () => {
                         }
                     })       
 
-                    axios('https://api.spotify.com/v1/me', {
-                        method: 'GET',
+                    axios.get('https://api.spotify.com/v1/me', {
+                        // method: 'GET',
                         headers: {
                             Accept: "application/json",
                             "Content-Type": "application/json",
@@ -152,8 +152,8 @@ const MatchScreen = () => {
                         await user.update({displayName: displayname, imageUrl: uniqueUrl, subscription: productsubs, spotifyId: userId });
                     })
 
-                    axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
-                            method: "GET",
+                    axios.get("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+                            // method: "GET",
                             headers: {
                                 Accept: "application/json",
                                 "Content-Type": "application/json",

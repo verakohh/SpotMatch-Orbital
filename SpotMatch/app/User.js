@@ -331,8 +331,8 @@ export const storeToken = async (token, expiresIn) => {
 };
 
 export const storeSubscription = async (subs) => {
-  const stringified = JSON.stringify(subs);
-  await AsyncStorage.setItem('subscription', stringified);
+  // const stringified = JSON.stringify(subs);
+  await AsyncStorage.setItem('subscription', subs);
 };
 
 export const getUser = async () => {

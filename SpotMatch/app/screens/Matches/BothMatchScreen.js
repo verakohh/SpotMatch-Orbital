@@ -331,7 +331,7 @@ const BothMatchScreen = () => {
                         <Text style={styles.title}>{card.firstName}</Text>
                         <View style={styles.textContainer}>
                             <Text style={styles.headerText}>Age: <Text style={styles.text}>{card.age ? card.age : "N/A"}</Text></Text>
-                            <Text style={styles.headerText}>Top Artist: <Text style={styles.text}>{card.topArtists ? card.topArtists.slice(0, 1) : "N/A"}</Text></Text>
+                            {/* <Text style={styles.headerText}>Top Artist: <Text style={styles.text}>{card.topArtists ? card.topArtists.slice(0, 1) : "N/A"}</Text></Text> */}
 
                             {/* <Text style={styles.headerText}>Top 3 Artists: <Text style={styles.text}>{card.topArtists ? top3artists(card) : "N/A"}</Text></Text> */}
                             <View style={styles.common}>
@@ -462,8 +462,8 @@ const styles = StyleSheet.create({
         fontSize: 25,
         color: "white",
         width: "100%",
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 5 },
+        textShadowColor: "#c1d1e6",
+        textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 8,
         padding: 10,
         paddingBottom: 8,
@@ -521,14 +521,14 @@ const styles = StyleSheet.create({
     },
     commonHeader: {
         // color: "#eaeff6",
-        color: "#1e314b",
+        color: "#eaeff6",
         textAlign: "left",
         fontSize: 18,
         fontWeight: "600",
         marginBottom: 7,
         marginLeft: 8,
         // textShadowColor: "#171717",
-        textShadowColor: "#c1d1e6",
+        // textShadowColor: "#c1d1e6",
 
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 4,

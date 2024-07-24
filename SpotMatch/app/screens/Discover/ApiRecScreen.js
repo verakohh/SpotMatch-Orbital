@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, Image, StyleSheet, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
 import Swiper from 'react-native-deck-swiper';
-import { getUser, getToken, getTokenExpiration, removeToken } from '../../User';
+import { getUser, getToken, getTokenExpiration, removeToken, getSubscription } from '../../User';
 import { useNavigation , useFocusEffect} from '@react-navigation/core';
 import { getDoc, getDocs, query, where, arrayUnion} from 'firebase/firestore';
 import { ref, usersColRef } from '../../../firebase';
@@ -24,6 +24,8 @@ export default function ApiRecScreen() {
     const [isUpdating, setIsUpdating] = useState(false);
     const [seedTracks, setSeedTracks] = useState([]);
     const [isDebounced, setIsDebounced] = useState(false);
+    const [premium, setPremium] = useState(true);
+
 
     const playingRef = useRef(false);
     const currentTrackRef = useRef(null);
@@ -31,116 +33,147 @@ export default function ApiRecScreen() {
 
 
     const fetchApiRecommendations = async () => {
-        const token = await getToken();
-        setLoading(true);
-        const user = await getUser();
-        const userDocRef = ref(user.email);
-        const userDocSnap = await getDoc(userDocRef);
+        await checkPremium();
+        
+        if (premium) {
+            const token = await getToken();
+            setLoading(true);
+            const user = await getUser();
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
 
-        if (!await checkTokenValidity(token)) {
-            alert("Token of 1 hour has expired! Kindly refresh it")
-            navigation.navigate('Access');
-            return;
-        }
+            if (!await checkTokenValidity(token)) {
+                alert("Token of 1 hour has expired! Kindly refresh it")
+                navigation.navigate('Access');
+                return;
+            }
 
-        if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            const spotifyId = userData.spotifyId;
-            const discPlaylistSongs = userData.discPlaylistSongs;
-            const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.id) : [];
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const spotifyId = userData.spotifyId;
+                const discPlaylistSongs = userData.discPlaylistSongs;
+                const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.id) : [];
 
-            const seedTracksIds = userTopTracks.slice(0, 5).join(',');
-            setSeedTracks(seedTracksIds);
-            console.log("seed tracks ids: ", seedTracksIds);
+                const seedTracksIds = userTopTracks.slice(0, 5).join(',');
+                setSeedTracks(seedTracksIds);
+                console.log("seed tracks ids: ", seedTracksIds);
 
-            const userTrack = userData.topTracks[0].uri;
-            const userTrackId = userData.topTracks[0].id;
-            console.log("userTrack: ", userTrack);
-            const instruction = [({
-                albumImg: DiscoverInstructionImage,
-                name: 'Instructions',
-                artist: 'Swipe LEFT for dismissal / RIGHT to add the song to a playlist in Spotify! \n Press the button below to stop / rewind a song \n Note: Refrain from spamming right swipes to avoid exceeding Spotify API rate limits',
-                names: ["SpotMatch"], 
-                uri: userTrack, 
-                id: userTrackId, 
-                flag: true})];
-            console.log("instruction object: ", instruction)
-            
-            if (!userData.discPlaylistId && spotifyId) {
-                try {
-                    const playlistResponse = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
-                        name: "SpotMatch Discover Playlist",
-                        description: "Playlist for songs discovered via SpotMatch :)",
-                        public: false
-                    }, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
+                const userTrack = userData.topTracks[0].uri;
+                const userTrackId = userData.topTracks[0].id;
+                console.log("userTrack: ", userTrack);
+                const instruction = [({
+                    albumImg: DiscoverInstructionImage,
+                    name: 'Instructions',
+                    artist: 'Swipe LEFT for dismissal / RIGHT to add the song to a playlist in Spotify! \n Press the button below to stop / rewind a song \n Note: Refrain from spamming right swipes to avoid exceeding Spotify API rate limits',
+                    names: ["SpotMatch"], 
+                    uri: userTrack, 
+                    id: userTrackId, 
+                    flag: true})];
+                console.log("instruction object: ", instruction)
+                
+                if (!userData.discPlaylistId && spotifyId) {
+                    try {
+                        const playlistResponse = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
+                            name: "SpotMatch Discover Playlist",
+                            description: "Playlist for songs discovered via SpotMatch :)",
+                            public: false
+                        }, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        const playlistId = playlistResponse.data.id;
+                        console.log('playlist id: ', playlistId)
+                        await user.update({ discPlaylistId: playlistId , discPlaylistSongs: []});
+                    } catch (error) {
+                        console.error("Error creating playlist: ", error);
+                        if(error.status === 429) {
+                            alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                         }
+                    }
+                }
+
+                const options = {
+                    seed_tracks: seedTracksIds,
+                    limit: 20
+                }
+                try {
+                    const response = await axios.get('https://api.spotify.com/v1/recommendations', {
+                    params: options,
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                     });
-                    const playlistId = playlistResponse.data.id;
-                    console.log('playlist id: ', playlistId)
-                    await user.update({ discPlaylistId: playlistId , discPlaylistSongs: []});
+                    const tracks = response.data.tracks.map(track => ({
+                        id: track.id,
+                        uri: track.uri,
+                        name: track.name,
+                        artist: track.artists[0].name,
+                        albumImg: track.album.images[0].url
+                    }))
+
+                    const filteredTracks = discPlaylistSongs ? tracks.filter(track => !discPlaylistSongs.includes(track.id)) : tracks;
+
+                    setRecommendedTracks([...instruction, ...filteredTracks]);
+                    setLoading(false);
+                    console.log("tracks:", recommendedTracks)
+                    console.log("tracks length : ", recommendedTracks.length)
                 } catch (error) {
-                    console.error("Error creating playlist: ", error);
+                    console.error("Error fetching recommendations: ", error);
                     if(error.status === 429) {
                         alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                     }
                 }
-            }
-
-            const options = {
-                seed_tracks: seedTracksIds,
-                limit: 20
-            }
-            try {
-                const response = await axios.get('https://api.spotify.com/v1/recommendations', {
-                  params: options,
-                  headers: {
-                    'Authorization': `Bearer ${token}`
-                  }
-                });
-                const tracks = response.data.tracks.map(track => ({
-                    id: track.id,
-                    uri: track.uri,
-                    name: track.name,
-                    artist: track.artists[0].name,
-                    albumImg: track.album.images[0].url
-                }))
-
-                const filteredTracks = discPlaylistSongs ? tracks.filter(track => !discPlaylistSongs.includes(track.id)) : tracks;
-
-                setRecommendedTracks([...instruction, ...filteredTracks]);
-                setLoading(false);
-                console.log("tracks:", recommendedTracks)
-                console.log("tracks length : ", recommendedTracks.length)
-            } catch (error) {
-                console.error("Error fetching recommendations: ", error);
-                if(error.status === 429) {
-                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-                }
+            } else {
+                alert("Error! No userDoc");
             }
         } else {
-            alert("Error! No userDoc");
+            console.log("not premium")
         }
 
     }
 
     useFocusEffect(
         React.useCallback(() => {
-          fetchApiRecommendations();
+            fetchApiRecommendations();
 
-          const checkIfPlayingAndPause = async () => {
-            const currentlyPlaying = await isPlaying();
-            if (currentlyPlaying) {
-              await pauseTrack();
-            }
-          };
-      
-            return async () => {
-                await checkIfPlayingAndPause();
+            if (premium) {
+            const checkIfPlayingAndPause = async () => {
+                const currentlyPlaying = await isPlaying();
+                if (currentlyPlaying) {
+                await pauseTrack();
+                }
             };
+        
+                return async () => {
+                    await checkIfPlayingAndPause();
+                };
+            }
         }, [])
       );
+
+
+    const checkPremium = async () => {
+        const subs = await getSubscription();
+        console.log( subs)
+        if (subs !== "premium") {
+            console.log("in here!")
+            setPremium(false);
+            
+        } else {
+            console.log("user is premium! everything okay!")
+
+        }
+
+    }
+
+    if (!premium) {
+        return (
+            <View style={styles.containerNonPremium}>
+                <Text style={styles.containerNonPremiumText}>Sorry, the playing of songs using the Spotify API is only for Spotify Premium users..</Text>
+            </View>
+        );
+    }
 
     const isPlaying = async () => {
         const token = await getToken();
@@ -460,6 +493,23 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    containerNonPremium: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 10, 
+        padding: 10,
+        marginHorizontal: 25,
+    },
+    containerNonPremiumText: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 10, 
+        padding: 10,
+        fontSize: 25,
+        fontWeight: '500', 
+        color: "#777696"
     },
     imgBackground: {
         flex: 1,

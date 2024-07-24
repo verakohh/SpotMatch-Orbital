@@ -1,6 +1,6 @@
 import React, { useState, useEffect , useRef} from 'react';
 import { View, TextInput, FlatList, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Modal , ScrollView} from 'react-native';
-import { getUser, getToken, getTokenExpiration, removeToken } from '../User';
+import { getUser, getToken, getTokenExpiration, removeToken, getSubscription } from '../User';
 import { FIREBASE_AUTH, db, ref } from '../../firebase';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
@@ -8,7 +8,6 @@ import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, onSnapshot } f
 import Feather from 'react-native-vector-icons/Feather';
 import { LinearGradient } from 'react-native-svg';
 import { Audio } from 'expo-av';
-
 
 
 const ChatMusicScreen = ({route}) => {
@@ -23,6 +22,8 @@ const ChatMusicScreen = ({route}) => {
     const [playingSong, setPlayingSong] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [premium, setPremium] = useState(true);
+
     const navigation = useNavigation();
     const flatListRef = useRef(null);
     const deviceIdRef = useRef(null);
@@ -34,93 +35,128 @@ const ChatMusicScreen = ({route}) => {
         React.useCallback(() => {
             fetchChatMusic();
 
-           
-            const chatDocRef = doc(db, 'chats', combinedId);
-            const checkIfPlayingAndPause = async () => {
-                const currentlyPlaying = await isPlaying();
-                if (currentlyPlaying) {
-                  await pauseTrack();
-                }
-            };
-
-            // interval = setInterval(checkSongCompletion, 10000); // Check first 10 sec by default
-
-
-            const unsubscribe = onSnapshot(chatDocRef, async (doc) => {
-                const data = doc.data();
-                setPlayingSong(data.currentSong);
-                if (data.playing && !playingRef.current && data.currentSong) {
-                    //if matched user is playing, current user not playing, current song exists 
-                    console.log("came in the unsubscribe")
-                    setProgress(0);
-                    playTrack(data.currentSong);
-                    
-                } else if (!data.playing && await isPlaying()) {
+            if (premium) {
+                const chatDocRef = doc(db, 'chats', combinedId);
+                const checkIfPlayingAndPause = async () => {
+                    const currentlyPlaying = await isPlaying();
+                    if (currentlyPlaying) {
                     await pauseTrack();
-                } 
-            });
+                    }
+                };
 
-            return async () => {
-                await checkIfPlayingAndPause();
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-                unsubscribe();
-            };
+                // interval = setInterval(checkSongCompletion, 10000); // Check first 10 sec by default
+
+
+                const unsubscribe = onSnapshot(chatDocRef, async (doc) => {
+                    const data = doc.data();
+                    setPlayingSong(data.currentSong);
+                    if (data.playing && !playingRef.current && data.currentSong) {
+                        //if matched user is playing, current user not playing, current song exists 
+                        console.log("came in the unsubscribe")
+                        setProgress(0);
+                        playTrack(data.currentSong);
+                        
+                    } else if (!data.playing && await isPlaying()) {
+                        await pauseTrack();
+                    } 
+                });
+
+                return async () => {
+                    await checkIfPlayingAndPause();
+                    clearInterval(intervalRef.current);
+                    intervalRef.current = null;
+                    unsubscribe();
+                };
+            }
         }, [combinedId])
     );
 
     const fetchChatMusic = async () => {
-        const chatDocRef = doc(db, 'chats', combinedId);
-        const chatDocSnap = await getDoc(chatDocRef);
-        const user = await getUser();
-        const userDocRef = ref(user.email);
-        const userDocSnap = await getDoc(userDocRef);
-        const token = await getToken();
-        if (!await checkTokenValidity(token)) {
-            alert("Token of 1 hour has expired! Kindly refresh it")
-            navigation.navigate('Access');
-            return;
-        }
-
-        if (chatDocSnap.exists()) {
-            const chatData = chatDocSnap.data();
-            const fetchedChatMusic = chatData.chatMusic || [];
-            setChatMusic(fetchedChatMusic);
-        }
-
-        if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            const spotifyId = userData.spotifyId;
-            const chatPlaylistId = userData.chatPlaylistId;
-
-            if (!chatPlaylistId && spotifyId) {
-                try {
-                    const response = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
-                        name: "SpotMatch Chat Playlist",
-                        description: "Playlist for matched chat users' songs",
-                        public: false,
-                    }, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                    });
-                    const playlistId = response.data.id;
-                    await user.update({ chatPlaylistId: playlistId, chatPlaylistSongs: []});
-                } catch (error) {
-                    console.error("Error creating playlist: ", error);
-                    if(error.status === 429) {
-                        alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-                    }
-                }
+        await checkPremium();
+        
+        if (premium) {
+            const chatDocRef = doc(db, 'chats', combinedId);
+            const chatDocSnap = await getDoc(chatDocRef);
+            const user = await getUser();
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
+            const token = await getToken();
+            if (!await checkTokenValidity(token)) {
+                alert("Token of 1 hour has expired! Kindly refresh it")
+                navigation.navigate('Access');
+                return;
             }
 
+            if (chatDocSnap.exists()) {
+                const chatData = chatDocSnap.data();
+                const fetchedChatMusic = chatData.chatMusic || [];
+                setChatMusic(fetchedChatMusic);
+            }
 
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const spotifyId = userData.spotifyId;
+                const chatPlaylistId = userData.chatPlaylistId;
+
+                if (!chatPlaylistId && spotifyId) {
+                    try {
+                        const response = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
+                            name: "SpotMatch Chat Playlist",
+                            description: "Playlist for matched chat users' songs",
+                            public: false,
+                        }, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                            },
+                        });
+                        const playlistId = response.data.id;
+                        await user.update({ chatPlaylistId: playlistId, chatPlaylistSongs: []});
+                    } catch (error) {
+                        console.error("Error creating playlist: ", error);
+                        if(error.status === 429) {
+                            alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                        }
+                    }
+                }
+
+
+            } else {
+                alert("Error! No userDoc");
+            }
+            
+            setLoading(false);
         } else {
-            alert("Error! No userDoc");
+            console.log("not premium")
         }
-        
-        setLoading(false);
     };
+
+    const checkPremium = async () => {
+        const subs = await getSubscription();
+        console.log( subs)
+        if (subs !== "premium") {
+            console.log("in here!")
+            setPremium(false);
+            
+        } else {
+            console.log("user is premium! everything okay!")
+
+        }
+
+    }
+
+    if (!premium) {
+        return (
+            <View style={styles.chevron} >
+                 <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Feather name="chevron-left" size={24} color="black" />
+                </TouchableOpacity>
+                <View style={styles.containerNonPremium}>
+    
+                    <Text style={styles.containerNonPremiumText}>Sorry, the playing of songs using the Spotify API is only for Spotify Premium users..</Text>
+                </View>
+            </View>
+        );
+    }
 
     const updateFirestore = async (data) => {
         const chatDocRef = doc(db, 'chats', combinedId);
@@ -606,7 +642,7 @@ const ChatMusicScreen = ({route}) => {
                 />
             </View>
 
-                <Text style={styles.searchResultsHeader}>Search Results: (Pick the song!)</Text>
+                <Text style={searchResults.length > 0 && query.length > 0 ? styles.searchResultsHeader : { display: "none" }}>Search Results: (Pick the song!)</Text>
                 <FlatList
                     data={searchResults}
                     keyExtractor={(item) => item.id}
@@ -616,8 +652,10 @@ const ChatMusicScreen = ({route}) => {
                         </TouchableOpacity>
                     )}
                     ItemSeparatorComponent={() => <View style={styles.separator} />}
-                    style={searchResults.length > 0 && query.length > 0 ? styles.searchResults : { display: "none" }}
+                    style={ searchResults.length > 0 && query.length > 0 ? styles.searchResults : { display: "none" }}
                 />
+
+                <Text style={styles.instructions}>Tap on a song to play or stop!</Text>
                 <View style={styles.songHeader}>
                     <Text style={styles.songIndexHeader}>#</Text>
                     <Text style={styles.songTitleHeader}>Title</Text>
@@ -764,6 +802,30 @@ const styles = StyleSheet.create({
         backgroundColor: '#FAF4EC',
         padding: 16,
     },
+    containerNonPremium: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 10, 
+        padding: 10,
+        marginHorizontal: 25,
+    },
+    containerNonPremiumText: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 10, 
+        padding: 10,
+        fontSize: 25,
+        fontWeight: '500', 
+        color: "#777696"
+    },
+    chevron: {
+        flex: 1, 
+        margin: 10,
+        paddingTop: 6,
+        paddingHorizontal: 6
+        
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -783,6 +845,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: '#000',
+    },
+    instructions: {
+        marginVertical: 10,
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#708090',
     },
     searchResults: {
         flex: 1,
@@ -968,6 +1036,8 @@ const styles = StyleSheet.create({
         textShadowRadius: 6,
         textShadowRadius: 5,
         paddingHorizontal: 10,
+        paddingBottom: 10,
+        marginBottom: 20
     },
     progressBarContainer: {
         flexDirection: 'row',
@@ -996,7 +1066,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         width: '80%',
         paddingHorizontal: 40,
-        marginVertical: 18 
+        marginVertical: 20 
     },
     modalCloseButton: {
         position: 'absolute',
