@@ -233,12 +233,14 @@ const Login = () => {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log(response);
+      console.log("email: ", email)
       const userDoc = ref(email);
       const docSnap = await getDoc(userDoc);
       console.log(docSnap);
 
       if (docSnap.exists()) {
         const data = docSnap.data()
+        console.log("data email: ", data.email)
         const newUser = new User(data.firstName, data.lastName, data.email);
         newUser.setArtists(data.topArtists);
         newUser.setGenres(data.genres);
