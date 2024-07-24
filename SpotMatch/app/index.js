@@ -59,7 +59,6 @@
 //   );
 // }
 // App.js
-
 import 'react-native-gesture-handler';
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -70,6 +69,7 @@ import { ChatProvider } from './screens/context/ChatContext';
 import Registration from './screens/Registration';
 import Login from './screens/Login';
 import SideBar from './screens/SideBar';
+import AccountManagement from './screens/SideBarScreen/AccountManagement';
 import SignUpScreen from './screens/SignUp/SignUpScreen';
 import SignUpStep2Screen from './screens/SignUp/SignUpStep2Screen';
 import SpotifyAuthScreen from './screens/SignUp/SpotifyAuthScreen';
@@ -84,7 +84,9 @@ import DiscoverScreen from './screens/DiscoverScreen';
 import EventsScreen from './screens/EventsScreen';
 import NavigationTab from './screens/NavigationTab';
 import ChatMusicScreen from './screens/ChatMusicScreen';
-import Access from './screens/Access'
+import Access from './screens/Access';
+import ProfileScreen from './screens/SideBarScreen/ProfileScreen';
+import ChangePasswordScreen from './screens/SideBarScreen/ChangePasswordScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -116,9 +118,12 @@ export default function App() {
             <Stack.Screen name="Activities" component={ActivitiesScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ActivityDetails" component={ActivityDetails} options={{ headerShown: false }} />
             <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
+            <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ChatMusicScreen" component={ChatMusicScreen} options={{ headerShown: false }} />
             <Stack.Screen name="MatchesProfileScreen" component={MatchesProfileScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="AccountManagement" component={AccountManagement} options={{ headerShown: false }} />
+            <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
       </ChatProvider>
     </UserProvider>

@@ -35,7 +35,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    height: 50,
+    paddingTop: 5,
+    height: 60,
+    backgroundColor: '#FAF4EC',
   },
   tab: {
     alignItems: 'center',
