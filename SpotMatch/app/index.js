@@ -106,14 +106,14 @@ export default function App() {
   return (
     <UserProvider>
       <ChatProvider>
-          <Stack.Navigator initialRouteName="Login">
+          <Stack.Navigator initialRouteName="Access">
+          <Stack.Screen name="Access" component={Access} options={{ headerShown: false }} />
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
             <Stack.Screen name="SignUpScreen" component={SignUpScreen} options={{ headerShown: false }} />
             <Stack.Screen name="SignUpStep2Screen" component={SignUpStep2Screen} options={{ headerShown: false }} />
             <Stack.Screen name="SpotifyAuthScreen" component={SpotifyAuthScreen} options={{ headerShown: false }} />
             <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Registration" component={Registration} options={{ headerShown: false }} />
-            <Stack.Screen name="Access" component={Access} options={{ headerShown: false }} />
             <Stack.Screen name="SideBar" component={SideBar} options={{ headerShown: false }} />
             <Stack.Screen name="Activities" component={ActivitiesScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ActivityDetails" component={ActivityDetails} options={{ headerShown: false }} />

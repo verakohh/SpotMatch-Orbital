@@ -9,7 +9,7 @@ import { refDoc , update} from './Registration';
 import { useNavigation } from '@react-navigation/core';
 import { useUserInfo, UserContext } from '../UserContext';
 import { ref } from '../../firebase';
-import { storeToken } from '../User';
+import { getToken, removeToken, storeToken } from '../User';
 
 
 
@@ -52,16 +52,37 @@ export default function Access() {
         discovery
     );
     
-    useEffect(() => {
-        if (response?.type === "success") {
-          const { access_token, expires_in } = response.params;
-          console.log("response: ", response)
-          console.log("response params: ", response.params)
-          console.log(access_token)
-          storeToken(access_token, expires_in);
-          // setToken(access_token);
-          navigation.navigate("Login");
+    useEffect( () => {
+      console.log("response: ", response)
+        const fetchData = async () => {
+          console.log("came in access.js fetchData")
+          
+          if (response && response?.type === "success") {
+            if(await getToken()) {
+              console.log("there was a previous token...")
+              await removeToken();
+              const { access_token, expires_in } = response.params;
+              console.log("response: ", response)
+              console.log("response params: ", response.params)
+              console.log("access_token: ", access_token)
+              await storeToken(access_token, expires_in);
+              navigation.navigate("Login");
+            } else {
+              const { access_token, expires_in } = response.params;
+              console.log("response: ", response)
+              console.log("response params: ", response.params)
+              console.log("access_token: ",access_token)
+              await storeToken(access_token, expires_in);
+              navigation.navigate("Login");
+            }
+        } else if (response?.type === "cancel") {
+          alert("Please continue to sign into Spotify and grant us access")
+        } else if (response && response?.type !== "success") {
+          alert("Unsuccessful! Please try again.")
         }
+      }
+      fetchData();
+    
       }, [response]);
 
 

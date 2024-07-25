@@ -4,7 +4,7 @@ import Button from '../../../components/navigation/Button';
 import { ResponseType, useAuthRequest } from 'expo-auth-session';
 import { useNavigation, useRoute } from '@react-navigation/core';
 import { UserContext } from '../../UserContext';
-import { storeToken } from '../../User';
+import { getToken, removeToken, storeToken } from '../../User';
 import Feather from 'react-native-vector-icons/Feather';
 
 
@@ -40,15 +40,37 @@ const SpotifyAuthScreen = ({route}) => {
     );
 
     useEffect(() => {
-        if (response?.type === "success") {
-            const { access_token, expires_in } = response.params;
-            console.log("response: ", response)
-          console.log("response params: ", response.params)
-          console.log(access_token)
-            storeToken(access_token, expires_in);
-            navigation.navigate("WelcomeScreen", { firstName, lastName, email, password, birthdate, age });
+        console.log("response: ", response)
+        const fetchData = async () => {
+          console.log("came in access.js fetchData")
+          
+          if (response && response?.type === "success") {
+            if(await getToken()) {
+              console.log("there was a previous token...")
+              await removeToken();
+              const { access_token, expires_in } = response.params;
+              console.log("response: ", response)
+              console.log("response params: ", response.params)
+              console.log("access_token: ", access_token)
+              await storeToken(access_token, expires_in);
+              navigation.navigate("Login");
+            } else {
+              const { access_token, expires_in } = response.params;
+              console.log("response: ", response)
+              console.log("response params: ", response.params)
+              console.log("access_token: ",access_token)
+              await storeToken(access_token, expires_in);
+              navigation.navigate("Login");
+            }
+        } else if (response?.type === "cancel") {
+          alert("Please continue to sign into Spotify and grant us access")
+        } else if (response && response?.type !== "success") {
+          alert("Unsuccessful! Please try again.")
         }
-    }, [response]);
+      }
+      fetchData();
+    
+      }, [response]);
 
     return (
         <View style={styles.container}>
