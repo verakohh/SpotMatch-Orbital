@@ -231,6 +231,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 export default class User {
   constructor(firstName, lastName, email) {
     this.firstName = firstName;
@@ -307,37 +308,101 @@ export default class User {
 }
 
 export const removeUser = async () => {
-  await AsyncStorage.removeItem('user');
+  try {
+    await AsyncStorage.removeItem('user', () => console.log("async removed user"));
+    console.log("removed the user! ")
+
+  } catch (error) {
+    console.error("Failed to remove user: ", error)
+    alert("Failed to remove user: ", error)
+  }
 };
 
 export const removeToken = async () => {
-  await AsyncStorage.removeItem('token');
-  await AsyncStorage.removeItem('tokenExpiration');
+  try {
+    const tokenJson = await AsyncStorage.getItem('token');
+    const tokenExpirationJson = await AsyncStorage.getItem('tokenExpiration');
+
+    await AsyncStorage.removeItem('token', () => console.log("async removed token: ", tokenJson));
+    await AsyncStorage.removeItem('tokenExpiration', () => console.log("async removed tokenExpiration", tokenExpirationJson ));
+
+  } catch (error) {
+    console.error("Failed to remove token: ", error)
+    alert("Failed to remove token: ", error)
+  }
 };
 
+export const removeSubscription = async () => {
+  try {
+    await AsyncStorage.removeItem('subscription', () => console.log("async removed subscription"));
+  } catch (error) {
+    console.error("Failed to remove subscription: ", error)
+    alert("Failed to remove subscription: ", error)
+  }
+};
+  
+
 export const storeUser = async user => {
-  const stringified = JSON.stringify(user);
-  await AsyncStorage.setItem('user', stringified);
+  try {
+    if (user) {
+      const stringified = JSON.stringify(user);
+      await AsyncStorage.setItem('user', stringified, () => console.log("async set user"));
+    } else {
+      alert("No user object to store")
+    }
+  } catch (error) {
+    console.error("Failed to store user: ", error)
+    alert("Failed to store user: ", error)
+  }
 };
 
 export const storeToken = async (token, expiresIn) => {
-  const expirationTime = new Date().getTime() + expiresIn * 1000;
-  try {
-    await AsyncStorage.setItem('token', token);
-    await AsyncStorage.setItem('tokenExpiration', expirationTime.toString());
-  } catch (error) {
-    console.error('Error storing token', error);
+  if (token && expiresIn) {
+    const expirationTime = new Date().getTime() + expiresIn * 1000;
+    try {
+      await AsyncStorage.setItem('token', token, () => console.log("async set token", token));
+      await AsyncStorage.setItem('tokenExpiration', expirationTime.toString(), () => console.log("async set tokenExpiration: ", expirationTime.toString()));
+    } catch (error) {
+      console.error('Error storing token', error);
+      alert("Failed to store token: ", error)
+
+    } 
+  } else {
+    alert("No token and expiration to store")
   }
 };
 
 export const storeSubscription = async (subs) => {
-  // const stringified = JSON.stringify(subs);
-  await AsyncStorage.setItem('subscription', subs);
+  try {
+    if (subs) {
+      // const stringified = JSON.stringify(subs);
+      await AsyncStorage.setItem('subscription', subs, () => console.log('async set subscription'));
+    } else {
+      alert("No subscription to store")
+    }
+  } catch (error) {
+    console.error('Error storing subscription', error);
+    alert("Failed to store subscription: ", error)
+  }
+};
+
+export const storeEmail = async email => {
+  try {
+    if (email) {
+      // const stringified = JSON.stringify(email);
+      await AsyncStorage.setItem('email', email, () => console.log('async set email'));
+    } else {
+      alert("No email to store")
+    }
+  } catch (error) {
+    console.error('Error storing email', error);
+    alert("Failed to store email: ", error)
+  }
 };
 
 export const getUser = async () => {
   try {
-    const userJson = await AsyncStorage.getItem('user');
+    const userJson = await AsyncStorage.getItem('user', () => console.log('async got user'));
     if (userJson) {
       const userData = JSON.parse(userJson);
       const user = new User(userData.firstName, userData.lastName, userData.email);
@@ -345,45 +410,64 @@ export const getUser = async () => {
       user.setGenres(userData.genres);
       user.setDisplayName(userData.displayName);
       user.setTopTracksData(userData.tracks);
+      user.setAge(userData.age);
+      user.setBirthdate(userData.birthdate);
       return user.userInstance();
+    } else {
+      alert("No userJson!")
     }
   } catch (error) {
-    console.error("Failed to load user: ", error);
+    console.error("Failed to get user: ", error);
+    alert("Failed to get user: ", error)
+
   }
 };
 
 export const getToken = async () => {
   try {
-    const tokenJson = await AsyncStorage.getItem('token');
+    const tokenJson = await AsyncStorage.getItem('token', () => console.log('async got token'));
+    console.log("token got is: ", tokenJson);
     return tokenJson;
   } catch (error) {
-    console.error("Failed to load token: ", error);
+    console.error("Failed to get token: ", error);
+    alert("Failed to get token: ", error)
+
   }
 };
 
 export const getTokenExpiration = async () => {
   try {
-    const expirationJson = await AsyncStorage.getItem('tokenExpiration');
-    return expirationJson;
+    const expirationJson = await AsyncStorage.getItem('tokenExpiration', () => console.log("async got token Expiration: "));
+    if (expirationJson) {
+      return expirationJson;
+    } else {
+      alert("No token Expiration")
+    }
   } catch (error) {
-    console.error("Failed to load token expiration: ", error);
+    console.error("Failed to get token expiration: ", error);
+    alert("Failed to get token Expiration: ", error)
+
   }
 };
 
 export const getEmail = async () => {
   try {
-    const emailJson = await AsyncStorage.getItem('email');
+    const emailJson = await AsyncStorage.getItem('email', () => console.log("async got email: ", emailJson));
     return emailJson;
   } catch (error) {
-    console.error("Failed to load email: ", error);
+    console.error("Failed to get email: ", error);
+    alert("Failed to get email: ", error)
+
   }
 };
 
 export const getSubscription = async () => {
   try {
-    const subsJson = await AsyncStorage.getItem('subscription');
+    const subsJson = await AsyncStorage.getItem('subscription', () => console.log("async got subscription: ", subsJson));
     return subsJson;
   } catch (error) {
-    console.error("Failed to load subscription: ", error);
+    console.error("Failed to get subscription: ", error);
+    alert("Failed to get subscription: ", error)
+
   }
 };

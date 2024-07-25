@@ -255,10 +255,17 @@ const Login = () => {
         newUser.setRejected(data.rejected);
         newUser.setDismissed(data.dismissed);
 
-        await storeSubscription(data.subscription);
-        await storeUser(newUser);
+        const subs = data.subscription 
+        if (subs) {
+          await storeSubscription(data.subscription);
+          await storeUser(newUser);
+          navigation.navigate("SideBar");
+        } else {
+          await storeUser(newUser);
+          navigation.navigate("SideBar");
+        }
 
-        navigation.navigate("SideBar");
+        
       } else {
         alert("Login failed! Try again");
       }

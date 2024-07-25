@@ -389,23 +389,45 @@ export default function UserRecScreen() {
         const devices = await getAvailableDevices();
         console.log('devices: ', devices)
         if (devices.length > 0) {
-            const selectedDevice = devices[0].id; // Select the first device
-            console.log("device phone?? :", devices[1])
-            setDeviceId(selectedDevice);
-            deviceIdRef.current = selectedDevice;
+            const smartphoneDevice = devices.filter(device => device.type === "smartphone")
+            console.log("smartphone device : ", smartphoneDevice)
+
+            //checking isactive device
+            const isActiveDevice = devices.filter(device => device.is_active);
+            console.log("is active devices? :", isActiveDevice);
+            if (smartphoneDevice) {
+                //checking if there are any smartphone devices, if so, use the first one
+                const selectedDevice = smartphoneDevice[0].id
+                console.log("selectedDevice Smartphone id: ", selectedDevice);
+                console.log("selected device type: ", smartphoneDevice[0].type)
+                deviceIdRef.current = selectedDevice;
+                setDeviceId(selectedDevice);
+                
+            } else {
+                const selectedDevice = devices[0].id; // Select the first device
+                console.log("selected device type: ", devices[0].type)
+                deviceIdRef.current = selectedDevice;
+                setDeviceId(selectedDevice);
+                
+            }
+            
             try {
-                await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice}`, 
-                { uris: [uri] },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                setPlaying(true);
-                setCurrentTrack(uri);
-                playingRef.current = true;
-                currentTrackRef.current = uri;
+                if (deviceIdRef.current) {
+                    await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`, 
+                    { uris: [uri] },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    setPlaying(true);
+                    setCurrentTrack(uri);
+                    playingRef.current = true;
+                    currentTrackRef.current = uri;
+                } else {
+                    alert("No device id!")
+                }
 
             } catch (error) {
                 console.error("Error playing track: ", error);
@@ -427,14 +449,19 @@ export default function UserRecScreen() {
         }
 
         try {
-            setPlaying(false);
-            playingRef.current = false;
-            console.log("device id: ", deviceIdRef.current)
-            await axios.put(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceIdRef.current}`, {}, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            if (deviceIdRef.current) {
+                setPlaying(false);
+                playingRef.current = false;
+                console.log("device id: ", deviceIdRef.current)
+                await axios.put(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceIdRef.current}`, {}, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            } else {
+                alert("No device id!")
+
+            }
             
         } catch (error) {
             console.error("Error pausing track: ", error);
@@ -450,11 +477,13 @@ export default function UserRecScreen() {
             if (expiration && new Date().getTime() < parseInt(expiration)) {
                 console.log("token is okay")
                 return true;
+            } else {
+                console.log("token is expired")
+                return false;
             }
         } catch (error) {
             console.error('Error checking token validity', error);
         }
-        return false;
     };
 
     const handlePlayPause = async (uri) => {

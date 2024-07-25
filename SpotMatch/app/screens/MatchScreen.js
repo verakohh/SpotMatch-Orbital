@@ -33,7 +33,9 @@ const MatchScreen = () => {
 
     // useEffect(() => {
         const fetchData = async () => {
+            console.log("at fetchData MatchScreen")
             const token = await getToken();
+            console.log("matchScreen token is: ", token)
             if (!await checkTokenValidity(token)) {
                 alert("Token of 1 hour has expired! Kindly refresh it")
                 navigation.navigate('Access');
@@ -84,8 +86,13 @@ const MatchScreen = () => {
                     setLoading(true);
                     console.log('yes')
                     console.log("user: ",user)
-                    axios.get("https://api.spotify.com/v1/me/top/artists", {
-                        // method: 'GET',
+                    const headers = {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    };
+                    axios("https://api.spotify.com/v1/me/top/artists", {
+                        method: 'GET',
                         headers: {
                             Accept: "application/json",
                             "Content-Type": "application/json",
@@ -97,7 +104,9 @@ const MatchScreen = () => {
                         }
                     })
                     .then(async res => {
-                        console.log(res.data)
+                        // alert("Artist and genre response:",res)
+                        // alert("Artist and genre response data:", res.data)
+                        console.log("Artist and genre response: ",res.data)
                         if (res.data && res.data.items && Array.isArray(res.data.items)) {
                             const names = res.data.items.map(artist => artist.name); 
                             user.setArtists(names);
@@ -118,12 +127,12 @@ const MatchScreen = () => {
                             await user.update({topArtists: names, genres: uniqueGenres});
                                     // user.update({genres: genre}); 
                         } else {
-                            console.error('Invalid response format: ', res.data);
+                            alert('Invalid response format: ', res.data);
                         }
                     })       
 
-                    axios.get('https://api.spotify.com/v1/me', {
-                        // method: 'GET',
+                    axios('https://api.spotify.com/v1/me', {
+                        method: 'GET',
                         headers: {
                             Accept: "application/json",
                             "Content-Type": "application/json",
@@ -131,7 +140,9 @@ const MatchScreen = () => {
                         },
                     })
                     .then(async res => {
-                        console.log(res.data)
+                        alert("profile data: ",res.data)
+
+                        console.log("profile data: ",res.data)
                         const displayname = res.data.display_name;
                         user.setDisplayName(displayname);
 
@@ -152,8 +163,8 @@ const MatchScreen = () => {
                         await user.update({displayName: displayname, imageUrl: uniqueUrl, subscription: productsubs, spotifyId: userId });
                     })
 
-                    axios.get("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
-                            // method: "GET",
+                    axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+                            method: "GET",
                             headers: {
                                 Accept: "application/json",
                                 "Content-Type": "application/json",
@@ -161,6 +172,8 @@ const MatchScreen = () => {
                             },
                     })
                     .then(async res => {
+                        alert("toptrack data: ", res.data)
+                        console.log("toptrack data: ", res.data)
                         if (res.data && res.data.items && Array.isArray(res.data.items)) {
                             const topTracks = res.data.items.map(track => ({
                                 id: track.id,
@@ -179,7 +192,8 @@ const MatchScreen = () => {
                         }
                     });
                 } catch (error) {
-                        console.error('Error in useEffect: ', error.response);
+                        alert('Error in useEffect: ', error.response);
+                        console.error("error fetching artist genere" , error.response)
                 } finally {
                     setDataUpdated(true);
                     setLoading(false);
