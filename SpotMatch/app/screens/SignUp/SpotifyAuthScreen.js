@@ -13,8 +13,11 @@ const discovery = {
     tokenEndpoint: 'https://accounts.spotify.com/api/token',
 };
 
-const clientId = '89d33611962f42ecb9e982ee2b879bb8';
+const clientId = '796b139564514f198f8511f8b260ff4b';
+// const clientId = '894050794daa4a568ee64d6a083cf2de';
 const redirectUri = 'spotmatch://callback';
+// const clientId = '618f2ff3cc724ed782719b1df8ceabda';
+// const redirectUri = 'smatch://callback';
 
 const SpotifyAuthScreen = ({route}) => {
     const navigation = useNavigation();
@@ -35,6 +38,9 @@ const SpotifyAuthScreen = ({route}) => {
             ],
             usePKCE: false,
             responseType: ResponseType.Token,
+            extraParams: {
+                show_dialog: 'true'
+            }
         },
         discovery
     );
@@ -46,21 +52,28 @@ const SpotifyAuthScreen = ({route}) => {
           
           if (response && response?.type === "success") {
             if(await getToken()) {
-              console.log("there was a previous token...")
-              await removeToken();
-              const { access_token, expires_in } = response.params;
-              console.log("response: ", response)
-              console.log("response params: ", response.params)
-              console.log("access_token: ", access_token)
-              await storeToken(access_token, expires_in);
-              navigation.navigate("Login");
+                console.log("there was a previous token...")
+                await removeToken();
+                const { access_token, expires_in } = response.params;
+                console.log("response: ", response)
+                console.log("response params: ", response.params)
+                console.log("access_token: ", access_token)
+                await storeToken(access_token, expires_in);
+                console.log("the new token:")
+                const token = await getToken();
+                if (token) {
+                    navigation.navigate("WelcomeScreen", { firstName, lastName, email, password, birthdate, age });
+                }
             } else {
-              const { access_token, expires_in } = response.params;
-              console.log("response: ", response)
-              console.log("response params: ", response.params)
-              console.log("access_token: ",access_token)
-              await storeToken(access_token, expires_in);
-              navigation.navigate("Login");
+                const { access_token, expires_in } = response.params;
+                console.log("response: ", response)
+                console.log("response params: ", response.params)
+                console.log("access_token: ",access_token)
+                await storeToken(access_token, expires_in);
+                const token = await getToken();
+                if (token) {
+                    navigation.navigate("WelcomeScreen", { firstName, lastName, email, password, birthdate, age });
+                }
             }
         } else if (response?.type === "cancel") {
           alert("Please continue to sign into Spotify and grant us access")

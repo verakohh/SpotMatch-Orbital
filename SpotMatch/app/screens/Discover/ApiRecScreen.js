@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import SpotifyWebApi from "spotify-web-api-node";
 import { BlurView } from 'expo-blur';
 import Feather from 'react-native-vector-icons/Feather';
-import { Audio } from 'expo-av';
+// import { Audio } from 'expo-av';
 import DiscoverInstructionImage from '../../../assets/images/Discover-Instruction-Image.png';
 
 
@@ -242,28 +242,58 @@ export default function ApiRecScreen() {
         const devices = await getAvailableDevices();
         console.log('devices: ', devices)
         if (devices.length > 0) {
-            const selectedDevice = devices[0].id; // Select the first device
-            setDeviceId(selectedDevice);
-            deviceIdRef.current = selectedDevice;
+            const smartphoneDevice = devices.filter(device => device.type === "Smartphone")
+            console.log("smartphone device : ", smartphoneDevice)
+
+            //checking isactive device
+            const isActiveDevice = devices.filter(device => device.is_active);
+            console.log("is active devices? :", isActiveDevice);
+            if (smartphoneDevice.length > 0) {
+                //checking if there are any smartphone devices, if so, use the first one
+                const selectedDevice = smartphoneDevice[0].id
+                console.log("selectedDevice Smartphone id: ", selectedDevice);
+                console.log("selected device type: ", smartphoneDevice[0].type)
+                deviceIdRef.current = selectedDevice;
+                setDeviceId(selectedDevice);
+                
+            } else {
+                const selectedDevice = devices[0].id; // Select the first device
+                console.log("selected device type: ", devices[0].type)
+                deviceIdRef.current = selectedDevice;
+                setDeviceId(selectedDevice);
+                
+            }
             try {
-                await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice}`, 
-                { uris: [uri] },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                setPlaying(true);
-                setCurrentTrack(uri);
-                playingRef.current = true;
-                currentTrackRef.current = uri;
+                if (deviceIdRef.current) {
+
+                    await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`, 
+                    { uris: [uri] },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    setPlaying(true);
+                    setCurrentTrack(uri);
+                    playingRef.current = true;
+                    currentTrackRef.current = uri;
+                } else {
+                    alert("No device id!")
+                }
 
             } catch (error) {
                 console.error("Error playing track: ", error);
-                if(error.status === 429) {
-                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                if (error.response && error.response.status === 502) {
+                    alert("Spotify server error, please try again later.");
+                } else if (error.response && error.response.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
+                } else {
+                    alert("Failed to play track, please try again.");
                 }
+                // if(error.status === 429) {
+                //     alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                // }
             }
         } else {
             alert("No devices available");

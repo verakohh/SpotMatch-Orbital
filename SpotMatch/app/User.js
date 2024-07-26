@@ -402,7 +402,7 @@ export const storeEmail = async email => {
 
 export const getUser = async () => {
   try {
-    const userJson = await AsyncStorage.getItem('user', () => console.log('async got user'));
+    const userJson = await AsyncStorage.getItem('user');
     if (userJson) {
       const userData = JSON.parse(userJson);
       const user = new User(userData.firstName, userData.lastName, userData.email);

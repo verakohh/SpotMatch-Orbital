@@ -7,7 +7,6 @@ import axios from 'axios';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
 import Feather from 'react-native-vector-icons/Feather';
 import { LinearGradient } from 'react-native-svg';
-import { Audio } from 'expo-av';
 
 
 const ChatMusicScreen = ({route}) => {
@@ -49,16 +48,22 @@ const ChatMusicScreen = ({route}) => {
 
                 const unsubscribe = onSnapshot(chatDocRef, async (doc) => {
                     const data = doc.data();
-                    setPlayingSong(data.currentSong);
-                    if (data.playing && !playingRef.current && data.currentSong) {
-                        //if matched user is playing, current user not playing, current song exists 
-                        console.log("came in the unsubscribe")
-                        setProgress(0);
-                        playTrack(data.currentSong);
-                        
-                    } else if (!data.playing && await isPlaying()) {
-                        await pauseTrack();
-                    } 
+                    console.log("data: ", data)
+                    // setPlayingSong(data.currentSong);
+                    if (data) {
+                        setPlayingSong(data.currentSong);
+
+                        if (data.playing && !playingRef.current && data.currentSong) {
+                            //if matched user is playing, current user not playing, current song exists 
+
+                            console.log("came in the unsubscribe")
+                            setProgress(0);
+                            playTrack(data.currentSong);
+                            
+                        } else if (!data.playing && await isPlaying()) {
+                            await pauseTrack();
+                        } 
+                    }
                 });
 
                 return async () => {
@@ -276,9 +281,10 @@ const ChatMusicScreen = ({route}) => {
         }
     };
 
-    const playTrack = async (song) => {
+    const playTrack = async (song,  retryCount = 0) => {
         if (!song) {
             alert("No song! Unable to play");
+            return;
         }
         const token = await getToken();
         if (!await checkTokenValidity(token)) {
@@ -290,36 +296,74 @@ const ChatMusicScreen = ({route}) => {
         const devices = await getAvailableDevices();
         console.log('devices: ', devices)
         if (devices.length > 0) {
-            const selectedDevice = devices[0].id; // Select the first device
-            setDeviceId(selectedDevice);
+            const smartphoneDevice = devices.filter(device => device.type === "Smartphone")
+            console.log("smartphone device : ", smartphoneDevice)
+
+            //checking isactive device
+            const isActiveDevice = devices.filter(device => device.is_active);
+            console.log("is active devices? :", isActiveDevice);
+            let selectedDevice;
+
+            if (smartphoneDevice.length > 0) {
+                //checking if there are any smartphone devices, if so, use the first one
+                selectedDevice = smartphoneDevice[0].id
+                console.log("selectedDevice Smartphone id: ", selectedDevice);
+                console.log("selected device type: ", smartphoneDevice[0].type)
+            } else {
+                selectedDevice = devices[0].id; // Select the first device
+                console.log("selected device type: ", devices[0].type);
+            }
             deviceIdRef.current = selectedDevice;
+            setDeviceId(selectedDevice);
+
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
             }
             intervalRef.current = setInterval(checkSongCompletion, 10000);
             try {
-                await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice}`, 
-                { uris: [song.uri] },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                setPlayingSong(song);
-                // playingIndexRef.current = chatMusic.findIndex(m => m.id === song.id)
-                playingRef.current = true;
-                await updateFirestore({ playing: true, currentSong: song, currentTime: 0 });
-                console.log("playing song: ", playingSong);
-                console.log("modal visible? :", modalVisible);
-
+                if (deviceIdRef.current) {
+                    console.log(`Attempting to play track with URI: ${song.uri} on device ID: ${deviceIdRef.current}`);
+                    await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`, 
+                    { uris: [song.uri] },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    setPlayingSong(song);
+                    // playingIndexRef.current = chatMusic.findIndex(m => m.id === song.id)
+                    playingRef.current = true;
+                    await updateFirestore({ playing: true, currentSong: song, currentTime: 0 });
+                    console.log("playing song: ", playingSong);
+                    console.log("modal visible? :", modalVisible);
+                    setLoading(false);
+                } else {
+                    alert("No device id!")
+                }
 
             } catch (error) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
                 console.error("Error playing track: ", error);
-                if(error.status === 429) {
-                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                if (error.response) {
+                    console.error("Error response data: ", error.response.data);
+                }
+                if (error.response && error.response.status === 502) {
+                    if (retryCount < 3) {
+                        setLoading(true);
+                        console.log(`Retrying... (${retryCount + 1})`);
+                        setTimeout(() => playTrack(song, retryCount + 1), 500);
+                    } else {
+                        setLoading(false);
+                        alert("Spotify server error, please try again later.");
+                    }
+                } else if (error.response && error.response.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
+                } else if (error.response && error.response.status === 404) {
+                    alert("Failed: Track not found or invalid track URI.");
+                }else {
+                    alert("Failed to play track, please try again.");
                 }
             }
         } else {
@@ -327,7 +371,7 @@ const ChatMusicScreen = ({route}) => {
         }
     };
 
-    const pauseTrack = async () => {
+    const pauseTrack = async (retryCount = 0) => {
         const token = await getToken();
         if (!await checkTokenValidity(token)) {
             alert("Token of 1 hour has expired! Kindly refresh it")
@@ -348,11 +392,23 @@ const ChatMusicScreen = ({route}) => {
             });
             playingRef.current = false;
             await updateFirestore({ playing: false , currentSong: null});
+            setLoading(false);
 
         } catch (error) {
             console.error("Error pausing track: ", error);
-            if(error.status === 429) {
-                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+            if (error.response && error.response.status === 502) {
+                if (retryCount < 3) {
+                    setLoading(true);
+                    console.log(`Retrying... (${retryCount + 1})`);
+                    setTimeout(() => pauseTrack(retryCount + 1), 500);
+                } else {
+                    setLoading(false);
+                    alert("Spotify server error, please try again later.");
+                }
+            } else if (error.response && error.response.status === 429) {
+                alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
+            } else {
+                alert("Failed to pause track, please try again.");
             }
         }
     };
@@ -380,6 +436,7 @@ const ChatMusicScreen = ({route}) => {
                 if (nextIndex < chatMusic.length) {
                     console.log('at play next song success')
                     const nextSong = chatMusic[nextIndex];
+                    setProgress(0);
                     await playTrack(nextSong);
                     await updateFirestore({ playing: true , currentSong: nextSong});
 
@@ -416,7 +473,7 @@ const ChatMusicScreen = ({route}) => {
                 const prevIndex = chatMusic.findIndex(song => song.id === currentSongId) - 1;
 
                 // const nextIndex = playingIndexRef.current + 1;
-                if (prevIndex < chatMusic.length) {
+                if (prevIndex >= 0) {
                     const prevSong = chatMusic[prevIndex];
                     setProgress(0);
                     await playTrack(prevSong);
@@ -460,7 +517,7 @@ const ChatMusicScreen = ({route}) => {
         }
     };
 
-    const searchSongs = async (query) => {
+    const searchSongs = async (query, retryCount = 0) => {
         const token = await getToken();
         if (!await checkTokenValidity(token)) {
             alert("Token of 1 hour has expired! Kindly refresh it")
@@ -481,10 +538,22 @@ const ChatMusicScreen = ({route}) => {
             });
 
             setSearchResults(response.data.tracks.items);
+            setLoading(false);
         } catch (error) {
             console.error("Error searching tracks: ", error);
-            if(error.status === 429) {
-                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+            if (error.response && error.response.status === 502) {
+                if (retryCount < 3) {
+                    setLoading(true);
+                    console.log(`Retrying... (${retryCount + 1})`);
+                    setTimeout(() => searchSongs(query, retryCount + 1), 500);
+                } else {
+                    setLoading(false);
+                    alert("Spotify server error, please try again later.");
+                }
+            } else if (error.response && error.response.status === 429) {
+                alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
+            } else {
+                alert("Failed to search track, please try again.");
             }
         }
     };
@@ -555,7 +624,7 @@ const ChatMusicScreen = ({route}) => {
 
     };
 
-    const addSongToPlaylist = async (song) => {
+    const addSongToPlaylist = async (song, retryCount = 0) => {
         const user = await getUser();
         const userDocRef = user.docRef;
         const userDocSnap = await getDoc(userDocRef);
@@ -571,6 +640,7 @@ const ChatMusicScreen = ({route}) => {
         }
 
         if( userDocSnap.exists() && song.uri && !chatPlaylistSongs.includes(song.id)) {
+            try {
             await axios.post(`https://api.spotify.com/v1/playlists/${chatPlaylistId}/tracks`, {
                 uris: [song.uri],
             }, {
@@ -580,6 +650,23 @@ const ChatMusicScreen = ({route}) => {
             });
 
             await user.update({ chatPlaylistSongs: arrayUnion(song.id)});
+        
+            alert("Please refresh your Spotify library to see the Chat playlist and songs!")
+        } catch (error) {
+            if (error.response && error.response.status === 502) {
+                if (retryCount < 3) {
+                    console.log(`Retrying... (${retryCount + 1})`);
+                    setTimeout(() => addSongToPlaylist(song, retryCount + 1), 500);
+                } else {
+                    alert("Spotify server error, please try again later.");
+                }
+            } else if (error.response && error.response.status === 429) {
+                alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
+            } else {
+                alert("Failed to add track to playlist, please try again.");
+            }
+
+        }
         } else {
             alert("Song has been added before! Not added to the Spotify playlist")
         }
@@ -620,7 +707,7 @@ const ChatMusicScreen = ({route}) => {
 
     if (loading) {
         return (
-            <View style={styles.container}>
+            <View style={styles.containerLoading}>
                 <ActivityIndicator size="large" color="#0000ff" />
             </View>
         );
@@ -801,6 +888,15 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FAF4EC',
         padding: 16,
+    },
+    containerLoading: {
+        flex: 1,
+        backgroundColor: '#FAF4EC',
+        margin: 10, 
+        padding: 10,
+        marginHorizontal: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     containerNonPremium: {
         flex: 1,

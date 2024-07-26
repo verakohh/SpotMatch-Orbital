@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import SpotifyWebApi from "spotify-web-api-node";
 import { BlurView } from 'expo-blur';
 import Feather from 'react-native-vector-icons/Feather';
-import { Audio } from 'expo-av';
+// import { Audio } from 'expo-av';
 import DiscoverInstructionImage from '../../../assets/images/Discover-Instruction-Image.png';
 
 
@@ -88,6 +88,7 @@ export default function UserRecScreen() {
                             description: "Playlist for songs discovered via SpotMatch :)",
                             public: false
                         }, {
+                            // method: "POST",
                             headers: {
                                 'Authorization': `Bearer ${token}`
                             }
@@ -303,7 +304,8 @@ export default function UserRecScreen() {
             return;
         }
         try {
-            const response = await axios.get('https://api.spotify.com/v1/me/player', {
+            const response = await axios('https://api.spotify.com/v1/me/player', {
+                method: "GET",
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -331,7 +333,8 @@ export default function UserRecScreen() {
         }
 
             try {
-                const response = await axios.get('https://api.spotify.com/v1/me/player/devices', {
+                const response = await axios('https://api.spotify.com/v1/me/player/devices', {
+                    method: "GET",
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -350,7 +353,7 @@ export default function UserRecScreen() {
         
     };
     
-    const playTrack = async (uri) => {
+    const playTrack = async (uri, retryCount = 0) => {
         // try {
             
         //     console.log("at playTrack")
@@ -377,42 +380,47 @@ export default function UserRecScreen() {
         // } catch (err) {
         //     console.error("Could not play track",err.message)
         // }
+        if (!uri) {
+            alert("No top track uri! Unable to play");
+            return;
+        }
+
+        const token = await getToken();
         if (!await checkTokenValidity(token)) {
             alert("Token of 1 hour has expired! Kindly refresh it")
             navigation.navigate('Access');
             return;
         }
-        if (!uri) {
-            alert("No top track uri! Unable to play");
-        }
-        const token = await getToken();
+        
         const devices = await getAvailableDevices();
         console.log('devices: ', devices)
         if (devices.length > 0) {
-            const smartphoneDevice = devices.filter(device => device.type === "smartphone")
+            const smartphoneDevice = devices.filter(device => device.type === "Smartphone")
             console.log("smartphone device : ", smartphoneDevice)
 
             //checking isactive device
             const isActiveDevice = devices.filter(device => device.is_active);
             console.log("is active devices? :", isActiveDevice);
-            if (smartphoneDevice) {
+            let selectedDevice;
+
+            if (smartphoneDevice.length > 0) {
                 //checking if there are any smartphone devices, if so, use the first one
-                const selectedDevice = smartphoneDevice[0].id
+                selectedDevice = smartphoneDevice[0].id
                 console.log("selectedDevice Smartphone id: ", selectedDevice);
                 console.log("selected device type: ", smartphoneDevice[0].type)
-                deviceIdRef.current = selectedDevice;
-                setDeviceId(selectedDevice);
+                
                 
             } else {
-                const selectedDevice = devices[0].id; // Select the first device
+                selectedDevice = devices[0].id; // Select the first device
                 console.log("selected device type: ", devices[0].type)
-                deviceIdRef.current = selectedDevice;
-                setDeviceId(selectedDevice);
-                
             }
+            deviceIdRef.current = selectedDevice;
+            setDeviceId(selectedDevice);
             
             try {
                 if (deviceIdRef.current) {
+                    console.log(`Attempting to play track with URI: ${uri} on device ID: ${deviceIdRef.current}`);
+
                     await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`, 
                     { uris: [uri] },
                     {
@@ -430,10 +438,23 @@ export default function UserRecScreen() {
                 }
 
             } catch (error) {
-                console.error("Error playing track: ", error);
-                if(error.status === 429) {
-                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-                }            
+                if (error.response) {
+                    console.error("Error response data: ", error.response.data);
+                }
+                if (error.response && error.response.status === 502) {
+                    if (retryCount < 3) {
+                        console.log(`Retrying... (${retryCount + 1})`);
+                        setTimeout(() => playTrack(uri, retryCount + 1), 500);
+                    } else {
+                        alert("Spotify server error, please try again later.");
+                    }
+                } else if (error.response && error.response.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
+                } else if (error.response && error.response.status === 404) {
+                    alert("Failed: Track not found or invalid track URI.");
+                }else {
+                    alert("Failed to play track, please try again.");
+                }
             }
         } else {
             alert("No devices available");

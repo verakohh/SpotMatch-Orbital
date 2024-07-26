@@ -86,11 +86,11 @@ const MatchScreen = () => {
                     setLoading(true);
                     console.log('yes')
                     console.log("user: ",user)
-                    const headers = {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    };
+                    // const headers = {
+                    //     'Authorization': `Bearer ${token}`,
+                    //     'Content-Type': 'application/json',
+                    //     'Accept': 'application/json'
+                    // };
                     axios("https://api.spotify.com/v1/me/top/artists", {
                         method: 'GET',
                         headers: {
@@ -140,7 +140,7 @@ const MatchScreen = () => {
                         },
                     })
                     .then(async res => {
-                        alert("profile data: ",res.data)
+                        // alert("profile data: ",res.data)
 
                         console.log("profile data: ",res.data)
                         const displayname = res.data.display_name;
@@ -172,7 +172,7 @@ const MatchScreen = () => {
                             },
                     })
                     .then(async res => {
-                        alert("toptrack data: ", res.data)
+                        // alert("toptrack data: ", res.data)
                         console.log("toptrack data: ", res.data)
                         if (res.data && res.data.items && Array.isArray(res.data.items)) {
                             const topTracks = res.data.items.map(track => ({
