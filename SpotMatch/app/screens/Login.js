@@ -232,11 +232,11 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);
+      console.log("Firebase signIn response: ",response);
       console.log("email: ", email)
       const userDoc = ref(email);
       const docSnap = await getDoc(userDoc);
-      console.log(docSnap);
+      console.log('Firebase document snapshot:',docSnap);
 
       if (docSnap.exists()) {
         const data = docSnap.data()
@@ -254,24 +254,25 @@ const Login = () => {
         newUser.setSentRequest(data.sentRequest);
         newUser.setRejected(data.rejected);
         newUser.setDismissed(data.dismissed);
+        const firstName = data.firstName;
+        const lastName = data.lastName;
+        const email = data.email;
+        const birthdate = data.birthdate;
+        const age = data.age;
 
         const subs = data.subscription 
         if (subs) {
           await storeSubscription(data.subscription);
-          await storeUser(newUser);
-          navigation.navigate("SideBar");
-        } else {
-          await storeUser(newUser);
-          navigation.navigate("SideBar");
         }
-
+        await storeUser(newUser);
+        navigation.navigate("Access", {firstName, lastName, email, password, birthdate, age });
         
       } else {
         alert("Login failed! Try again");
       }
     } catch (error) {
       console.log(error);
-      alert('Login failed: ' + error.message);
+      alert('Login failed: ' + error.message + " Check if your email and password are correct!");
     } finally {
       setLoading(false);
     }

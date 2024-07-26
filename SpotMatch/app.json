@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "spotmatch",
+    "name": "smatch",
     "slug": "SpotMatch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/SpotMatch-icon.png",
     "scheme": [
-      "spotmatch"
+      "smatch"
     ],
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -30,13 +30,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font",
-      [
-        "expo-av",
-        {
-          "microphonePermission": "Allow spotmatch to access your microphone."
-        }
-      ]
+      "expo-font"
+      
     ],
     "experiments": {
       "typedRoutes": true

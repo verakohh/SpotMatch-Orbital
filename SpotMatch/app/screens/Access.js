@@ -17,12 +17,15 @@ const discovery = {
     authorizationEndpoint: 'https://accounts.spotify.com/authorize',
     tokenEndpoint: 'https://accounts.spotify.com/api/token',
   };
- 
-const clientId = '89d33611962f42ecb9e982ee2b879bb8';
+
+// const clientId = '894050794daa4a568ee64d6a083cf2de';
+const clientId = '796b139564514f198f8511f8b260ff4b';
 const redirectUri = 'spotmatch://callback';
+// const clientId = '89d33611962f42ecb9e982ee2b879bb8';
+// const redirectUri = 'spotmatch://callback';
 
 
-export default function Access() {
+export default function Access () {
 
     // const [token, setToken] = useState("");
     // const { user, setUser, token, setToken } = useContext(UserContext);
@@ -33,6 +36,8 @@ export default function Access() {
 
 
     const navigation= useNavigation();
+    // const { firstName, lastName, email, password, birthdate, age } = route.params;
+
     const [request, response, promptAsync] = useAuthRequest(
         {
           clientId,
@@ -48,6 +53,9 @@ export default function Access() {
           ],
           usePKCE: false,
           responseType: ResponseType.Token,
+          extraParams: {
+            show_dialog: 'true'
+          }
         },
         discovery
     );
@@ -66,21 +74,28 @@ export default function Access() {
               console.log("response params: ", response.params)
               console.log("access_token: ", access_token)
               await storeToken(access_token, expires_in);
-              navigation.navigate("Login");
+              console.log("the new token:")
+              const token = await getToken();
+              if (token) {
+                navigation.navigate("Login");
+              }
             } else {
               const { access_token, expires_in } = response.params;
               console.log("response: ", response)
               console.log("response params: ", response.params)
               console.log("access_token: ",access_token)
               await storeToken(access_token, expires_in);
-              navigation.navigate("Login");
+              const token = await getToken();
+              if (token) {
+                navigation.navigate("Login");
+              }
             }
         } else if (response?.type === "cancel") {
           alert("Please continue to sign into Spotify and grant us access")
         } else if (response && response?.type !== "success") {
           alert("Unsuccessful! Please try again.")
         }
-      }
+      };
       fetchData();
     
       }, [response]);

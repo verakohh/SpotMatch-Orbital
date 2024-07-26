@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import SpotifyWebApi from "spotify-web-api-node";
 import { BlurView } from 'expo-blur';
 import Feather from 'react-native-vector-icons/Feather';
-import { Audio } from 'expo-av';
+// import { Audio } from 'expo-av';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import UserRecScreen from './Discover/UserRecScreen';
 import ApiRecScreen from './Discover/ApiRecScreen';

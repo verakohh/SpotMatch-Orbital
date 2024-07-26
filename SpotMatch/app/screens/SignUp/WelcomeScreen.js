@@ -51,7 +51,9 @@ const WelcomeScreen = ({route}) => {
                 // setUser(newUser);
                 console.log("registered user Object : ",newUser);
 
-                navigation.navigate("SideBar")
+                navigation.navigate("SideBar"
+                    // "Access", { firstName, lastName, email, password, birthdate, age }
+                );
   
                 // setUserInfo(newUser);
   
