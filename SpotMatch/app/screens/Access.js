@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Button from '../../components/navigation/Button';
 import { ResponseType, useAuthRequest} from 'expo-auth-session';
 import Login from './Login';
@@ -8,8 +8,11 @@ import axios from 'axios';
 import { refDoc , update} from './Registration';
 import { useNavigation } from '@react-navigation/core';
 import { useUserInfo, UserContext } from '../UserContext';
-import { ref } from '../../firebase';
-import { getToken, removeToken, storeToken } from '../User';
+import { ref, db } from '../../firebase';
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
+
+import { getUser, getToken, getEmail, storeSubscription, getTokenExpiration, checkTokenValidity, getStoredToken } from '../User';
+import qs from 'qs';
 
 
 
@@ -23,9 +26,44 @@ const clientId = '796b139564514f198f8511f8b260ff4b';
 const redirectUri = 'spotmatch://callback';
 // const clientId = '89d33611962f42ecb9e982ee2b879bb8';
 // const redirectUri = 'spotmatch://callback';
+// const navigation= useNavigation();
 
 
-export default function Access () {
+// export const refreshToken = async (refreshToken) => {
+//   alert("Token has expired! Refreshing now")
+//   if (refreshToken) {
+//     try {
+//       const data = qs.stringify({
+//         client_id: clientId,
+//         grant_type: 'refresh_token',
+//         refresh_token: refreshToken
+    
+//     });
+//     console.log("data: ", data);
+
+//       const tokenResponse = await axios.post(discovery.tokenEndpoint, data, {
+//           headers: {
+//               'Content-Type': 'application/x-www-form-urlencoded',
+//           }
+//       });
+//         const { access_token, refresh_token, expires_in } = tokenResponse.data;
+//         console.log("access token: ", access_token)
+//         console.log("refreshToken: ", refresh_token)
+//         await storeToken({access_token, expires_in, refresh_token});
+//         return access_token;
+//     } catch (error) {
+//       console.error("Error refreshing token:", error);
+//       alert("Failed to refresh token. Please log in again.");
+//       await removeToken();
+//       navigation.navigate('Access');
+//     }
+//   } else {
+//     alert("No token to refresh!")
+//     navigation.navigate('Access');
+//   }
+// }
+
+export default function Access ({route}) {
 
     // const [token, setToken] = useState("");
     // const { user, setUser, token, setToken } = useContext(UserContext);
@@ -33,10 +71,23 @@ export default function Access () {
     // const [genres, setGenres] = useState([""]);
     // const [displayName, setDisplayName] = useState("");
     // const [topTracksData, setTopTracksData] = useState("");
-
-
+    const {docRefPath} = route.params;
+    const docRef = doc(db, docRefPath);
+    const [loading, setLoading] = useState(false);
     const navigation= useNavigation();
     // const { firstName, lastName, email, password, birthdate, age } = route.params;
+    const update = async (data) => {
+      if (docRef) {
+        try {
+          await setDoc(docRef, data, { merge: true });
+          console.log("Document updated successfully");
+        } catch (error) {
+          console.error("Error updating document: ", error);
+        }
+      } else {
+        console.error("No user docRef");
+      }
+    }
 
     const [request, response, promptAsync] = useAuthRequest(
         {
@@ -51,8 +102,10 @@ export default function Access () {
             'playlist-modify-public',
             'playlist-modify-private'
           ],
-          usePKCE: false,
-          responseType: ResponseType.Token,
+          usePKCE: true,  // Enable PKCE
+          responseType: ResponseType.Code, 
+          // usePKCE: false,
+          // responseType: ResponseType.Token,
           extraParams: {
             show_dialog: 'true'
           }
@@ -62,34 +115,252 @@ export default function Access () {
     
     useEffect( () => {
       console.log("response: ", response)
+      
         const fetchData = async () => {
           console.log("came in access.js fetchData")
-          
+          const now = new Date().getTime();
+            console.log("now: ", now)
+            // const user = await getUser();
           if (response && response?.type === "success") {
-            if(await getToken()) {
-              console.log("there was a previous token...")
-              await removeToken();
-              const { access_token, expires_in } = response.params;
-              console.log("response: ", response)
-              console.log("response params: ", response.params)
-              console.log("access_token: ", access_token)
-              await storeToken(access_token, expires_in);
-              console.log("the new token:")
-              const token = await getToken();
-              if (token) {
-                navigation.navigate("Login");
+            // if(await getStoredToken()) {
+              // if(newUser) {
+
+              // console.log("there was a previous token...")
+              // await removeToken();
+              // console.log("there is a user: ", newUser)
+              const code = response.params.code;
+              console.log("request :", request)
+              console.log("request code verifier :", request.codeVerifier)
+
+
+
+              try {
+                // const tokenData = new URLSearchParams();
+                // tokenData.append('client_id', clientId);
+                // tokenData.append('grant_type', 'authorization_code');
+                // tokenData.append('code', code);
+                // tokenData.append('redirect_uri', redirectUri);
+                // tokenData.append('code_verifier', request.codeVerifier);
+                setLoading(true);
+                const data = qs.stringify({
+                  client_id: clientId,
+                  grant_type: 'authorization_code',
+                  code: code,
+                  redirect_uri: redirectUri,
+                  code_verifier: request.codeVerifier,  
+                });
+    
+                const tokenResponse = await axios.post(discovery.tokenEndpoint, data, {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                });
+                const { access_token, refresh_token, expires_in } = tokenResponse.data;
+                console.log("access token: ", access_token)
+                console.log("refreshToken: ", refresh_token)
+                const expiresIn = new Date().getTime() + expires_in * 1000;
+                await update({token: access_token, expiresIn: expiresIn, refreshToken: refresh_token});
+                // const userDocRef = ref(user.email);
+                // const userDocSnap = await getDoc(userDocRef);
+
+                // if(userDocSnap.exists()) {
+                //   const userData = userDocSnap.data();
+                //   const accessToken = userData.token;
+                //   if (accessToken) {
+                //     setLoading(false);
+                //     console.log("token is same!")
+                //     console.log("access token from userDoc: ", accessToken);
+                //     alert("access token from userDoc: ", accessToken);
+                //     navigation.navigate("SideBar");
+                //   } else {
+                //     console.log("Token not same! or Token not updated! no token")
+                //     alert("Token not updated! no token")
+                //   }
+
+                // } else {
+                //   alert("No userDoc!")
+                // }
+                if (access_token) {
+                  console.log("Getting spotify data now..")
+                  await axios.get("https://api.spotify.com/v1/me/top/artists", {
+                      // method: 'GET',
+                      headers: {
+                          Accept: "application/json",
+                          "Content-Type": "application/json",
+                          Authorization: "Bearer " + access_token,
+                      },
+                      params: {
+                          time_range: "medium_term",
+                          limit: 20
+                      }
+                  })
+                  .then(async res => {
+                      // alert("Artist and genre response:",res)
+                      // alert("Artist and genre response data:", res.data)
+                      console.log("Artist and genre response: ",res.data)
+                      if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                          const names = res.data.items.map(artist => artist.name); 
+                          // newUser.setArtists(names);
+                          // console.log(user.artists);
+                          console.log(names);
+
+                          console.log("res data items: ", res.data.items)
+                          const genre = res.data.items.flatMap(user => user.genres);
+                          const uniqueGenres = [...new Set(genre)];
+                          // newUser.setGenres(uniqueGenres);
+                          console.log(genre); 
+                          console.log(uniqueGenres);
+      
+
+                              // console.log(refDoc);
+                          
+                                  // console.log(artistNames);
+                          await update({topArtists: names, genres: uniqueGenres});
+                                  // user.update({genres: genre}); 
+                      } else {
+                          alert('Invalid response format: ', res.data);
+                      }
+                  })       
+
+                  await axios('https://api.spotify.com/v1/me', {
+                      method: 'GET',
+                      headers: {
+                          Accept: "application/json",
+                          "Content-Type": "application/json",
+                          Authorization: "Bearer " + access_token,
+                      },
+                  })
+                  .then(async res => {
+                      // alert("profile data: ",res.data)
+
+                      console.log("profile data: ",res.data)
+                      const displayname = res.data.display_name;
+                      // newUser.setDisplayName(displayname);
+
+                      console.log(res.data.images)
+                      const imgUrl = res.data.images.map(img => img.url)
+                      const uniqueUrl = imgUrl[0];
+                      console.log('this is imgUrl: ', uniqueUrl)
+                      // newUser.setImgUrl(uniqueUrl);
+
+                      console.log(res.data.product);
+                      const productsubs = res.data.product;
+                      await storeSubscription(productsubs);
+
+                      console.log(res.data.id);
+                      const userId = res.data.id;
+                      
+
+                      await update({displayName: displayname, imageUrl: uniqueUrl, subscription: productsubs, spotifyId: userId });
+                  })
+
+                  await axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+                          method: "GET",
+                          headers: {
+                              Accept: "application/json",
+                              "Content-Type": "application/json",
+                              Authorization: "Bearer " + access_token,
+                          },
+                  })
+                  .then(async res => {
+                      // alert("toptrack data: ", res.data)
+                      console.log("toptrack data: ", res.data)
+                      if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                          const topTracks = res.data.items.map(track => ({
+                              id: track.id,
+                              uri: track.uri,
+                              name: track.name,
+                              previewUrl: track.preview_url,
+                              artist: track.artists[0].name,
+                              albumImg: track.album.images[0].url
+                          }));
+                          // console.log("top tracks preview url: ", topTracks.previewUrl);
+                          // newUser.setTopTracksData(topTracks);
+                          await update({ topTracks });
+                          console.log(topTracks);
+                      } else {
+                          console.error('Invalid response format: ', res.data);
+                      }
+                  });
+              } else {
+                  alert("No token!")
+
               }
-            } else {
-              const { access_token, expires_in } = response.params;
-              console.log("response: ", response)
-              console.log("response params: ", response.params)
-              console.log("access_token: ",access_token)
-              await storeToken(access_token, expires_in);
-              const token = await getToken();
-              if (token) {
-                navigation.navigate("Login");
+                setLoading(false);
+                alert("Fetched all data successfully!")
+                navigation.navigate("SideBar");
+                // await storeToken({token: access_token, expiresIn: expires_in, refreshToken: refresh_token});
+                // const token = await getStoredToken();
+                // if (token) {
+                //   navigation.navigate("SideBar");
+                // }
+
+                // const { access_token, expires_in } = response.params;
+              // console.log("response: ", response)
+              // console.log("response params: ", response.params)
+              // console.log("access_token: ",access_token)
+              // await storeToken(access_token, expires_in);
+
+             
+              } catch (error) {
+                if(error.response) {
+                  console.log("response :", error.response)
+                  console.log("response data: ", error.response.data)
+                } else if (error.request) {
+                  console.log('No response received:', error.request);
+                } 
+                console.error("Error exchanging code for token:", error.message);
+                alert("Failed to exchange code for token.");
+              } finally {
+                setLoading(false);
               }
-            }
+            // } else {
+            //   alert("No user!")
+            //   const code = response.params.code;
+            //   console.log("code: ", code)
+            //   console.log("request :", request)
+            //   console.log("request code verifier :", request.codeVerifier)
+
+
+
+            //   try {
+            //     const data = qs.stringify({
+            //       client_id: clientId,
+            //       grant_type: 'authorization_code',
+            //       code: code,
+            //       redirect_uri: redirectUri,
+            //       code_verifier: request.codeVerifier,  
+            //   });
+            //   console.log("data: ", data);
+            //     // const tokenData = new URLSearchParams();
+            //     // tokenData.append('client_id', clientId);
+            //     // tokenData.append('grant_type', 'authorization_code');
+            //     // tokenData.append('code', code);
+            //     // tokenData.append('redirect_uri', redirectUri);
+    
+            //     const tokenResponse = await axios.post(discovery.tokenEndpoint, data, {
+            //         headers: {
+            //             'Content-Type': 'application/x-www-form-urlencoded',
+            //         }
+            //     });
+            //       const { access_token, refresh_token, expires_in } = tokenResponse.data;
+            //       console.log("access token: ", access_token)
+            //       console.log("refreshToken: ", refresh_token)
+            //       await storeToken({token: access_token, expiresIn: expires_in, refreshToken: refresh_token});
+            //       // const { access_token, expires_in } = response.params;
+            //   // console.log("response: ", response)
+            //   // console.log("response params: ", response.params)
+            //   // console.log("access_token: ",access_token)
+            //   // await storeToken(access_token, expires_in);
+            //     const token = await getStoredToken();
+            //     if (token) {
+            //       navigation.navigate("SideBar");
+            //     }
+            // } catch (error) {
+            //   console.error("Error exchanging code for token:", error.message);
+            //   alert("Failed to exchange code for token.");
+            // }
+            // }
         } else if (response?.type === "cancel") {
           alert("Please continue to sign into Spotify and grant us access")
         } else if (response && response?.type !== "success") {
@@ -101,6 +372,13 @@ export default function Access () {
       }, [response]);
 
 
+      if (loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
     // useEffect(() => {
     //     if (token) {
     //         try {
