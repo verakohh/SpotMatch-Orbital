@@ -230,6 +230,10 @@
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import qs from 'qs';
+import { useNavigation } from '@react-navigation/core';
+// import { refreshToken } from './screens/Access';
+
 
 
 export default class User {
@@ -320,15 +324,15 @@ export const removeUser = async () => {
 
 export const removeToken = async () => {
   try {
-    const tokenJson = await AsyncStorage.getItem('token');
-    const tokenExpirationJson = await AsyncStorage.getItem('tokenExpiration');
+    const tokenJson = await AsyncStorage.getItem('tokenObj');
+    // const tokenExpirationJson = await AsyncStorage.getItem('tokenExpiration');
 
-    await AsyncStorage.removeItem('token', () => console.log("async removed token: ", tokenJson));
-    await AsyncStorage.removeItem('tokenExpiration', () => console.log("async removed tokenExpiration", tokenExpirationJson ));
+    await AsyncStorage.removeItem('tokenObj', () => console.log("async removed token Object: ", tokenJson));
+    // await AsyncStorage.removeItem('tokenExpiration', () => console.log("async removed tokenExpiration", tokenExpirationJson ));
 
   } catch (error) {
-    console.error("Failed to remove token: ", error)
-    alert("Failed to remove token: ", error)
+    console.error("Failed to remove token object: ", error)
+    alert("Failed to remove token object: ", error)
   }
 };
 
@@ -356,21 +360,27 @@ export const storeUser = async user => {
   }
 };
 
-export const storeToken = async (token, expiresIn) => {
-  if (token && expiresIn) {
-    const expirationTime = new Date().getTime() + expiresIn * 1000;
+export const storeToken = async (tokenObj) => {
+  if (tokenObj.token && tokenObj.expiresIn && tokenObj.refreshToken) {
+    const expirationTime = new Date().getTime() + tokenObj.expiresIn * 1000;
+    const token = tokenObj.token;
+    const refreshToken = tokenObj.refreshToken;
+    const expiresIn = expirationTime.toString();
     try {
-      await AsyncStorage.setItem('token', token, () => console.log("async set token", token));
-      await AsyncStorage.setItem('tokenExpiration', expirationTime.toString(), () => console.log("async set tokenExpiration: ", expirationTime.toString()));
+      const newTokenObj = {token, expiresIn, refreshToken};
+      const stringified = JSON.stringify(newTokenObj);
+      await AsyncStorage.setItem('tokenObj', stringified, () => console.log("async set token", stringified));
+      // await AsyncStorage.setItem('tokenExpiration', expirationTime.toString(), () => console.log("async set tokenExpiration: ", expirationTime.toString()));
     } catch (error) {
-      console.error('Error storing token', error);
-      alert("Failed to store token: ", error)
+      console.error('Error storing token Object', error);
+      alert("Failed to store token object: ", error)
 
     } 
   } else {
-    alert("No token and expiration to store")
+    alert("No token object to store")
   }
 };
+
 
 export const storeSubscription = async (subs) => {
   try {
@@ -425,30 +435,111 @@ export const getUser = async () => {
 
 export const getToken = async () => {
   try {
-    const tokenJson = await AsyncStorage.getItem('token', () => console.log('async got token'));
-    console.log("token got is: ", tokenJson);
-    return tokenJson;
-  } catch (error) {
-    console.error("Failed to get token: ", error);
-    alert("Failed to get token: ", error)
-
-  }
-};
-
-export const getTokenExpiration = async () => {
-  try {
-    const expirationJson = await AsyncStorage.getItem('tokenExpiration', () => console.log("async got token Expiration: "));
-    if (expirationJson) {
-      return expirationJson;
-    } else {
-      alert("No token Expiration")
+    const tokenJson = await AsyncStorage.getItem('tokenObj', () => console.log('async got token'));
+    console.log("token Object got is: ", tokenJson);
+    if (tokenJson) {
+      const token = JSON.parse(tokenJson);
+      console.log("token Object parsed: ", token);
+      return token;
     }
-  } catch (error) {
-    console.error("Failed to get token expiration: ", error);
-    alert("Failed to get token Expiration: ", error)
+    return null;
+    } catch (error) {
+    console.error("Failed to get token Object: ", error);
+    alert("Failed to get token object: ", error)
 
   }
 };
+
+export const getStoredToken = async () => {
+  try {
+    const tokenObj = await getToken();
+    console.log("token Obj: ", tokenObj)
+    if (tokenObj && await checkTokenValidity(tokenObj)) {
+      return tokenObj.token;
+    } else if (tokenObj && !await checkTokenValidity(tokenObj)) {
+      return await refreshToken(tokenObj.refreshToken)
+    }
+    return null;
+
+  } catch (error) {
+    console.error("Failed to get stored token : ", error);
+
+    alert("Failed to get stored Token: ", error)
+  }
+}
+
+export const checkTokenValidity = async (tokenObj) => {
+  // const token = await getToken();
+  if (tokenObj) {
+    try {
+        const expiration = tokenObj.expiresIn;
+        const now = new Date().getTime();
+        console.log("now: ", now)
+        if (expiration && new Date().getTime() < parseInt(expiration)) {
+            console.log("token is okay")
+            return true;
+        }
+    } catch (error) {
+        console.error('Error checking token validity', error);
+        alert('Error checking token validity', error);
+
+    }
+    return false;
+  } else {
+    return false;
+  }
+};
+
+
+export const refreshToken = async (refreshToken) => {
+  alert("Token has expired! Refreshing now")
+  const navigation = useNavigation();
+  if (refreshToken) {
+    try {
+      const data = qs.stringify({
+        client_id: '796b139564514f198f8511f8b260ff4b',
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken
+    
+    });
+    console.log("data: ", data);
+
+      const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', data, {
+          headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+          }
+      });
+        const { access_token, refresh_token, expires_in } = tokenResponse.data;
+        console.log("access token: ", access_token)
+        console.log("refreshToken: ", refresh_token)
+        await storeToken({access_token, expires_in, refresh_token});
+        
+        return access_token;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      alert("Failed to refresh token. Please log in again.");
+      await removeToken();
+      navigation.navigate('Access');
+    }
+  } else {
+    alert("No token to refresh!")
+    navigation.navigate('Access');
+  }
+}
+// export const getTokenExpiration = async () => {
+//   try {
+//     const expirationJson = await AsyncStorage.getItem('tokenExpiration', () => console.log("async got token Expiration: "));
+//     if (expirationJson) {
+//       return expirationJson;
+//     } else {
+//       alert("No token Expiration")
+//     }
+//   } catch (error) {
+//     console.error("Failed to get token expiration: ", error);
+//     alert("Failed to get token Expiration: ", error)
+
+//   }
+// };
 
 export const getEmail = async () => {
   try {

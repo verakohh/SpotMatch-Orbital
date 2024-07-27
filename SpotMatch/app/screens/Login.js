@@ -220,6 +220,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import User, { storeUser, getToken , storeEmail, storeSubscription } from '../User';
 import { getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/core';
+import axios from 'axios';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -242,41 +243,238 @@ const Login = () => {
         const data = docSnap.data()
         console.log("data email: ", data.email)
         const newUser = new User(data.firstName, data.lastName, data.email);
-        newUser.setArtists(data.topArtists);
-        newUser.setGenres(data.genres);
-        newUser.setDisplayName(data.displayName);
-        newUser.setTopTracksData(data.topTracks); 
+        // newUser.setArtists(data.topArtists);
+        // newUser.setGenres(data.genres);
+        // newUser.setDisplayName(data.displayName);
+        // newUser.setTopTracksData(data.topTracks); 
         newUser.setAge(data.age);
         newUser.setBirthdate(data.birthdate);
-        newUser.setImgUrl(data.imageUrl)
+        // newUser.setImgUrl(data.imageUrl)
         newUser.setRequestedBy(data.requestedBy);
         newUser.setMatched(data.matched);
         newUser.setSentRequest(data.sentRequest);
         newUser.setRejected(data.rejected);
         newUser.setDismissed(data.dismissed);
-        const firstName = data.firstName;
-        const lastName = data.lastName;
-        const email = data.email;
-        const birthdate = data.birthdate;
-        const age = data.age;
+        
 
         const subs = data.subscription 
         if (subs) {
           await storeSubscription(data.subscription);
         }
         await storeUser(newUser);
-        navigation.navigate("Access", {firstName, lastName, email, password, birthdate, age });
+
+        let token = data.token;
+        const expiresIn = data.expiresIn;
+        const refreshAccessToken = data.refreshToken;
+
+        if (!await checkTokenValidity(expiresIn)) {
+            token = await refreshToken(refreshAccessToken);
+        }
+        
+        if (token) {
+            console.log("access token from userDoc at Login: ", token);
+            alert("access token from userDoc at Login: ", token); 
+            await axios.get("https://api.spotify.com/v1/me/top/artists", {
+                // method: 'GET',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token,
+                },
+                params: {
+                    time_range: "medium_term",
+                    limit: 20
+                }
+            })
+            .then(async res => {
+                // alert("Artist and genre response:",res)
+                // alert("Artist and genre response data:", res.data)
+                console.log("Artist and genre response: ",res.data)
+                if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                    const names = res.data.items.map(artist => artist.name); 
+                    newUser.setArtists(names);
+                    console.log(newUser.artists);
+                    console.log(names);
+
+                    console.log("res data items: ", res.data.items)
+                    const genre = res.data.items.flatMap(user => user.genres);
+                    const uniqueGenres = [...new Set(genre)];
+                    newUser.setGenres(uniqueGenres);
+                    console.log(genre); 
+                    console.log(uniqueGenres);
+
+
+                        // console.log(refDoc);
+                    
+                            // console.log(artistNames);
+                    await newUser.update({topArtists: names, genres: uniqueGenres});
+                            // user.update({genres: genre}); 
+                } else {
+                    alert('Invalid response format: ', res.data);
+                }
+            })       
+
+            await axios('https://api.spotify.com/v1/me', {
+                method: 'GET',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token,
+                },
+            })
+            .then(async res => {
+                // alert("profile data: ",res.data)
+
+                console.log("profile data: ",res.data)
+                const displayname = res.data.display_name;
+                newUser.setDisplayName(displayname);
+
+                console.log(res.data.images)
+                const imgUrl = res.data.images.map(img => img.url)
+                const uniqueUrl = imgUrl[0];
+                console.log('this is imgUrl: ', uniqueUrl)
+                newUser.setImgUrl(uniqueUrl);
+
+                console.log(res.data.product);
+                const productsubs = res.data.product;
+                await storeSubscription(productsubs);
+
+                console.log(res.data.id);
+                const userId = res.data.id;
+                
+
+                await newUser.update({displayName: displayname, imageUrl: uniqueUrl, subscription: productsubs, spotifyId: userId });
+            })
+
+            await axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + token,
+                    },
+            })
+            .then(async res => {
+                // alert("toptrack data: ", res.data)
+                console.log("toptrack data: ", res.data)
+                if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                    const topTracks = res.data.items.map(track => ({
+                        id: track.id,
+                        uri: track.uri,
+                        name: track.name,
+                        previewUrl: track.preview_url,
+                        artist: track.artists[0].name,
+                        albumImg: track.album.images[0].url
+                    }));
+                    // console.log("top tracks preview url: ", topTracks.previewUrl);
+                    newUser.setTopTracksData(topTracks);
+                    await newUser.update({ topTracks });
+                    console.log(topTracks);
+                } else {
+                    console.error('Invalid response format: ', res.data);
+                }
+            });
+            navigation.navigate("SideBar");
+        } else {
+            alert("No token!")
+            return;
+        }
+        
         
       } else {
         alert("Login failed! Try again");
       }
     } catch (error) {
       console.log(error);
+      if(error.response) {
+        console.log("response :", error.response)
+        console.log("response data: ", error.response.data)
+      } else if (error.request) {
+        console.log('No response received:', error.request);
+      } 
       alert('Login failed: ' + error.message + " Check if your email and password are correct!");
     } finally {
       setLoading(false);
     }
   };
+
+  const checkTokenValidity = async (expiration) => {
+    if (expiration) {
+        try {
+        const now = new Date().getTime();
+        console.log("now: ", now)
+        if (expiration && new Date().getTime() < expiration) {
+            console.log("token is okay")
+            return true;
+        }
+        } catch (error) {
+            console.error('Error checking token validity', error);
+            alert('Error checking token validity', error);
+    
+        }
+        return false;
+    } else {
+        return false;
+    }
+}
+
+const refreshToken = async (refreshToken) => {
+    alert("Token has expired! Refreshing now")
+    const navigation = useNavigation();
+    if (refreshToken) {
+        const user = await getUser();
+      try {
+        setLoading(true);
+        const data = qs.stringify({
+          client_id: '796b139564514f198f8511f8b260ff4b',
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken
+      
+        });
+        console.log("data: ", data);
+  
+        const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', data, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+          const { access_token, refresh_token, expires_in } = tokenResponse.data;
+          console.log("access token: ", access_token)
+          console.log("refreshToken: ", refresh_token)
+          const expiresIn = new Date().getTime() + expires_in * 1000;
+          await user.update({token: access_token, expiresIn: expiresIn, refreshToken: refresh_token});
+          const userDocRef = ref(user.email);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if(userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            const accessToken = userData.token;
+            if (accessToken && accessToken === access_token) {
+                console.log("Refreshed Token is same!")
+              console.log("refreshed access token from userDoc: ", accessToken);
+              alert("refreshed access token from userDoc: ", accessToken);
+            } else {
+              console.log("Refreshed token not updated!")
+            }
+
+          } else {
+            alert("No userDoc!")
+          }
+          setLoading(false);
+          
+          return access_token;
+
+      } catch (error) {
+        setLoading(false);
+        console.error("Error refreshing token:", error);
+        alert("Failed to refresh token. Please log in again.");
+        navigation.navigate('Access');
+      }
+    } else {
+      alert("No token to refresh!")
+      navigation.navigate('Access');
+    }
+  }
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior='padding'>

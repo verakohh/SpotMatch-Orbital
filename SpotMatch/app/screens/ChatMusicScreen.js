@@ -77,6 +77,7 @@ const ChatMusicScreen = ({route}) => {
     );
 
     const fetchChatMusic = async () => {
+        setLoading(true);
         await checkPremium();
         
         if (premium) {

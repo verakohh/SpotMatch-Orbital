@@ -106,7 +106,7 @@ export default function App() {
   return (
     <UserProvider>
       <ChatProvider>
-          <Stack.Navigator initialRouteName="Access">
+          <Stack.Navigator initialRouteName="Login">
           <Stack.Screen name="Access" component={Access} options={{ headerShown: false }} />
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
             <Stack.Screen name="SignUpScreen" component={SignUpScreen} options={{ headerShown: false }} />
