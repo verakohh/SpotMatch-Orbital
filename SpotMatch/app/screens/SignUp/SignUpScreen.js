@@ -31,17 +31,8 @@ const SignUpScreen = () => {
 
     if (firstName && lastName && email && password && confirmPassword) {
       try {
-        // Check in Firebase Authentication
         const signInMethods = await fetchSignInMethodsForEmail(auth, email);
         if (signInMethods.length > 0) {
-          Alert.alert('Error', 'Email is already in use');
-          return;
-        }
-        
-        // Check in Firestore
-        const docRef = doc(db, 'users', email);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
           Alert.alert('Error', 'Email is already in use');
         } else {
           navigation.navigate('SignUpStep2Screen', { firstName, lastName, email, password });
@@ -72,7 +63,7 @@ const SignUpScreen = () => {
         <View style={styles.headerLine} />
         <View style={styles.progressBar}>
           <View style={styles.progress}></View>
-          <Text style={styles.progressText}>25%</Text>
+          <Text style={styles.progressText}>33.3%</Text>
         </View>
         <Text style={styles.subtitle}>Let's get started!</Text>
         <View style={styles.inputContainer}>

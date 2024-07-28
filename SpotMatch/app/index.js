@@ -69,7 +69,6 @@ import { ChatProvider } from './screens/context/ChatContext';
 import Registration from './screens/Registration';
 import Login from './screens/Login';
 import SideBar from './screens/SideBar';
-import AccountManagement from './screens/SideBarScreen/AccountManagement';
 import SignUpScreen from './screens/SignUp/SignUpScreen';
 import SignUpStep2Screen from './screens/SignUp/SignUpStep2Screen';
 import SpotifyAuthScreen from './screens/SignUp/SpotifyAuthScreen';
@@ -122,7 +121,6 @@ export default function App() {
             <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ChatMusicScreen" component={ChatMusicScreen} options={{ headerShown: false }} />
             <Stack.Screen name="MatchesProfileScreen" component={MatchesProfileScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="AccountManagement" component={AccountManagement} options={{ headerShown: false }} />
             <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
       </ChatProvider>

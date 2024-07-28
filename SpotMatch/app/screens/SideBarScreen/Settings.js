@@ -15,7 +15,6 @@ const Settings = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const currentUser = auth.currentUser;
       const user = await getUser();
       const userDocRef = ref(user.email);
       const userDocSnap = await getDoc(userDocRef);

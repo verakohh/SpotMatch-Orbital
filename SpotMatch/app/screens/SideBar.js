@@ -27,7 +27,7 @@ const CustomHeader = ({ title, navigation, isDrawer }) => {
     if (isDrawer) {
       navigation.openDrawer();
     } else {
-      navigation.navigate("InsideLayout");
+      navigation.goBack();
       setTimeout(() => {
         navigation.openDrawer();
       }, 0);
@@ -179,19 +179,6 @@ const SideBar = () => {
           header: () => (
             <CustomHeader
               title="Matches"
-              navigation={navigation}
-              isDrawer={false}
-            />
-          ),
-        })}
-      />
-      <Drawer.Screen
-        name="MatchesProfileScreen"
-        component={MatchesProfileScreen}
-        options={({ navigation }) => ({
-          header: () => (
-            <CustomHeader
-              title="MatchesProfileScreen"
               navigation={navigation}
               isDrawer={false}
             />

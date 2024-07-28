@@ -1,16 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, Image, StyleSheet, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
-import Swiper from 'react-native-deck-swiper';
-import { getUser, getToken, getTokenExpiration, removeToken } from '../User';
-import { useNavigation , useFocusEffect} from '@react-navigation/core';
-import { getDoc, getDocs, query, where} from 'firebase/firestore';
-import { ref, usersColRef } from '../../firebase';
-import axios from 'axios';
-import { LinearGradient } from 'expo-linear-gradient';
-import SpotifyWebApi from "spotify-web-api-node";
-import { BlurView } from 'expo-blur';
-import Feather from 'react-native-vector-icons/Feather';
-// import { Audio } from 'expo-av';
+import React from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import UserRecScreen from './Discover/UserRecScreen';
 import ApiRecScreen from './Discover/ApiRecScreen';
@@ -19,13 +8,76 @@ const Tab = createMaterialTopTabNavigator();
 
 
 export default function DiscoverScreen() {
-
     return (
-        <Tab.Navigator screenOptions={{swipeEnabled: false, tabBarStyle: {marginBottom: 0, paddingBottom: 0}}}>
-            <Tab.Screen name="User Recommendations" component={UserRecScreen} />
-            <Tab.Screen name="API Recommendations" component={ApiRecScreen} />
+      <View style={styles.container}>
+        <Tab.Navigator
+          screenOptions={{
+            swipeEnabled: false,
+            tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' },
+            tabBarIndicatorStyle: { backgroundColor: 'transparent', height: 0 },
+            tabBarStyle: { backgroundColor: '#FAF4EC', shadowOpacity: 0, elevation: 0 },
+            tabBarPressColor: '#D3D3D3',
+            tabBarItemStyle: { borderRadius: 20, marginHorizontal: 0, height: 60, width: 'auto' },
+            tabBarScrollEnabled: false,
+            tabBarInactiveTintColor: '#212E37',
+            tabBarActiveTintColor: '#FAF4EC',
+          }}
+        >
+          <Tab.Screen
+            name="User Recommendations"
+            component={UserRecScreen}
+            options={{
+              tabBarLabel: ({ focused }) => (
+                <View style={focused ? styles.activeTab : styles.inactiveTab}>
+                  <Text style={focused ? styles.activeTabText : styles.inactiveTabText}>User Recommendations </Text>
+                </View>
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="API Recommendations"
+            component={ApiRecScreen}
+            options={{
+              tabBarLabel: ({ focused }) => (
+                <View style={focused ? styles.activeTab : styles.inactiveTab}>
+                  <Text style={focused ? styles.activeTabText : styles.inactiveTabText}>API Recommendations </Text>
+                </View>
+              ),
+            }}
+          />
         </Tab.Navigator>
+      </View>
     );
+  }
+  
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#FAF4EC',
+    },
+    activeTab: {
+      backgroundColor: '#3F78D8',
+      paddingVertical: 10,
+      paddingHorizontal: 10, // Increase the horizontal padding for a longer tab
+      borderRadius: 20,
+      height: '100%',
+    },
+    inactiveTab: {
+      backgroundColor: '#BAD6EB',
+      paddingVertical: 10,
+      paddingHorizontal: 10, // Increase the horizontal padding for a longer tab
+      borderRadius: 20,
+      height: '100%',
+    },
+    activeTabText: {
+      color: '#FAF4EC',
+      fontWeight: '500',
+    },
+    inactiveTabText: {
+      color: '#212E37',
+      fontWeight: '400',
+    },
+  });
     // const navigation = useNavigation();
     // const [recommendedTracks, setRecommendedTracks] = useState([]);
     // const [allTracks, setAllTracks] = useState([]);
@@ -427,79 +479,79 @@ export default function DiscoverScreen() {
        
     //     </LinearGradient>
     // );
-}
+// }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imgBackground: {
-        flex: 1,
-        width: "100%",
-        height: "100%",
-    },
-    card: {
-        flex: Dimensions.get("window").height < 700 ? 0.5 : 0.6,
-        borderRadius: 8,
-        shadowRadius: 25,
-        shadowColor: '#171717',  
-        shadowOpacity: 0.2,
-        shadowOffset: { width: 0, height: 0 },
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: 'lightgrey',
-        overflow: "hidden",
-        marginTop: 10,
+// const styles = StyleSheet.create({
+//     container: {
+//         flex: 1,
+//         justifyContent: 'center',
+//         alignItems: 'center',
+//     },
+//     imgBackground: {
+//         flex: 1,
+//         width: "100%",
+//         height: "100%",
+//     },
+//     card: {
+//         flex: Dimensions.get("window").height < 700 ? 0.5 : 0.6,
+//         borderRadius: 8,
+//         shadowRadius: 25,
+//         shadowColor: '#171717',  
+//         shadowOpacity: 0.2,
+//         shadowOffset: { width: 0, height: 0 },
+//         justifyContent: "center",
+//         alignItems: "center",
+//         backgroundColor: 'lightgrey',
+//         overflow: "hidden",
+//         marginTop: 10,
 
-      },
-    cardImg: {
-        flex: 1,
-        width: "70%",
-        resizeMode: "contain",
-        borderRadius: 8,
-        marginTop: 5,
-        marginbottom: 5,
-        marginLeft: '15%',
-    },
-    title: {
-        // marginTop: 2,
-        fontSize: 25,
-        fontWeight: '600',
-        color: "white",
-        width: "100%",
-        textShadowColor: "black",
-        textShadowOffset: { width: 1, height: 2 },
-        textShadowRadius: 6,
-        paddingBottom: 10,
-        paddingHorizontal: 12,
-        textAlign: "center",
-    },
-    artist: {
-        color: "white",
-        textAlign: "center",
-        fontSize: 19,
-        fontWeight: '500',
-        textShadowColor: "black",
-        textShadowOffset: { width: 1, height: 2 },
-        textShadowRadius: 5,
-        paddingHorizontal: 10,
+//       },
+//     cardImg: {
+//         flex: 1,
+//         width: "70%",
+//         resizeMode: "contain",
+//         borderRadius: 8,
+//         marginTop: 5,
+//         marginbottom: 5,
+//         marginLeft: '15%',
+//     },
+//     title: {
+//         // marginTop: 2,
+//         fontSize: 25,
+//         fontWeight: '600',
+//         color: "white",
+//         width: "100%",
+//         textShadowColor: "black",
+//         textShadowOffset: { width: 1, height: 2 },
+//         textShadowRadius: 6,
+//         paddingBottom: 10,
+//         paddingHorizontal: 12,
+//         textAlign: "center",
+//     },
+//     artist: {
+//         color: "white",
+//         textAlign: "center",
+//         fontSize: 19,
+//         fontWeight: '500',
+//         textShadowColor: "black",
+//         textShadowOffset: { width: 1, height: 2 },
+//         textShadowRadius: 5,
+//         paddingHorizontal: 10,
 
-    },
-    playPauseButton: {
-        alignItems: 'center',
-        width: "28%",
-        backgroundColor: '#D3D3D3',
-        borderRadius: 50,
-        paddingVertical: 8,
-        paddingHorizontal: 18,
-        margin: 15,
+//     },
+//     playPauseButton: {
+//         alignItems: 'center',
+//         width: "28%",
+//         backgroundColor: '#D3D3D3',
+//         borderRadius: 50,
+//         paddingVertical: 8,
+//         paddingHorizontal: 18,
+//         margin: 15,
 
-    },
+//     },
    
 
-});
+// });
 
 
 // const fetchMoreTracks = async () => {

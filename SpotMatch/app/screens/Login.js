@@ -213,7 +213,7 @@
 
 
 import React, { useState } from 'react';
-import { Text, TextInput, Image, View, StyleSheet, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { Text, TextInput, Image, View, StyleSheet, KeyboardAvoidingView, TouchableOpacity, Alert } from 'react-native';
 import Button from '../../components/navigation/Button';
 import { FIREBASE_AUTH, ref } from '../../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -235,12 +235,12 @@ export const checkTokenValidity = async (expiration) => {
       }
       } catch (error) {
           console.error('Error checking token validity', error);
-          alert('Error checking token validity', error);
+          Alert.alert('Error checking token validity', error);
   
       }
       return false;
   } else {
-    alert("No expiration given!")
+    Alert.alert("No expiration given!")
   }
 }
 
@@ -296,7 +296,7 @@ const Login = () => {
         
         if (token) {
             console.log("access token from userDoc at Login: ", token);
-            alert("access token from userDoc at Login: ", token); 
+            // alert("access token from userDoc at Login: ", token); 
             await axios.get("https://api.spotify.com/v1/me/top/artists", {
                 // method: 'GET',
                 headers: {
@@ -333,7 +333,7 @@ const Login = () => {
                     await newUser.update({topArtists: names, genres: uniqueGenres});
                             // user.update({genres: genre}); 
                 } else {
-                    alert('Invalid response format: ', res.data);
+                    Alert.alert('Error! Invalid response format ', res.data);
                 }
             })       
 
@@ -395,19 +395,21 @@ const Login = () => {
                     console.log(topTracks);
                 } else {
                     console.error('Invalid response format: ', res.data);
+                    Alert.alert('Error! Invalid response format ', res.data);
+
                 }
             });
 
-                alert("Fetched all data successfully!")
+                Alert.alert("Success", "Fetched all data successfully!")
                 navigation.navigate("SideBar");
         } else {
-            alert("No token!")
+            Alert.alert("Error!", "No token!")
             return;
         }
         
         
       } else {
-        alert("No userDoc!");
+        Alert.alert("Error!", "No userDoc!");
       }
     } catch (error) {
       console.log(error);
@@ -415,12 +417,12 @@ const Login = () => {
         console.log("response :", error.response)
         console.log("response data: ", error.response.data)
         if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
-          alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+          Alert.alert("Currently you are not allowlisted by SpotMatch yet!", "SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. ")
         }
       } else if (error.request) {
         console.log('No response received:', error.request);
       } 
-      alert('Login failed: ' + error.message + " Check if your email and password are correct!");
+      Alert.alert("Login failed, check if your email and password are correct! " , error.message );
       console.error('Login failed: ' + error.message + " Check if your email and password are correct!");
 
     } finally {
@@ -430,7 +432,7 @@ const Login = () => {
 
 
   const refreshToken = async (refreshToken) => {
-    alert("Token has expired! Refreshing now..")
+    Alert.alert("Refreshing token!", "Token has expired! Refreshing now..")
     const user = await getUser();
     const docRefPath = `users/${user.email}`;
     console.log("docRefPath: ", docRefPath)
@@ -463,14 +465,14 @@ const Login = () => {
             if (accessToken && accessToken === access_token) {
                 console.log("Refreshed Token is same!")
               console.log("refreshed access token from userDoc: ", accessToken);
-              alert("refreshed access token from userDoc: ", accessToken);
+              Alert.alert("Success!", "Refreshed access token!");
             } else {
               console.log("Refreshed token not updated!")
-              alert("Refreshed token not updated!")
+              Alert.alert("Error!", "Refreshed token not updated!")
             }
   
           } else {
-            alert("No userDoc!")
+            Alert.alert("Error!", "No userDoc!")
           }
           
           return access_token;
@@ -478,11 +480,11 @@ const Login = () => {
       } catch (error) {
         
         console.error("Error refreshing token:", error);
-        alert("Failed to refresh token. Please log in to Spotify and grant access again.");
+        Alert.alert("Error!", "Failed to refresh token. Please log in to Spotify and grant access again.");
         navigation.navigate('Access', {docRefPath});
       }
     } else {
-      alert("No token to refresh!")
+      Alert.alert("Unsuccessful!", "No token to refresh! Please log in to Spotify and grant access again.")
       navigation.navigate('Access', {docRefPath});
     }
   }

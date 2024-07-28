@@ -48,13 +48,6 @@ const ChatMusicScreen = ({route}) => {
                 const userDocRef = ref(user.email);
                 const userDocSnap = await getDoc(userDocRef);
 
-                if (chatDocSnap.exists()) {
-                    const chatData = chatDocSnap.data();
-                    const fetchedChatMusic = chatData.chatMusic || [];
-                    setChatMusic(fetchedChatMusic);
-                } else {
-                    alert("No chatDoc!")
-                }
 
                 if (userDocSnap.exists()) {
                     const userData = userDocSnap.data();
@@ -84,13 +77,13 @@ const ChatMusicScreen = ({route}) => {
                             await user.update({ chatPlaylistId: playlistId, chatPlaylistSongs: []});
                         } catch (error) {
                             console.error("Error creating playlist: ", error);
-                            if(error.response.status === 429) {
-                                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-                            } else if(error.response) {
+                             if(error.response) {
                                 console.log("response :", error.response)
                                 console.log("response data: ", error.response.data)
                                 if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
                                   alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                                } else if(error.response.status === 429) {
+                                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                                 } else {
                                     alert("Failed creating SpotMatch Chat playlist, error response data: ", error.response.data);
                                 }
@@ -110,13 +103,13 @@ const ChatMusicScreen = ({route}) => {
                 }
                 
             } catch (error) {
-                if(error.response.status === 429) {
-                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-                } else if(error.response) {
+                if(error.response) {
                     console.log("response :", error.response)
                     console.log("response data: ", error.response.data)
                     if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
                       alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                    } else if(error.response.status === 429) {
+                        alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                     } else {
                         alert("Failed getting data, error response data: ", error.response.data);
                     }
@@ -158,16 +151,29 @@ const ChatMusicScreen = ({route}) => {
                     const data = doc.data();
                     console.log("data: ", data)
                     // setPlayingSong(data.currentSong);
+                    
+                    const chatDocSnap = await getDoc(chatDocRef);
+    
+                    if (chatDocSnap.exists()) {
+                        const chatData = chatDocSnap.data();
+                        const fetchedChatMusic = chatData.chatMusic || [];
+                        setChatMusic(fetchedChatMusic);
+                    } else {
+                        alert("No chatDoc!")
+                    }
                     if (data) {
                         setPlayingSong(data.currentSong);
 
                         if (data.playing && !playingRef.current && data.currentSong) {
                             //if matched user is playing, current user not playing, current song exists 
-
+                            setPlayingSong(data.currentSong);
+                            
                             console.log("came in the unsubscribe")
                             setProgress(0);
                             playTrack(data.currentSong);
                             
+                        } else if (data.playing && playingRef.current && playingSong.id !== data.currentSong.id) {
+
                         } else if (!data.playing && await isPlaying()) {
                             await pauseTrack();
                         } 
@@ -336,9 +342,7 @@ const ChatMusicScreen = ({route}) => {
             }
         } catch (error) {
             console.error("Error fetching devices: ", error);
-            if(error.response.status === 429) {
-                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-            } else if (error.response && error.response.status === 404) {
+             if (error.response && error.response.status === 404) {
                 alert("Due to the Spotify API's limits, kindly ensure you play a song on Spotify before proceeding.");
                 
             } else if (error.response) {
@@ -346,7 +350,9 @@ const ChatMusicScreen = ({route}) => {
                 console.log("response data: ", error.response.data)
                 if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
                   alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
-                } else {
+                } else if(error.response.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                }else {
                     alert("Failed getting available devices. Due to the Spotify API's limits, kindly ensure you play a song on Spotify before proceeding so that your device is detected. Error response data: ", error.response.data);
                 }
             } else if (error.request) {
@@ -394,13 +400,13 @@ const ChatMusicScreen = ({route}) => {
             }
         } catch (error) {
             console.error("Error fetching isPlaying: ", error);
-            if(error.response.status === 429) {
-                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-            } else if(error.response) {
+             if(error.response) {
                 console.log("response :", error.response)
                 console.log("response data: ", error.response.data)
                 if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
                   alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                } else if(error.response.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                 } else {
                     alert("Failed getting isPlaying, error response data: ", error.response.data);
                 }
@@ -503,7 +509,7 @@ const ChatMusicScreen = ({route}) => {
         
     };
 
-    const playTrack = async (song,  retryCount = 0) => {
+    const playTrack = async (song) => {
         if (!song) {
             alert("No song! Unable to play");
             return;
@@ -561,14 +567,9 @@ const ChatMusicScreen = ({route}) => {
                 console.error("Error response data: ", error.response.data);
             }
             if (error.response && error.response.status === 502) {
-                if (retryCount < 3) {
-                    setLoading(true);
-                    console.log(`Retrying... (${retryCount + 1})`);
-                    setTimeout(() => playTrack(song, retryCount + 1), 500);
-                } else {
-                    setLoading(false);
+               
                     alert("Spotify server error, please try again later. Kindly ensure you play a song on Spotify before proceeding");
-                }
+                
             } else if (error.response && error.response.status === 429) {
                 alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
             } else if (error.response && error.response.status === 404) {
@@ -591,7 +592,7 @@ const ChatMusicScreen = ({route}) => {
        
     };
 
-    const pauseTrack = async (retryCount = 0) => {
+    const pauseTrack = async () => {
         try {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
@@ -634,14 +635,9 @@ const ChatMusicScreen = ({route}) => {
         } catch (error) {
             console.error("Error pausing track: ", error);
             if (error.response && error.response.status === 502) {
-                if (retryCount < 3) {
-                        setLoading(true);
-                        console.log(`Retrying... (${retryCount + 1})`);
-                        setTimeout(() => pauseTrack(retryCount + 1), 500);
-                    } else {
-                        setLoading(false);
+               
                         alert("Spotify server error, please try again later.");
-                    }
+                    
             } else if (error.response && error.response.status === 429) {
                 alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
             } else if (error.response && error.response.status === 404) {
@@ -669,7 +665,7 @@ const ChatMusicScreen = ({route}) => {
     
     if (loading) {
         return (
-            <View style={styles.container}>
+            <View style={styles.containerLoading}>
                 <ActivityIndicator size="large" color="#0000ff" />
             </View>
         );
@@ -857,7 +853,7 @@ const ChatMusicScreen = ({route}) => {
         await updateDoc(chatDocRef, {
             chatMusic: arrayUnion(songObject),
         });
-        setChatMusic((prev) => [...prev, songObject]);
+        // setChatMusic((prev) => [...prev, songObject]);
         setSearchResults([]);
     };
 

@@ -26,7 +26,7 @@ const Matches = () => {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
               const docData = docSnap.data();
-              return { ...docData, docRef: docRef.path }; // Pass path instead of docRef
+              return { ...docData, userId: docRef.id };
             }
             return null;
           })
@@ -39,6 +39,7 @@ const Matches = () => {
       }
     } catch (error) {
       console.error('Error fetching matches:', error);
+      setLoading(false);
     }
   };
 
@@ -50,11 +51,13 @@ const Matches = () => {
 
   const renderItem = ({ item }) => (
     // <TouchableOpacity style={styles.matchContainer} onPress={() => navigation.navigate('MatchesProfileScreen', { user: item })}>
-    <View style={styles.matchContainer}>
+
+       <TouchableOpacity style={styles.matchContainer} onPress={() => navigation.navigate('MatchesProfileScreen', { userId: item.userId })}>
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
       <Text style={styles.name}>{item.firstName}</Text>
-      </View>
-    // </TouchableOpacity>
+    </TouchableOpacity>
+
+
   );
 
   if (loading) {
@@ -77,7 +80,7 @@ const Matches = () => {
     <View style={styles.container}>
       <FlatList
         data={matches}
-        keyExtractor={(item) => item.docRef}
+        keyExtractor={(item) => item.userId}
         renderItem={renderItem}
       />
     </View>
@@ -108,6 +111,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ccc',
     paddingVertical: 14,
     paddingHorizontal: 15,
+    marginBottom: 15,
 
   },
   image: {

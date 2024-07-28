@@ -105,13 +105,13 @@ export default function UserRecScreen() {
                             await user.update({ discPlaylistId: playlistId , discPlaylistSongs: []});
                         } catch (error) {
                             console.error("Error creating playlist: ", error);
-                            if(error.response.status === 429) {
-                                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-                            } else if(error.response) {
+                             if(error.response) {
                                 console.log("response :", error.response)
                                 console.log("response data: ", error.response.data)
                                 if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
                                   alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                                } else if(error.response.status === 429) {
+                                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                                 } else {
                                     alert("Failed creating SpotMatch discover playlist, error response data: ", error.response.data);
                                 }
@@ -214,13 +214,13 @@ export default function UserRecScreen() {
                 }
 
             } catch (error) {
-                if(error.response.status === 429) {
-                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-                } else if(error.response) {
+                 if(error.response) {
                     console.log("response :", error.response)
                     console.log("response data: ", error.response.data)
                     if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
                       alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                    } else  if(error.response.status === 429) {
+                        alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                     } else {
                         alert("Failed getting data, error response data: ", error.response.data);
                     }
@@ -430,13 +430,13 @@ export default function UserRecScreen() {
             }
         } catch (error) {
             console.error("Error fetching isPlaying: ", error);
-            if(error.response.status === 429) {
-                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-            } else if(error.response) {
+            if(error.response) {
                 console.log("response :", error.response)
                 console.log("response data: ", error.response.data)
                 if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
                   alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                } else if(error.response.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                 } else {
                     alert("Failed getting isPlaying, error response data: ", error.response.data);
                 }
@@ -510,13 +510,13 @@ export default function UserRecScreen() {
             }
         } catch (error) {
             console.error("Error fetching devices: ", error);
-            if(error.response.status === 429) {
-                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-            } else if(error.response) {
+            if(error.response) {
                 console.log("response :", error.response)
                 console.log("response data: ", error.response.data)
                 if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
                     alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                } else if(error.response.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                 } else {
                     alert("Failed getting available devices. Due to the Spotify API's limits, kindly ensure you play a song on Spotify before proceeding so that your device is detected. Error response data: ", error.response.data);
                 }
@@ -527,7 +527,7 @@ export default function UserRecScreen() {
             } else {
                 alert("Failed getting available devices. Due to the Spotify API's limits, kindly ensure you play a song on Spotify before proceeding so that your device is detected. ", error);
             }
-            return [];
+
         }
             // console.log("response", response.devices);
             // const data = await response.json();
@@ -535,7 +535,7 @@ export default function UserRecScreen() {
         
     };
     
-    const playTrack = async (uri, retryCount = 0) => {
+    const playTrack = async (uri) => {
         // try {
             
         //     console.log("at playTrack")
@@ -608,13 +608,9 @@ export default function UserRecScreen() {
 
             } catch (error) {
                 if (error.response && error.response.status === 502) {
-                    if (retryCount < 3) {
-                        setLoading(true);
-                        console.log(`Retrying... (${retryCount + 1})`);
-                        setTimeout(() => playTrack(uri, retryCount + 1), 500);
-                    } else {
+                   
                         alert("Spotify server error, please try again later. Kindly ensure you play a song on Spotify before proceeding");
-                    }
+                    
                 } else if (error.response && error.response.status === 429) {
                     alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
                 } else if (error.response && error.response.status === 404) {
@@ -637,7 +633,7 @@ export default function UserRecScreen() {
             }
     };
 
-    const pauseTrack = async (retryCount = 0) => {
+    const pauseTrack = async () => {
 
         try {
             const user = await getUser();
@@ -675,13 +671,9 @@ export default function UserRecScreen() {
         } catch (error) {
             console.error("Error pausing track: ", error);
             if (error.response && error.response.status === 502) {
-                if (retryCount < 3) {
-                    setLoading(true);
-                        console.log(`Retrying... (${retryCount + 1})`);
-                        setTimeout(() => pauseTrack(retryCount + 1), 500);
-                    } else {
+                
                         alert("Spotify server error, please try again later.");
-                    }
+
             } else if (error.response && error.response.status === 429) {
                 alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
             } else if (error.response && error.response.status === 404) {
