@@ -12,6 +12,11 @@ import { BlurView } from 'expo-blur';
 import Feather from 'react-native-vector-icons/Feather';
 // import { Audio } from 'expo-av';
 import DiscoverInstructionImage from '../../../assets/images/Discover-Instruction-Image.png';
+import { checkTokenValidity } from '../Login';
+import qs from 'qs';
+
+
+
 
 
 export default function UserRecScreen() {
@@ -34,107 +39,122 @@ export default function UserRecScreen() {
 
     const fetchData = async () => {
         await checkPremium();
+        await getAvailableDevices();
+
         
         if (premium) {
-            const token = await getToken();
-            console.log("token: ", token)
+            try {
+                setLoading(true);
 
-            setLoading(true);
+                const user = await getUser();
+                console.log(user)
+                console.log(user.email)
+                const userDocRef = ref(user.email);
+                const userDocSnap = await getDoc(userDocRef);
 
-            const user = await getUser();
-            console.log(user)
-            console.log(user.email)
-            const userDocRef = ref(user.email);
-            const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    let token = userData.token;
+                    const expiresIn = userData.expiresIn;
+                    const refreshAccessToken = userData.refreshToken;
 
-            if (!await checkTokenValidity(token)) {
-                alert("Token of 1 hour has expired! Kindly refresh it")
-                navigation.navigate('Access');
-                return;
-            }
+                    if (!await checkTokenValidity(expiresIn)) {
+                        token = await refreshToken(refreshAccessToken);
+                    }
 
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                const userGenres = userData.genres || [];
-                const previousMatched = userData.previousMatched || [];
-                const userMatched = userData.matched || [];
-                const userTrack = userData.topTracks[0].uri || '';
-                const userTrackId = userData.topTracks[0].id;
-                const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.id) : [];
-                console.log("userTrack: ", userTrack);
-                const instruction = [({
-                    albumImg: DiscoverInstructionImage,
-                    name: 'Instructions',
-                    artist: 'Swipe LEFT for dismissal / RIGHT to add the song to a playlist in Spotify! \n Press the button below to stop / rewind a song \n Note: Refrain from spamming right swipes to avoid exceeding Spotify API rate limits',
-                    names: ["SpotMatch"], 
-                    uri: userTrack, 
-                    id: userTrackId, 
-                    flag: true})];
-                console.log("instruction object: ", instruction)
-                const spotifyId = userData.spotifyId;
-                const discPlaylistSongs = userData.discPlaylistSongs;
-                // const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.uri) : [];
+                    const userGenres = userData.genres || [];
+                    const previousMatched = userData.previousMatched || [];
+                    const userMatched = userData.matched || [];
+                    const userTrack = userData.topTracks[0].uri || '';
+                    const userTrackId = userData.topTracks[0].id;
+                    const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.id) : [];
+                    console.log("userTrack: ", userTrack);
+                    const instruction = [({
+                        albumImg: DiscoverInstructionImage,
+                        name: 'Instructions',
+                        artist: 'Swipe LEFT for dismissal / RIGHT to add the song to a playlist in Spotify! \n Press the button below to stop / rewind a song \n Note: Refrain from spamming right swipes to avoid exceeding Spotify API rate limits',
+                        names: ["SpotMatch"], 
+                        uri: userTrack, 
+                        id: userTrackId, 
+                        flag: true})];
+                    console.log("instruction object: ", instruction)
+                    const spotifyId = userData.spotifyId;
+                    const discPlaylistSongs = userData.discPlaylistSongs;
+                    // const userTopTracks = userData.topTracks  && userData.topTracks.length > 0 ? userData.topTracks.map(track => track.uri) : [];
+                    
+                    // if (trackIndex >= allTracks.length || trackIndex === 0) {
+                        // console.log("index: ", trackIndex);
+                        // const q = query(usersColRef, where("genres", "array-contains-any", userGenres));
+                        // const querySnapshot = await getDocs(q);
+
+                        // console.log("querySnapshot docs : ", querySnapshot.docs)
+                    if (!userData.discPlaylistId && spotifyId) {
+                        try {
+                            const playlistResponse = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
+                                name: "SpotMatch Discover Playlist",
+                                description: "Playlist for songs discovered via SpotMatch :)",
+                                public: false
+                            }, {
+                                // method: "POST",
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            const playlistId = playlistResponse.data.id;
+                            console.log('playlist id: ', playlistId)
+                            await user.update({ discPlaylistId: playlistId , discPlaylistSongs: []});
+                        } catch (error) {
+                            console.error("Error creating playlist: ", error);
+                            if(error.response.status === 429) {
+                                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                            } else if(error.response) {
+                                console.log("response :", error.response)
+                                console.log("response data: ", error.response.data)
+                                if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+                                  alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                                } else {
+                                    alert("Failed creating SpotMatch discover playlist, error response data: ", error.response.data);
+                                }
+                            } else if (error.request) {
+                                console.log('No response received:', error.request);
+                                alert('No response received:', error.request);
                 
-                // if (trackIndex >= allTracks.length || trackIndex === 0) {
-                    // console.log("index: ", trackIndex);
-                    // const q = query(usersColRef, where("genres", "array-contains-any", userGenres));
-                    // const querySnapshot = await getDocs(q);
-
-                    // console.log("querySnapshot docs : ", querySnapshot.docs)
-                if (!userData.discPlaylistId && spotifyId) {
-                    try {
-                        const playlistResponse = await axios.post(`https://api.spotify.com/v1/users/${spotifyId}/playlists`, {
-                            name: "SpotMatch Discover Playlist",
-                            description: "Playlist for songs discovered via SpotMatch :)",
-                            public: false
-                        }, {
-                            // method: "POST",
-                            headers: {
-                                'Authorization': `Bearer ${token}`
+                            } else {
+                                alert("Failed creating SpotMatch discover playlist: ", error);
                             }
-                        });
-                        const playlistId = playlistResponse.data.id;
-                        console.log('playlist id: ', playlistId)
-                        await user.update({ discPlaylistId: playlistId , discPlaylistSongs: []});
-                    } catch (error) {
-                        console.error("Error creating playlist: ", error);
-                        if(error.status === 429) {
-                            alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
                         }
                     }
-                }
+                    
+                    if(userMatched.length === 0) {
+                        setRecommendedTracks([]);
+                        setLoading(false);
+                        return;
+                    }
+
+                    const previousMatchedPaths = previousMatched.map(ref => ref.path);
+                    const userMatchedPaths = userMatched.map(ref => ref.path);
+
+
+                    console.log("previous matched: ", previousMatchedPaths)
+                    console.log("user matched: ", userMatchedPaths)
+
+                    const newlyMatchedPaths = userMatchedPaths.filter(path => !previousMatchedPaths.includes(path));
+                    const newlyMatched = userMatched.filter(ref => newlyMatchedPaths.includes(ref.path));
+                    const relevantTracks = await fetchRelevantTracks(userMatched, newlyMatched, userGenres);
+                    const filteredTracks = discPlaylistSongs ? relevantTracks.filter(track => !discPlaylistSongs.includes(track.id) && !userTopTracks.includes(track.id)) : relevantTracks;
+                    
+                    
+                    console.log("new matched: ", newlyMatched)
+
+                    
+                    if(newlyMatched.length > 0) {
+                        await user.update({previousMatched: userMatched});
+                    }
+
+
+                    setRecommendedTracks([...instruction, ...filteredTracks]);
+                    console.log("tracks length : ", recommendedTracks.length)
                 
-                if(userMatched.length === 0) {
-                    setRecommendedTracks([]);
-                    setLoading(false);
-                    return;
-                }
-
-                const previousMatchedPaths = previousMatched.map(ref => ref.path);
-                const userMatchedPaths = userMatched.map(ref => ref.path);
-
-
-                console.log("previous matched: ", previousMatchedPaths)
-                console.log("user matched: ", userMatchedPaths)
-
-                const newlyMatchedPaths = userMatchedPaths.filter(path => !previousMatchedPaths.includes(path));
-                const newlyMatched = userMatched.filter(ref => newlyMatchedPaths.includes(ref.path));
-                const relevantTracks = await fetchRelevantTracks(userMatched, newlyMatched, userGenres);
-                const filteredTracks = discPlaylistSongs ? relevantTracks.filter(track => !discPlaylistSongs.includes(track.id) && !userTopTracks.includes(track.id)) : relevantTracks;
-                
-                
-                console.log("new matched: ", newlyMatched)
-
-                
-                if(newlyMatched.length > 0) {
-                    await user.update({previousMatched: userMatched});
-                }
-
-
-                setRecommendedTracks([...instruction, ...filteredTracks]);
-                console.log("tracks length : ", recommendedTracks.length)
-
-                setLoading(false);
                 // querySnapshot.forEach(doc => {
                 //     const docData = doc.data();
                 //     if (!previousMatchedUsers.includes(doc.id) && docData.topTracks && docData.topTracks.length > 0) {
@@ -188,12 +208,35 @@ export default function UserRecScreen() {
 
                 //     setLoading(false);
                 // }
-            } else {
-                alert("Error! No userDoc");
-                return;
+                } else {
+                    alert("Error! No userDoc");
+                    return;
+                }
+
+            } catch (error) {
+                if(error.response.status === 429) {
+                    alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                } else if(error.response) {
+                    console.log("response :", error.response)
+                    console.log("response data: ", error.response.data)
+                    if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+                      alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                    } else {
+                        alert("Failed getting data, error response data: ", error.response.data);
+                    }
+                } else if (error.request) {
+                    console.log('No response received:', error.request);
+                    alert('No response received:', error.request);
+    
+                } else {
+                    alert("Failed getting data ", error);
+                }
+            } finally {
+                setLoading(false);
             }
         } else {
             console.log("not premium")
+            alert("User is not premium!")
         }
 
     }
@@ -295,44 +338,136 @@ export default function UserRecScreen() {
             </View>
         );
     }
-
-    const isPlaying = async () => {
-        const token = await getToken();
-        if (!await checkTokenValidity(token)) {
-            alert("Token of 1 hour has expired! Kindly refresh it")
-            navigation.navigate('Access');
-            return;
-        }
-        try {
-            const response = await axios('https://api.spotify.com/v1/me/player', {
-                method: "GET",
+    const refreshToken = async (refreshToken) => {
+        alert("Token has expired! Refreshing now..")
+        const user = await getUser();
+        const docRefPath = `users/${user.email}`;
+        console.log("docRefPath: ", docRefPath)
+        if (refreshToken) {
+          try {
+            const data = qs.stringify({
+              client_id: '8346e646ff7a44b59b3f91f8a49033cb',
+              grant_type: 'refresh_token',
+              refresh_token: refreshToken
+          
+            });
+            console.log("data: ", data);
+      
+            const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', data, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 }
             });
-            console.log('response is playing: ', response.data.is_playing)
+              const { access_token, refresh_token, expires_in } = tokenResponse.data;
+              console.log("access token: ", access_token)
+              console.log("refreshToken: ", refresh_token)
+              const expiresIn = new Date().getTime() + expires_in * 1000;
+              await user.update({token: access_token, expiresIn: expiresIn, refreshToken: refresh_token});
+              const userDocRef = ref(user.email);
+              const userDocSnap = await getDoc(userDocRef);
+      
+              if(userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const accessToken = userData.token;
+                if (accessToken && accessToken === access_token) {
+                    console.log("Refreshed Token is same!")
+                  console.log("refreshed access token from userDoc: ", accessToken);
+                  alert("refreshed access token from userDoc: ", accessToken);
+                } else {
+                  console.log("Refreshed token not updated!")
+                  alert("Refreshed token not updated!")
+                }
+      
+              } else {
+                alert("No userDoc!")
+              }
+              
+              return access_token;
+      
+          } catch (error) {
+            
+            console.error("Error refreshing token:", error);
+            alert("Failed to refresh token. Please log in to Spotify and grant access again.");
+            navigation.navigate('Access', {docRefPath});
+          }
+        } else {
+          alert("No token to refresh!")
+          navigation.navigate('Access', {docRefPath});
+        }
+      }
+      
 
-            return response.data.is_playing;
+    const isPlaying = async () => {
+        
+        try {
+            const user = await getUser();
+            console.log(user)
+            console.log(user.email)
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                let token = userData.token;
+                const expiresIn = userData.expiresIn;
+                const refreshAccessToken = userData.refreshToken;
+
+                if (!await checkTokenValidity(expiresIn)) {
+                    token = await refreshToken(refreshAccessToken);
+                } 
+                   
+                const response = await axios('https://api.spotify.com/v1/me/player', {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                console.log('response is playing: ', response.data.is_playing)
+
+                return response.data.is_playing;
+            } else {
+                alert("No userDoc!")
+            }
         } catch (error) {
-            console.error("Error fetching is_playing: ", error);
-            if(error.status === 429) {
+            console.error("Error fetching isPlaying: ", error);
+            if(error.response.status === 429) {
                 alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+            } else if(error.response) {
+                console.log("response :", error.response)
+                console.log("response data: ", error.response.data)
+                if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+                  alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                } else {
+                    alert("Failed getting isPlaying, error response data: ", error.response.data);
+                }
+            } else if (error.request) {
+                console.log('No response received:', error.request);
+                alert('No response received:', error.request);
+
+            } else {
+                alert("Failed getting isPlaying ", error);
             }
         }
 
     };
 
     const getAvailableDevices = async () => {
-        const token = await getToken();
-        if (!await checkTokenValidity(token)) {
-        
-            alert("Token of 1 hour has expired! Kindly refresh it")
-            navigation.navigate('Access');
-            return [];
-            
-        }
+        try {
+            const user = await getUser();
+            console.log(user)
+            console.log(user.email)
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
 
-            try {
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                let token = userData.token;
+                const expiresIn = userData.expiresIn;
+                const refreshAccessToken = userData.refreshToken;
+
+                if (!await checkTokenValidity(expiresIn)) {
+                    token = await refreshToken(refreshAccessToken);
+                } 
                 const response = await axios('https://api.spotify.com/v1/me/player/devices', {
                     method: "GET",
                     headers: {
@@ -342,11 +477,58 @@ export default function UserRecScreen() {
                 console.log("response", response);
                 console.log('response device: ', response.data.devices)
 
-                return response.data.devices;
-            } catch (error) {
-                console.error("Error fetching devices: ", error);
-                return [];
+                const devices = response.data.devices;
+                console.log('devices: ', devices)
+                if (devices.length > 0) {
+                    const smartphoneDevice = devices.filter(device => device.type === "Smartphone")
+                    console.log("smartphone device : ", smartphoneDevice)
+
+                    //checking isactive device
+                    const isActiveDevice = devices.filter(device => device.is_active);
+                    console.log("is active devices? :", isActiveDevice);
+                    let selectedDevice;
+
+                    if (smartphoneDevice.length > 0) {
+                        //checking if there are any smartphone devices, if so, use the first one
+                        selectedDevice = smartphoneDevice[0].id
+                        console.log("selectedDevice Smartphone id: ", selectedDevice);
+                        console.log("selected device type: ", smartphoneDevice[0].type)
+                        
+                        
+                    } else {
+                        selectedDevice = devices[0].id; // Select the first device
+                        console.log("selected device type: ", devices[0].type)
+                    }
+                    deviceIdRef.current = selectedDevice;
+                    setDeviceId(selectedDevice);
+                } else {
+                    alert("No devices available. Due to the Spotify API's limits, kindly ensure you play a song on Spotify before proceeding so that your device is detected. ");
+                }
+
+            } else {
+                alert("No userDoc!")
             }
+        } catch (error) {
+            console.error("Error fetching devices: ", error);
+            if(error.response.status === 429) {
+                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+            } else if(error.response) {
+                console.log("response :", error.response)
+                console.log("response data: ", error.response.data)
+                if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+                    alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                } else {
+                    alert("Failed getting available devices. Due to the Spotify API's limits, kindly ensure you play a song on Spotify before proceeding so that your device is detected. Error response data: ", error.response.data);
+                }
+            } else if (error.request) {
+                console.log('No response received:', error.request);
+                alert('No response received:', error.request);
+
+            } else {
+                alert("Failed getting available devices. Due to the Spotify API's limits, kindly ensure you play a song on Spotify before proceeding so that your device is detected. ", error);
+            }
+            return [];
+        }
             // console.log("response", response.devices);
             // const data = await response.json();
             // return data.devices;
@@ -384,136 +566,175 @@ export default function UserRecScreen() {
             alert("No top track uri! Unable to play");
             return;
         }
-
-        const token = await getToken();
-        if (!await checkTokenValidity(token)) {
-            alert("Token of 1 hour has expired! Kindly refresh it")
-            navigation.navigate('Access');
-            return;
-        }
         
-        const devices = await getAvailableDevices();
-        console.log('devices: ', devices)
-        if (devices.length > 0) {
-            const smartphoneDevice = devices.filter(device => device.type === "Smartphone")
-            console.log("smartphone device : ", smartphoneDevice)
+        try {
+            const user = await getUser();
+            console.log(user)
+            console.log(user.email)
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
 
-            //checking isactive device
-            const isActiveDevice = devices.filter(device => device.is_active);
-            console.log("is active devices? :", isActiveDevice);
-            let selectedDevice;
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                let token = userData.token;
+                const expiresIn = userData.expiresIn;
+                const refreshAccessToken = userData.refreshToken;
 
-            if (smartphoneDevice.length > 0) {
-                //checking if there are any smartphone devices, if so, use the first one
-                selectedDevice = smartphoneDevice[0].id
-                console.log("selectedDevice Smartphone id: ", selectedDevice);
-                console.log("selected device type: ", smartphoneDevice[0].type)
-                
-                
-            } else {
-                selectedDevice = devices[0].id; // Select the first device
-                console.log("selected device type: ", devices[0].type)
-            }
-            deviceIdRef.current = selectedDevice;
-            setDeviceId(selectedDevice);
-            
-            try {
+                if (!await checkTokenValidity(expiresIn)) {
+                    token = await refreshToken(refreshAccessToken);
+                } 
                 if (deviceIdRef.current) {
-                    console.log(`Attempting to play track with URI: ${uri} on device ID: ${deviceIdRef.current}`);
+                console.log(`Attempting to play track with URI: ${uri} on device ID: ${deviceIdRef.current}`);
 
-                    await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`, 
-                    { uris: [uri] },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    setPlaying(true);
-                    setCurrentTrack(uri);
-                    playingRef.current = true;
-                    currentTrackRef.current = uri;
+                await axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`, 
+                { uris: [uri] },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                setPlaying(true);
+                setCurrentTrack(uri);
+                playingRef.current = true;
+                currentTrackRef.current = uri;
+
                 } else {
-                    alert("No device id!")
+                    alert("No device id available! Please exit the screen and return to refresh")
                 }
+            } else {
+                alert("No userDoc!")
+            }
 
             } catch (error) {
-                if (error.response) {
-                    console.error("Error response data: ", error.response.data);
-                }
                 if (error.response && error.response.status === 502) {
                     if (retryCount < 3) {
+                        setLoading(true);
                         console.log(`Retrying... (${retryCount + 1})`);
                         setTimeout(() => playTrack(uri, retryCount + 1), 500);
                     } else {
-                        alert("Spotify server error, please try again later.");
+                        alert("Spotify server error, please try again later. Kindly ensure you play a song on Spotify before proceeding");
                     }
                 } else if (error.response && error.response.status === 429) {
                     alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
                 } else if (error.response && error.response.status === 404) {
-                    alert("Failed: Track not found or invalid track URI.");
-                }else {
-                    alert("Failed to play track, please try again.");
+                    alert("Due to the Spotify API's limits, kindly ensure you play a song on Spotify before proceeding.");
+                    
+                } else if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+                      alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                } else if(error.response) {
+                    console.log("response :", error.response)
+                    console.log("response data: ", error.response.data)
+                    alert("Failed to play track, error response data: ", error.response.data)
+                } else if (error.request) {
+                    console.log('No response received:', error.request);
+                } else {
+                    alert("Failed to play track, please try again.", error);
                 }
+            } finally {
+                setLoading(false);
+
             }
-        } else {
-            alert("No devices available");
-        }
     };
 
-    const pauseTrack = async () => {
-        const token = await getToken();
-        if (!await checkTokenValidity(token)) {
-            alert("Token of 1 hour has expired! Kindly refresh it")
-            navigation.navigate('Access');
-            return;
-        }
+    const pauseTrack = async (retryCount = 0) => {
 
         try {
-            if (deviceIdRef.current) {
-                setPlaying(false);
-                playingRef.current = false;
-                console.log("device id: ", deviceIdRef.current)
-                await axios.put(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceIdRef.current}`, {}, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-            } else {
-                alert("No device id!")
+            const user = await getUser();
+                console.log(user)
+                console.log(user.email)
+                const userDocRef = ref(user.email);
+                const userDocSnap = await getDoc(userDocRef);
 
-            }
-            
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    let token = userData.token;
+                    const expiresIn = userData.expiresIn;
+                    const refreshAccessToken = userData.refreshToken;
+
+                    if (!await checkTokenValidity(expiresIn)) {
+                        token = await refreshToken(refreshAccessToken);
+                    } 
+                    if (deviceIdRef.current) {
+                        setPlaying(false);
+                        playingRef.current = false;
+                        console.log("device id: ", deviceIdRef.current)
+                        await axios.put(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceIdRef.current}`, {}, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                    } else {
+                        alert("No device id available! Please exit the screen and return to refresh")
+
+                    }
+                    
+                } else {
+                    alert("No userDoc!")
+                }
         } catch (error) {
             console.error("Error pausing track: ", error);
-            if(error.status === 429) {
-                alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
-            }        
+            if (error.response && error.response.status === 502) {
+                if (retryCount < 3) {
+                    setLoading(true);
+                        console.log(`Retrying... (${retryCount + 1})`);
+                        setTimeout(() => pauseTrack(retryCount + 1), 500);
+                    } else {
+                        alert("Spotify server error, please try again later.");
+                    }
+            } else if (error.response && error.response.status === 429) {
+                alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
+            } else if (error.response && error.response.status === 404) {
+                alert("Failed: Track not found or invalid track URI.");
+                
+            } else if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+                  alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+            } else if(error.response) {
+                console.log("response :", error.response)
+                console.log("response data: ", error.response.data)
+                alert("Failed to pause track, error response data: ", error.response.data)
+            } else if (error.request) {
+                console.log('No response received:', error.request);
+            } else {
+                alert("Failed to pause track, please try again.", error);
+            }   
+        } finally {
+            setLoading(false);
+
         }
     };
 
-    const checkTokenValidity = async () => {
-        try {
-            const expiration = await getTokenExpiration();
-            if (expiration && new Date().getTime() < parseInt(expiration)) {
-                console.log("token is okay")
-                return true;
-            } else {
-                console.log("token is expired")
-                return false;
-            }
-        } catch (error) {
-            console.error('Error checking token validity', error);
-        }
-    };
+
+
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
+    // const checkTokenValidity = async () => {
+    //     try {
+    //         const expiration = await getTokenExpiration();
+    //         if (expiration && new Date().getTime() < parseInt(expiration)) {
+    //             console.log("token is okay")
+    //             return true;
+    //         } else {
+    //             console.log("token is expired")
+    //             return false;
+    //         }
+    //     } catch (error) {
+    //         console.error('Error checking token validity', error);
+    //     }
+    // };
 
     const handlePlayPause = async (uri) => {
         if (isDebounced) return;
         setIsDebounced(true);
         setTimeout(() => setIsDebounced(false), 500);
 
-        const isTokenValid = await checkTokenValidity();
-        if (isTokenValid ) {
+        // const isTokenValid = await checkTokenValidity();
+        // if (isTokenValid ) {
             console.log("playing: ",playingRef.current)
             console.log("current track === uri: ",currentTrackRef.current === uri)
             if (playingRef.current && currentTrackRef.current === uri) { 
@@ -523,11 +744,11 @@ export default function UserRecScreen() {
             } else {
                 await playTrack(uri);
             }
-        } else {
-            await removeToken();
-            alert("Token of 1 hour has expired! Kindly refresh it")
-            navigation.navigate('Access');
-        }
+        // } else {
+        //     await removeToken();
+        //     alert("Token of 1 hour has expired! Kindly refresh it")
+        //     navigation.navigate('Access');
+        // }
     };
 
     const onSwiped = async (cardIndex) => {
@@ -541,47 +762,61 @@ export default function UserRecScreen() {
 
 
     const handleRight = async (cardIndex) => {
-        const user = await getUser();
-        const userDocRef = ref(user.email);
-        const userDocSnap = await getDoc(userDocRef);
+        try {
+            const user = await getUser();
+            const userDocRef = ref(user.email);
+            const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            const playlistId = userData.discPlaylistId;
-            const discPlaylistSongs = userData.discPlaylistSongs;
-            const trackUri = recommendedTracks[cardIndex].uri;
-            const trackId = recommendedTracks[cardIndex].id;
-            const token = await getToken();
-            const isTokenValid = await checkTokenValidity();
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                let token = userData.token;
+                const expiresIn = userData.expiresIn;
+                const refreshAccessToken = userData.refreshToken;
 
-            if (isTokenValid) {
+                if (!await checkTokenValidity(expiresIn)) {
+                    token = await refreshToken(refreshAccessToken);
+                } 
+                const playlistId = userData.discPlaylistId;
+                const discPlaylistSongs = userData.discPlaylistSongs;
+                const trackUri = recommendedTracks[cardIndex].uri;
+                const trackId = recommendedTracks[cardIndex].id;
+            
                 if (trackUri && trackId && !discPlaylistSongs.includes(trackId)) {
-
-                    try {
-                        await axios.post(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-                            uris: [trackUri]
-                        }, {
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
-                        await user.update({
-                            discPlaylistSongs: arrayUnion(trackId)
-                        });
-                    } catch (error) {
-                        console.error("Error adding track to playlist: ", error);
-                        if(error.status === 429) {
-                            alert("Failed: Exceeded SpotMatch's Spotify API rate limits")
+                    await axios.post(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+                        uris: [trackUri]
+                    }, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
                         }
-                    }
+                    });
+                    await user.update({
+                        discPlaylistSongs: arrayUnion(trackId)
+                    });
+
+
                 } else {
-                    alert("Either no top track or the song has been added before! Not added to the Spotify playlist")
+                    alert("Either no top track or the song has been added before! Not added to the Spotify SpotMatch Discover playlist")
                 }
             } else {
-                await removeToken();
-                alert("Token of 1 hour has expired! Kindly refresh it")
-                navigation.navigate('Access');
+                alert("No userDoc!")
             }
+        } catch (error) {
+            if (error.response && error.response.status === 429) {
+                alert("Failed: Exceeded SpotMatch's Spotify API rate limits");
+            } else if (error.response && error.response.status === 404) {
+                alert("Failed: Track not found or invalid track URI.");
+                
+            } else if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+                  alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+            } else if(error.response) {
+                console.log("response :", error.response)
+                console.log("response data: ", error.response.data)
+                alert("Failed to add track to the Spotify SpotMatch Discover playlist, error response data: ", error.response.data)
+            } else if (error.request) {
+                console.log('No response received:', error.request);
+            } else {
+                alert("Failed to add track to the Spotify SpotMatch Discover playlist, please try again.", error);
+            }   
         }
     };
 

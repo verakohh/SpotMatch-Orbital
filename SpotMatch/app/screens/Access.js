@@ -22,8 +22,8 @@ const discovery = {
   };
 
 // const clientId = '894050794daa4a568ee64d6a083cf2de';
-const clientId = '796b139564514f198f8511f8b260ff4b';
-const redirectUri = 'spotmatch://callback';
+const clientId = '8346e646ff7a44b59b3f91f8a49033cb';
+const redirectUri = 'musicmatch://callback';
 // const clientId = '89d33611962f42ecb9e982ee2b879bb8';
 // const redirectUri = 'spotmatch://callback';
 // const navigation= useNavigation();
@@ -220,10 +220,40 @@ export default function Access ({route}) {
                       } else {
                           alert('Invalid response format: ', res.data);
                       }
-                  })       
+                  }) 
+                  
+                  
+                  await axios.get("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+                          // method: "GET",
+                          headers: {
+                              Accept: "application/json",
+                              "Content-Type": "application/json",
+                              Authorization: "Bearer " + access_token,
+                          },
+                  })
+                  .then(async res => {
+                      // alert("toptrack data: ", res.data)
+                      console.log("toptrack data: ", res.data)
+                      if (res.data && res.data.items && Array.isArray(res.data.items)) {
+                          const topTracks = res.data.items.map(track => ({
+                              id: track.id,
+                              uri: track.uri,
+                              name: track.name,
+                              previewUrl: track.preview_url,
+                              artist: track.artists[0].name,
+                              albumImg: track.album.images[0].url
+                          }));
+                          // console.log("top tracks preview url: ", topTracks.previewUrl);
+                          // newUser.setTopTracksData(topTracks);
+                          await update({ topTracks });
+                          console.log(topTracks);
+                      } else {
+                          console.error('Invalid response format: ', res.data);
+                      }
+                  });
 
-                  await axios('https://api.spotify.com/v1/me', {
-                      method: 'GET',
+                  await axios.get('https://api.spotify.com/v1/me', {
+                      // method: 'GET',
                       headers: {
                           Accept: "application/json",
                           "Content-Type": "application/json",
@@ -254,41 +284,14 @@ export default function Access ({route}) {
                       await update({displayName: displayname, imageUrl: uniqueUrl, subscription: productsubs, spotifyId: userId });
                   })
 
-                  await axios("https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
-                          method: "GET",
-                          headers: {
-                              Accept: "application/json",
-                              "Content-Type": "application/json",
-                              Authorization: "Bearer " + access_token,
-                          },
-                  })
-                  .then(async res => {
-                      // alert("toptrack data: ", res.data)
-                      console.log("toptrack data: ", res.data)
-                      if (res.data && res.data.items && Array.isArray(res.data.items)) {
-                          const topTracks = res.data.items.map(track => ({
-                              id: track.id,
-                              uri: track.uri,
-                              name: track.name,
-                              previewUrl: track.preview_url,
-                              artist: track.artists[0].name,
-                              albumImg: track.album.images[0].url
-                          }));
-                          // console.log("top tracks preview url: ", topTracks.previewUrl);
-                          // newUser.setTopTracksData(topTracks);
-                          await update({ topTracks });
-                          console.log(topTracks);
-                      } else {
-                          console.error('Invalid response format: ', res.data);
-                      }
-                  });
+                  alert("Fetched all data successfully!")
+                  navigation.navigate("SideBar");
+
               } else {
                   alert("No token!")
 
               }
-                setLoading(false);
-                alert("Fetched all data successfully!")
-                navigation.navigate("SideBar");
+                
                 // await storeToken({token: access_token, expiresIn: expires_in, refreshToken: refresh_token});
                 // const token = await getStoredToken();
                 // if (token) {
@@ -306,6 +309,9 @@ export default function Access ({route}) {
                 if(error.response) {
                   console.log("response :", error.response)
                   console.log("response data: ", error.response.data)
+                  if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+                    alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                  }
                 } else if (error.request) {
                   console.log('No response received:', error.request);
                 } 

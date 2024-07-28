@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "smatch",
-    "slug": "SpotMatch",
+    "name": "musicmatch",
+    "slug": "musicmatch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/SpotMatch-icon.png",
     "scheme": [
-      "smatch"
+      "musicmatch"
     ],
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -31,7 +31,6 @@
     "plugins": [
       "expo-router",
       "expo-font"
-      
     ],
     "experiments": {
       "typedRoutes": true
@@ -41,7 +40,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "1f539db7-f45f-4a3a-851e-02e887d8b50c"
+        "projectId": "104c4b04-af40-4852-9442-07508ff21ead"
       }
     },
     "runtimeVersion": {
@@ -49,6 +48,7 @@
     },
     "updates": {
       "url": "https://u.expo.dev/1f539db7-f45f-4a3a-851e-02e887d8b50c"
-    }
+    },
+    "owner": "lenetcy"
   }
 }
