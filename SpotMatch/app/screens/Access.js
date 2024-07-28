@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
 import Button from '../../components/navigation/Button';
 import { ResponseType, useAuthRequest} from 'expo-auth-session';
 import Login from './Login';
@@ -218,7 +218,7 @@ export default function Access ({route}) {
                           await update({topArtists: names, genres: uniqueGenres});
                                   // user.update({genres: genre}); 
                       } else {
-                          alert('Invalid response format: ', res.data);
+                          Alert.alert('Error! Invalid response format: ', res.data);
                       }
                   }) 
                   
@@ -248,7 +248,7 @@ export default function Access ({route}) {
                           await update({ topTracks });
                           console.log(topTracks);
                       } else {
-                          console.error('Invalid response format: ', res.data);
+                        Alert.alert('Error! Invalid response format: ', res.data);
                       }
                   });
 
@@ -266,29 +266,32 @@ export default function Access ({route}) {
                       console.log("profile data: ",res.data)
                       const displayname = res.data.display_name;
                       // newUser.setDisplayName(displayname);
-
-                      console.log(res.data.images)
-                      const imgUrl = res.data.images.map(img => img.url)
-                      const uniqueUrl = imgUrl[0];
-                      console.log('this is imgUrl: ', uniqueUrl)
-                      // newUser.setImgUrl(uniqueUrl);
+                      console.log(res.data.id);
+                      const userId = res.data.id;
 
                       console.log(res.data.product);
                       const productsubs = res.data.product;
                       await storeSubscription(productsubs);
 
-                      console.log(res.data.id);
-                      const userId = res.data.id;
-                      
 
-                      await update({displayName: displayname, imageUrl: uniqueUrl, subscription: productsubs, spotifyId: userId });
+                      console.log(res.data.images)
+                      const imgUrl = res.data.images.map(img => img.url)
+                      const uniqueUrl = imgUrl ? imgUrl[0] : ""
+                      console.log('this is imgUrl: ', uniqueUrl)
+                      // newUser.setImgUrl(uniqueUrl);
+
+                     
+                      
+                      
+                      await update({displayName: displayname, spotifyId: userId, subscription: productsubs})
+                      await update({ imageUrl: uniqueUrl});
                   })
 
-                  alert("Fetched all data successfully!")
+                  Alert.alert("Success", "Fetched all data successfully!")
                   navigation.navigate("SideBar");
 
               } else {
-                  alert("No token!")
+                  Alert.alert("Error", "No token!")
 
               }
                 
@@ -310,13 +313,15 @@ export default function Access ({route}) {
                   console.log("response :", error.response)
                   console.log("response data: ", error.response.data)
                   if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
-                    alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+                    Alert.alert("Currently you are not allowlisted by SpotMatch yet.", "SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch.")
                   }
                 } else if (error.request) {
                   console.log('No response received:', error.request);
+                  Alert.alert("Error! No response received:", error.request);
+
                 } 
                 console.error("Error exchanging code for token:", error.message);
-                alert("Failed to exchange code for token.");
+                Alert.alert("Error!", "Failed to exchange code for token.");
               } finally {
                 setLoading(false);
               }
@@ -368,9 +373,9 @@ export default function Access ({route}) {
             // }
             // }
         } else if (response?.type === "cancel") {
-          alert("Please continue to sign into Spotify and grant us access")
+          Alert.alert("Connection cancelled", "Please click continue to sign into Spotify and grant access to proceed.")
         } else if (response && response?.type !== "success") {
-          alert("Unsuccessful! Please try again.")
+          Alert.alert("Unsuccessful!", "Please try again.")
         }
       };
       fetchData();
@@ -467,56 +472,59 @@ export default function Access ({route}) {
 
 
     return (
-        <View style={styles.container}>
-            
-            <Text style= {styles.text}>
-                Kindly log into your 
-                Spotify and follow the instructions 
-                to grant us 
-                access to the specified data needed for our app to deliver.
-                {"\n"}
-                {"\n"}
-                That way, we can meet 
-                your needs in tuning out 
-                with a friend! 
-            </Text>
+      <View style={styles.container}>
+          <Image source={require('../../assets/images/dark-icon.png')} style={styles.icon} />
+          <Text style={styles.title}>Welcome to SpotMatch</Text>
+          <Text style={styles.text}>
+              Kindly log into your Spotify and follow the instructions to grant us access to the specified data needed for our app to deliver.
+              {"\n"}{"\n"}
+              That way, we can meet your needs in tuning out with a friend!
+          </Text>
           <Button
-            disabled={!request}
-            type='primary'
-            size='m'
-            text="Login to Spotify"
-            onPress={() => {
-              promptAsync();
-              
-            }}
+              disabled={!request}
+              type='primary'
+              size='m'
+              text="Login to Spotify"
+              onPress={() => {
+                  promptAsync();
+              }}
           />
-        {/* <TouchableOpacity onPress={}> 
-            <Text style={{color: '#2196F3', fontSize: 15}}>Go Back</Text>
-        </TouchableOpacity> */}
-          
-        </View>
-      );
+      </View>
+  );
 
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1, 
-        justifyContent: 'space-evenly', 
-        alignItems: 'center',
-    },
-
-    text: {  
-        fontSize: 25,      
-        fontWeight: '400', 
-        textAlign: 'left',
-        fontFamily: 'Verdana',
-        color: '#212e37',      
-        marginBottom: 0,
-        paddingHorizontal: 40   
-    },
-
-})
+  container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+      backgroundColor: '#111E26',
+  },
+  icon: {
+      width: 350,
+      height: 200,
+      marginBottom: 10,
+      resizeMode: 'contain',
+  },
+  title: {
+      fontSize: 28,
+      fontWeight: '700',
+      textAlign: 'center',
+      color: '#FFFFFF',
+      marginBottom: 20,
+  },
+  text: {
+      fontSize: 18,
+      fontWeight: '400',
+      textAlign: 'center',
+      color: '#BBCFF1',
+      marginBottom: 30,
+      paddingHorizontal: 20,
+      lineHeight: 26,
+  },
+});
 
 
 //alternative axios all with axios spread:

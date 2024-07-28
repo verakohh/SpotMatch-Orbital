@@ -85,12 +85,13 @@ const WelcomeScreen = ({route}) => {
         <View style={styles.headerLine} />
         <View style={styles.progressBar}>
           <View style={styles.progress}></View>
-          <Text style={styles.progressText}>75%</Text>
+          <Text style={styles.progressText}>100%</Text>
         </View>
         <View style={styles.messageContainer}>
           <Text style={styles.messageText}>
-            Hi there! Welcome to SpotMatch!
-            We connect you with people of similar music preferences based on your Spotify activity!
+            Hi there, {firstName}! Welcome to SpotMatch!
+            Gentle disclaimer: The next step requires you to connect to your Spotify. 
+            This helps you connect with people of similar music preferences based on your Spotify activity!
             Ready to start matching?
           </Text>
         </View>

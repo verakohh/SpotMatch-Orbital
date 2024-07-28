@@ -1,37 +1,108 @@
 import React, {useEffect, useState, useContext} from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, Image, StyleSheet, Settings, ActivityIndicator, Dimensions, Modal, ScrollView } from 'react-native';
-import Button from '../../components/navigation/Button';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
-import Swiper from "react-native-deck-swiper";
-import { BlurView } from "expo-blur";
-import axios from 'axios';
-import GetSpotifyData from '../../components/GetSpotifyData';
-import { getUser, getToken, getEmail, storeSubscription, getTokenExpiration, checkTokenValidity, getStoredToken } from '../User';
-import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
-import { ref, set, usersColRef } from '../../firebase';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import BothMatchScreen from './Matches/BothMatchScreen';
 import AllScreen from './Matches/AllScreen';
 import InstructionsScreen from './Matches/Instruction';
 
+// const MatchScreen = () => {
+//     const navigation= useNavigation();
+//     // const [userDocs, setUserDocs] = useState(null);
+//     // const [currentDocs, setCurrentDocs] = useState([]);
+//     // const [swipedUsers, setSwipedUsers] = useState([]);
+//     // const [dismissedUsers, setDismissedUsers] = useState([]);
+//     // // const [request, setRequest] = useState(null);
+//     const [loading, setLoading] = useState(true);
+//     const [dataUpdated, setDataUpdated] = useState(false);
 
 
-const Tab = createMaterialTopTabNavigator();
-{/* <GetSpotifyData /> */}
+    const Tab = createMaterialTopTabNavigator();
 
-const MatchScreen = () => {
+    const MatchScreen = () => {
 
-
-    const navigation= useNavigation();
-    // const [userDocs, setUserDocs] = useState(null);
-    // const [currentDocs, setCurrentDocs] = useState([]);
-    // const [swipedUsers, setSwipedUsers] = useState([]);
-    // const [dismissedUsers, setDismissedUsers] = useState([]);
-    // // const [request, setRequest] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [dataUpdated, setDataUpdated] = useState(false);
-
-
+    
+      return (
+        <View style={styles.container}>
+          <Tab.Navigator
+            screenOptions={{
+              swipeEnabled: false, // Disable swipe between tabs
+              tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' },
+              tabBarIndicatorStyle: { backgroundColor: 'transparent', height: 0 },
+              tabBarStyle: { backgroundColor: '#FAF4EC', shadowOpacity: 0, elevation: 0 },
+              tabBarPressColor: '#D3D3D3',
+              tabBarItemStyle: { borderRadius: 20, marginHorizontal: 0, height: 50, width: 'auto' },
+              tabBarScrollEnabled: true,
+              tabBarInactiveTintColor: '#212E37',
+              tabBarActiveTintColor: '#FAF4EC',
+            }}
+          >
+            <Tab.Screen 
+              name="Instructions" 
+              component={InstructionsScreen} 
+              options={{
+                tabBarLabel: ({ focused }) => (
+                  <View style={focused ? styles.activeTab : styles.inactiveTab}>
+                    <Text style={focused ? styles.activeTabText : styles.inactiveTabText}>Instructions </Text>
+                  </View>
+                ),
+              }}
+            />
+            <Tab.Screen 
+              name="by Genre & Artists" 
+              component={BothMatchScreen} 
+              options={{
+                tabBarLabel: ({ focused }) => (
+                  <View style={focused ? styles.activeTab : styles.inactiveTab}>
+                    <Text style={focused ? styles.activeTabText : styles.inactiveTabText}>by Genre & Artists </Text>
+                  </View>
+                ),
+              }}
+            />
+            <Tab.Screen 
+              name="Discover All" 
+              component={AllScreen} 
+              options={{
+                tabBarLabel: ({ focused }) => (
+                  <View style={focused ? styles.activeTab : styles.inactiveTab}>
+                    <Text style={focused ? styles.activeTabText : styles.inactiveTabText}>Discover All </Text>
+                  </View>
+                ),
+              }}
+            />
+          </Tab.Navigator>
+        </View>
+      );
+    };
+    
+    const styles = StyleSheet.create({
+      container: {
+        flex: 1,
+        backgroundColor: '#FAF4EC',
+      },
+      activeTab: {
+        backgroundColor: '#3F78D8',
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        borderRadius: 20,
+      },
+      inactiveTab: {
+        backgroundColor: '#BAD6EB',
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        borderRadius: 20,
+      },
+      activeTabText: {
+        color: '#FAF4EC',
+        fontWeight: '500',
+      },
+      inactiveTabText: {
+        color: '#212E37',
+        fontWeight: '400',
+      },
+    });
+    
+    export default MatchScreen;
     // useEffect(() => {
         // const fetchData = async () => {
         //     console.log("at fetchData MatchScreen")
@@ -241,83 +312,83 @@ const MatchScreen = () => {
         //     fetchData();
         // }, []);
 
-        const checkTokenValidity = async (expiration) => {
-            if (expiration) {
-                try {
-                const now = new Date().getTime();
-                console.log("now: ", now)
-                if (expiration && new Date().getTime() < expiration) {
-                    console.log("token is okay")
-                    return true;
-                }
-                } catch (error) {
-                    console.error('Error checking token validity', error);
-                    alert('Error checking token validity', error);
+        // const checkTokenValidity = async (expiration) => {
+        //     if (expiration) {
+        //         try {
+        //         const now = new Date().getTime();
+        //         console.log("now: ", now)
+        //         if (expiration && new Date().getTime() < expiration) {
+        //             console.log("token is okay")
+        //             return true;
+        //         }
+        //         } catch (error) {
+        //             console.error('Error checking token validity', error);
+        //             alert('Error checking token validity', error);
             
-                }
-                return false;
-            } else {
-                return false;
-            }
-        }
+        //         }
+        //         return false;
+        //     } else {
+        //         return false;
+        //     }
+        // }
 
-        const refreshToken = async (refreshToken) => {
-            alert("Token has expired! Refreshing now")
-            const navigation = useNavigation();
-            if (refreshToken) {
-                const user = await getUser();
-              try {
-                setLoading(true);
-                const data = qs.stringify({
-                  client_id: '796b139564514f198f8511f8b260ff4b',
-                  grant_type: 'refresh_token',
-                  refresh_token: refreshToken
+        // const refreshToken = async (refreshToken) => {
+        //     alert("Token has expired! Refreshing now")
+        //     const navigation = useNavigation();
+        //     if (refreshToken) {
+        //         const user = await getUser();
+        //       try {
+        //         setLoading(true);
+        //         const data = qs.stringify({
+        //           client_id: '796b139564514f198f8511f8b260ff4b',
+        //           grant_type: 'refresh_token',
+        //           refresh_token: refreshToken
               
-                });
-                console.log("data: ", data);
+        //         });
+        //         console.log("data: ", data);
           
-                const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', data, {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    }
-                });
-                  const { access_token, refresh_token, expires_in } = tokenResponse.data;
-                  console.log("access token: ", access_token)
-                  console.log("refreshToken: ", refresh_token)
-                  const expiresIn = new Date().getTime() + expires_in * 1000;
-                  await user.update({token: access_token, expiresIn: expiresIn, refreshToken: refresh_token});
-                  const userDocRef = ref(user.email);
-                  const userDocSnap = await getDoc(userDocRef);
+        //         const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', data, {
+        //             headers: {
+        //                 'Content-Type': 'application/x-www-form-urlencoded',
+        //             }
+        //         });
+        //           const { access_token, refresh_token, expires_in } = tokenResponse.data;
+        //           console.log("access token: ", access_token)
+        //           console.log("refreshToken: ", refresh_token)
+        //           const expiresIn = new Date().getTime() + expires_in * 1000;
+        //           await user.update({token: access_token, expiresIn: expiresIn, refreshToken: refresh_token});
+        //           const userDocRef = ref(user.email);
+        //           const userDocSnap = await getDoc(userDocRef);
   
-                  if(userDocSnap.exists()) {
-                    const userData = userDocSnap.data();
-                    const accessToken = userData.token;
-                    if (accessToken && accessToken === access_token) {
-                        console.log("Refreshed Token is same!")
-                      console.log("refreshed access token from userDoc: ", accessToken);
-                      alert("refreshed access token from userDoc: ", accessToken);
-                    } else {
-                      console.log("Refreshed token not updated!")
-                    }
+        //           if(userDocSnap.exists()) {
+        //             const userData = userDocSnap.data();
+        //             const accessToken = userData.token;
+        //             if (accessToken && accessToken === access_token) {
+        //                 console.log("Refreshed Token is same!")
+        //               console.log("refreshed access token from userDoc: ", accessToken);
+        //               alert("refreshed access token from userDoc: ", accessToken);
+        //             } else {
+        //               console.log("Refreshed token not updated!")
+        //             }
   
-                  } else {
-                    alert("No userDoc!")
-                  }
-                  setLoading(false);
+        //           } else {
+        //             alert("No userDoc!")
+        //           }
+        //           setLoading(false);
                   
-                  return access_token;
+        //           return access_token;
 
-              } catch (error) {
-                setLoading(false);
-                console.error("Error refreshing token:", error);
-                alert("Failed to refresh token. Please log in again.");
-                navigation.navigate('Access');
-              }
-            } else {
-              alert("No token to refresh!")
-              navigation.navigate('Access');
-            }
-          }
+        //       } catch (error) {
+        //         setLoading(false);
+        //         console.error("Error refreshing token:", error);
+        //         alert("Failed to refresh token. Please log in again.");
+        //         navigation.navigate('Access');
+        //       }
+        //     } else {
+        //       alert("No token to refresh!")
+        //       navigation.navigate('Access');
+        //     }
+        //   }
     
         // const checkTokenValidity = async () => {
         //     try {
@@ -394,13 +465,13 @@ const MatchScreen = () => {
     //     );
     // } else {
 
-        return (
-            <Tab.Navigator screenOptions={{swipeEnabled: false, tabBarStyle: {marginBottom: 0, paddingBottom: 0}}}>
-            <Tab.Screen name="Instructions" component={InstructionsScreen} />
-            <Tab.Screen name="by Genre & Artists" component={BothMatchScreen} />
-            <Tab.Screen name="Discover All" component={AllScreen} />
-            </Tab.Navigator>
-        );
+        // return (
+        //     <Tab.Navigator screenOptions={{swipeEnabled: false, tabBarStyle: {marginBottom: 0, paddingBottom: 0}}}>
+        //     <Tab.Screen name="Instructions" component={InstructionsScreen} />
+        //     <Tab.Screen name="by Genre & Artists" component={BothMatchScreen} />
+        //     <Tab.Screen name="Discover All" component={AllScreen} />
+        //     </Tab.Navigator>
+        // );
     // }
 
     
@@ -469,88 +540,88 @@ const MatchScreen = () => {
     //         />
     //     </View>
     // );
-}
 
-export default MatchScreen;
 
-const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: '#FAF4EC',
+// export default MatchScreen;
+
+// const styles = StyleSheet.create({
+//     container: {
+//       flex: 1,
+//       justifyContent: 'center',
+//       alignItems: 'center',
+//       backgroundColor: '#FAF4EC',
         
-    },
-    imgBackground: {
-        width: "100%",
-        height: "100%",
-        flex: 1,
-      },
-    card: {
-        flex: Dimensions.get("window").height < 700 ? 0.5 : 0.6,
-        borderRadius: 8,
-        shadowRadius: 25,
-        shadowColor: '#171717',  
-        shadowOpacity: 0.2,
-        shadowOffset: { width: 0, height: 0 },
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: 'lightgrey',
-        overflow: "hidden",
-      },
-    cardImg: {
-        flex: 1,
-        width: "70%",
-        height: 220,
-        resizeMode: "contain",
-        borderRadius: 8,
-        marginTop: 15,
-        marginbottom: 8,
-        marginLeft: '15%',
-    },
-    title: {
-        marginTop: 2,
-        fontSize: 25,
-        color: "white",
-        width: "100%",
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 5 },
-        textShadowRadius: 8,
-        padding: 10,
-        textAlign: "center",
-    },
-    text: {
-        color: "white",
-        fontSize: 16,
-        fontWeight: "400",
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 6,
-        shadowOpacity: 0.2,
-    },
-    headerText: {
-        color: "white",
-        textAlign: "left",
-        fontSize: 18,
-        fontWeight: "600",
-        marginBottom: 7,
-        marginLeft: 8,
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-        shadowOpacity: 0.2,
+//     },
+//     imgBackground: {
+//         width: "100%",
+//         height: "100%",
+//         flex: 1,
+//       },
+//     card: {
+//         flex: Dimensions.get("window").height < 700 ? 0.5 : 0.6,
+//         borderRadius: 8,
+//         shadowRadius: 25,
+//         shadowColor: '#171717',  
+//         shadowOpacity: 0.2,
+//         shadowOffset: { width: 0, height: 0 },
+//         justifyContent: "center",
+//         alignItems: "center",
+//         backgroundColor: 'lightgrey',
+//         overflow: "hidden",
+//       },
+//     cardImg: {
+//         flex: 1,
+//         width: "70%",
+//         height: 220,
+//         resizeMode: "contain",
+//         borderRadius: 8,
+//         marginTop: 15,
+//         marginbottom: 8,
+//         marginLeft: '15%',
+//     },
+//     title: {
+//         marginTop: 2,
+//         fontSize: 25,
+//         color: "white",
+//         width: "100%",
+//         textShadowColor: "#171717",
+//         textShadowOffset: { width: 0, height: 5 },
+//         textShadowRadius: 8,
+//         padding: 10,
+//         textAlign: "center",
+//     },
+//     text: {
+//         color: "white",
+//         fontSize: 16,
+//         fontWeight: "400",
+//         textShadowColor: "#171717",
+//         textShadowOffset: { width: 0, height: 2 },
+//         textShadowRadius: 6,
+//         shadowOpacity: 0.2,
+//     },
+//     headerText: {
+//         color: "white",
+//         textAlign: "left",
+//         fontSize: 18,
+//         fontWeight: "600",
+//         marginBottom: 7,
+//         marginLeft: 8,
+//         textShadowColor: "#171717",
+//         textShadowOffset: { width: 0, height: 2 },
+//         textShadowRadius: 4,
+//         shadowOpacity: 0.2,
 
         
-    },
-    textContainer: {
-        color: "white",
-        textAlign: "left",
-        fontSize: 18,
-        margin: 15,
-        fontWeight: "600",
-    },
-    scrollViewContent: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-});
+//     },
+//     textContainer: {
+//         color: "white",
+//         textAlign: "left",
+//         fontSize: 18,
+//         margin: 15,
+//         fontWeight: "600",
+//     },
+//     scrollViewContent: {
+//         justifyContent: 'center',
+//         alignItems: 'center',
+//     },
+// });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { getAuth, updatePassword } from 'firebase/auth';
+import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import Feather from 'react-native-vector-icons/Feather';
 
 const ChangePasswordScreen = () => {
@@ -13,6 +13,10 @@ const ChangePasswordScreen = () => {
   const auth = getAuth();
 
   const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -20,11 +24,17 @@ const ChangePasswordScreen = () => {
 
     try {
       const user = auth.currentUser;
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
       alert('Password changed successfully');
       navigation.goBack();
     } catch (error) {
-      setError(error.message);
+      if (error.code === 'auth/requires-recent-login') {
+        setError('Please reauthenticate to change your password');
+      } else {
+        setError(error.message);
+      }
     }
   };
 

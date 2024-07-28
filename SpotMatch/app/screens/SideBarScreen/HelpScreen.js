@@ -6,7 +6,7 @@ import { FIREBASE_AUTH } from '@/firebase';
 const faqs = [
   {
     question: "How do I change my password?",
-    answer: "If you want to change your password, click on the 'Change Password' link on the Settings page  in the side bar and follow the instructions to reset your password.",
+    answer: "If you want to change your password, click on the arrow besides password in the Settings page in the side bar.",  
   },
   {
     question: "How do I delete my account?",
@@ -18,7 +18,7 @@ const faqs = [
   },
   {
     question: "How do I match with someone?",
-    answer: "You can match with someone by liking their profile on the Match tab. If they like you back, it's a match and you can start messaging each other.",
+    answer: "You can match with someone by liking their profile on the 'Match' tab. If they like you back, it's a match and you can start messaging each other.",
   },
   {
     question: "How do I send a message?",

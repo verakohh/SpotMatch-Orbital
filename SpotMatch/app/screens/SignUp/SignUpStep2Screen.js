@@ -50,7 +50,7 @@ const SignUpStep2Screen = () => {
       <View style={styles.headerLine} />
       <View style={styles.progressBar}>
         <View style={styles.progress}></View>
-        <Text style={styles.progressText}>50%</Text>
+        <Text style={styles.progressText}>66.7%</Text>
       </View>
       <Text style={styles.subtitle}>When were you born?</Text>
       <Text style={styles.note}>*You can't change this later!</Text>
@@ -103,9 +103,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerLine: {
-    width: '100%',
+    width: '130%',
     height: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#828282',
     marginBottom: 5,
   },
   progressBar: {
@@ -115,6 +115,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     position: 'relative',
     marginBottom: 10,
+    marginTop: 10,
+
   },
   progress: {
     width: '50%',
@@ -166,7 +168,7 @@ const styles = StyleSheet.create({
   },
   illustration: {
     width: '300%',
-    height: 300,
+    height: 290,
     resizeMode: 'contain',
     marginBottom: 0,
     marginTop: 170,
