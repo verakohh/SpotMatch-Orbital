@@ -33,6 +33,7 @@ const ChatMusicScreen = ({route}) => {
     const playingRef = useRef(false);
     const playingIndexRef = useRef(0);
     const intervalRef = useRef(null);
+    const playingSongIdRef = useRef(null);
 
 
     const fetchChatMusic = async () => {
@@ -167,13 +168,19 @@ const ChatMusicScreen = ({route}) => {
                         if (data.playing && !playingRef.current && data.currentSong) {
                             //if matched user is playing, current user not playing, current song exists 
                             setPlayingSong(data.currentSong);
-                            
+                            const playingSong = data.currentSong
+                            playingSongIdRef.current = playingSong.id;
                             console.log("came in the unsubscribe")
                             setProgress(0);
-                            playTrack(data.currentSong);
+                            await playTrack(data.currentSong);
                             
-                        } else if (data.playing && playingRef.current && playingSong.id !== data.currentSong.id) {
-
+                        } else if (data.playing && playingRef.current && data.currentSong && playingSongIdRef.current && playingSongIdRef.current !== data.currentSong.id) {
+                            setPlayingSong(data.currentSong);
+                            const playingSong = data.currentSong
+                            playingSongIdRef.current = playingSong.id;
+                            console.log("came in the unsubscribe")
+                            setProgress(0);
+                            await playTrack(playingSong);
                         } else if (!data.playing && await isPlaying()) {
                             await pauseTrack();
                         } 
