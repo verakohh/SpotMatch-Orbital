@@ -217,10 +217,33 @@ import { Text, TextInput, Image, View, StyleSheet, KeyboardAvoidingView, Touchab
 import Button from '../../components/navigation/Button';
 import { FIREBASE_AUTH, ref } from '../../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import User, { storeUser, getToken , storeEmail, storeSubscription } from '../User';
+import User, { storeUser, getToken , storeEmail, storeSubscription, getUser } from '../User';
 import { getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/core';
 import axios from 'axios';
+import qs from 'qs';
+
+
+export const checkTokenValidity = async (expiration) => {
+  if (expiration) {
+      try {
+      const now = new Date().getTime();
+      console.log("now: ", now)
+      if (expiration && new Date().getTime() < expiration) {
+          console.log("token is okay")
+          return true;
+      }
+      } catch (error) {
+          console.error('Error checking token validity', error);
+          alert('Error checking token validity', error);
+  
+      }
+      return false;
+  } else {
+    alert("No expiration given!")
+  }
+}
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -374,7 +397,9 @@ const Login = () => {
                     console.error('Invalid response format: ', res.data);
                 }
             });
-            navigation.navigate("SideBar");
+
+                alert("Fetched all data successfully!")
+                navigation.navigate("SideBar");
         } else {
             alert("No token!")
             return;
@@ -382,51 +407,37 @@ const Login = () => {
         
         
       } else {
-        alert("Login failed! Try again");
+        alert("No userDoc!");
       }
     } catch (error) {
       console.log(error);
       if(error.response) {
         console.log("response :", error.response)
         console.log("response data: ", error.response.data)
+        if (error.response.status === 403 && error.response.data === "Check settings on developer.spotify.com/dashboard, the user may not be registered.") {
+          alert("SpotMatch is a Spotify development mode app where your Spotify email has to be manually granted access to SpotMatch. Currently you are not allowlisted by SpotMatch yet.")
+        }
       } else if (error.request) {
         console.log('No response received:', error.request);
       } 
       alert('Login failed: ' + error.message + " Check if your email and password are correct!");
+      console.error('Login failed: ' + error.message + " Check if your email and password are correct!");
+
     } finally {
       setLoading(false);
     }
   };
 
-  const checkTokenValidity = async (expiration) => {
-    if (expiration) {
-        try {
-        const now = new Date().getTime();
-        console.log("now: ", now)
-        if (expiration && new Date().getTime() < expiration) {
-            console.log("token is okay")
-            return true;
-        }
-        } catch (error) {
-            console.error('Error checking token validity', error);
-            alert('Error checking token validity', error);
-    
-        }
-        return false;
-    } else {
-        return false;
-    }
-}
 
-const refreshToken = async (refreshToken) => {
-    alert("Token has expired! Refreshing now")
-    const navigation = useNavigation();
+  const refreshToken = async (refreshToken) => {
+    alert("Token has expired! Refreshing now..")
+    const user = await getUser();
+    const docRefPath = `users/${user.email}`;
+    console.log("docRefPath: ", docRefPath)
     if (refreshToken) {
-        const user = await getUser();
       try {
-        setLoading(true);
         const data = qs.stringify({
-          client_id: '796b139564514f198f8511f8b260ff4b',
+          client_id: '8346e646ff7a44b59b3f91f8a49033cb',
           grant_type: 'refresh_token',
           refresh_token: refreshToken
       
@@ -445,7 +456,7 @@ const refreshToken = async (refreshToken) => {
           await user.update({token: access_token, expiresIn: expiresIn, refreshToken: refresh_token});
           const userDocRef = ref(user.email);
           const userDocSnap = await getDoc(userDocRef);
-
+  
           if(userDocSnap.exists()) {
             const userData = userDocSnap.data();
             const accessToken = userData.token;
@@ -455,26 +466,27 @@ const refreshToken = async (refreshToken) => {
               alert("refreshed access token from userDoc: ", accessToken);
             } else {
               console.log("Refreshed token not updated!")
+              alert("Refreshed token not updated!")
             }
-
+  
           } else {
             alert("No userDoc!")
           }
-          setLoading(false);
           
           return access_token;
-
+  
       } catch (error) {
-        setLoading(false);
+        
         console.error("Error refreshing token:", error);
-        alert("Failed to refresh token. Please log in again.");
-        navigation.navigate('Access');
+        alert("Failed to refresh token. Please log in to Spotify and grant access again.");
+        navigation.navigate('Access', {docRefPath});
       }
     } else {
       alert("No token to refresh!")
-      navigation.navigate('Access');
+      navigation.navigate('Access', {docRefPath});
     }
   }
+  
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior='padding'>

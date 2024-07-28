@@ -34,7 +34,7 @@ const InstructionsScreen = () => {
         <View style={styles.instructionBox}>
           <Text style={styles.instructionNumber}>4.</Text>
           <Text style={styles.instructionText}>
-            Check your requests at the side bar under the requests section.
+            Check your requests, matches, profile, settings, and FAQ at the side bar under the requests section.
           </Text>
         </View>
 
@@ -47,6 +47,27 @@ const InstructionsScreen = () => {
 
         <View style={styles.instructionBox}>
           <Text style={styles.instructionNumber}>6.</Text>
+          <Text style={styles.instructionText}>
+            Get to know your matches better by discovering their top tracks or listen to new songs recommended by the Spotify API. Due to Spotify API's limits, kindly ensure you play a song in Spotify so that your device is detected before navigating to the Discover section! Swipe RIGHT to add the song to a SpotMatch Discover playlist in your Spotify and refresh your Spotify library to see the Discover playlist and songs!
+          </Text>
+        </View>
+
+        <View style={styles.instructionBox}>
+          <Text style={styles.instructionNumber}>7.</Text>
+          <Text style={styles.instructionText}>
+            Chat with your matches or listen to music together in the Chat section! Due to Spotify API's limits, kindly ensure you play a song in Spotify so that your device is detected before navigating to the Chat section! Add songs to the SpotMatch Chat Playlist and refresh your Spotify library to see the Chat playlist and songs!
+          </Text>
+        </View>
+
+        <View style={styles.instructionBox}>
+          <Text style={styles.instructionNumber}>8.</Text>
+          <Text style={styles.instructionText}>
+            Events section's got you covered for ideas to spend time with your matches! 
+          </Text>
+        </View>
+
+        <View style={styles.instructionBox}>
+          <Text style={styles.instructionNumber}>9.</Text>
           <Text style={styles.instructionText}>
             Tune in, and friend out!
           </Text>
