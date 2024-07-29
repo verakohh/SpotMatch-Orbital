@@ -47,7 +47,7 @@ const WelcomeScreen = ({route}) => {
                 // await storeEmail(email);
                 console.log("registered user Object : ", newUser);
 
-                Alert.alert('Success', 'Created Successfully!');
+                // Alert.alert('Success', 'Created Successfully!');
                 navigation.navigate("Access", {docRefPath}
                     // "Access", { firstName, lastName, email, password, birthdate, age }
                 );
