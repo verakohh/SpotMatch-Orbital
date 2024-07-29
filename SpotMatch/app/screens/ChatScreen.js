@@ -906,9 +906,7 @@ const ChatScreen = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Feather name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('MatchesProfileScreen', { userDocRef: `users/${user.userId}` })}>
             <Image source={{ uri: user.imageUrl }} style={styles.profileImage} />
-          </TouchableOpacity>
           <Text style={styles.headerText}>{user.firstName}</Text>
           <View style={styles.headerIcons}>
             <TouchableOpacity onPress={() => navigation.navigate('ChatMusicScreen', { combinedId })}>
