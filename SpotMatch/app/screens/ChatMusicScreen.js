@@ -12,7 +12,6 @@ import qs from 'qs';
 
 
 
-
 const ChatMusicScreen = ({route}) => {
     const { combinedId } = route.params;
     const [query, setQuery] = useState('');

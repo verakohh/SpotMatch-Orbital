@@ -497,12 +497,14 @@ const Login = () => {
       </View>
       <Text style={styles.tagline}>Tune In, Friend Out</Text>
       <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Email</Text>
         <TextInput
           value={email}
           onChangeText={text => setEmail(text)}
           placeholder="email@domain.com"
           style={styles.input}
         />
+        <Text style={styles.inputLabel}>Password</Text>
         <TextInput
           value={password}
           onChangeText={text => setPassword(text)}
@@ -521,14 +523,7 @@ const Login = () => {
           style={styles.fullWidthButton}
         />
       </View>
-      <View style={styles.separatorContainer}>
-        <View style={styles.separatorLine} />
-        <Text style={styles.orText}>or continue with</Text>
-        <View style={styles.separatorLine} />
-      </View>
-      <TouchableOpacity style={styles.googleButton}>
-        <Text style={styles.googleButtonText}>G</Text>
-      </TouchableOpacity>
+      
       <Text style={styles.footerText}>
         By clicking continue, you agree to our
         <Text style={styles.linkText}> Terms of Service </Text>
@@ -567,6 +562,13 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginBottom: 15,
+  },
+  inputLabel: {
+    alignSelf: 'flex-start',
+    marginLeft: '2%',
+    marginBottom: 5,
+    fontSize: 16,
+    color: '#333',
   },
   input: {
     width: '100%',

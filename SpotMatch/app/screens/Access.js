@@ -16,6 +16,7 @@ import qs from 'qs';
 
 
 
+
 const discovery = {
     authorizationEndpoint: 'https://accounts.spotify.com/authorize',
     tokenEndpoint: 'https://accounts.spotify.com/api/token',
@@ -91,8 +92,8 @@ export default function Access ({route}) {
 
     const [request, response, promptAsync] = useAuthRequest(
         {
-          clientId,
-          redirectUri,
+          clientId: clientId,
+          redirectUri: redirectUri,
           scopes: [
             'user-top-read',
             'user-read-private',

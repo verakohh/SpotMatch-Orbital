@@ -92,14 +92,12 @@ export default Matches;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginHorizontal: 18,
     backgroundColor: '#FAF4EC',
     // alignItems: 'center',
     justifyContent: 'center'
   },
   wait: {
     flex: 1,
-    marginHorizontal: 25,
     backgroundColor: '#FAF4EC',
     alignItems: 'center',
     justifyContent: 'center'
@@ -111,7 +109,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ccc',
     paddingVertical: 14,
     paddingHorizontal: 15,
-    marginBottom: 15,
 
   },
   image: {
