@@ -17,8 +17,6 @@ import qs from 'qs';
 
 
 
-
-
 export default function UserRecScreen() {
     const navigation = useNavigation();
     const [recommendedTracks, setRecommendedTracks] = useState([]);

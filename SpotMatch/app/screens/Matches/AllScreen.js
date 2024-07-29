@@ -6,6 +6,7 @@ import { getUser, getToken } from '../../User';
 import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
 import { ref, usersColRef } from '../../../firebase';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const AllScreen = () => {
 
@@ -180,7 +181,9 @@ const AllScreen = () => {
     );
 
     return (
-        <View style={styles.container}>
+        <LinearGradient colors={["#3a5e91", "transparent"]} style={{flex:1}}>
+
+        {/* <View style={styles.container}> */}
             <Swiper
                 cards={currentDocs}
                 renderCard={renderCard}
@@ -194,6 +197,7 @@ const AllScreen = () => {
                 onSwipedAll={fetchData}
              onTapCard={handleTapCard}
             />
+
              {tapUser && (
                 <Modal
                     animationType="slide"
@@ -264,7 +268,7 @@ const AllScreen = () => {
                     </View>
                 </Modal>
             )}
-        </View>
+        </LinearGradient>
     );
 }
 
@@ -284,37 +288,37 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     card: {
-        flex: 0.75,
+        flex: 0.70,
         // flex: Dimensions.get("window").height < 700 ? 0.55 : 0.65,
         borderRadius: 8,
-        // shadowRadius: 25,
-        // shadowColor: '#171717',  
-        // shadowOpacity: 0.2,
-        // shadowOffset: { width: 0, height: 0 },
+        shadowRadius: 25,
+        shadowColor: '#171717',  
+        shadowOpacity: 0.2,
+        shadowOffset: { width: 0, height: 0 },
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: 'lightgrey',
         overflow: "hidden",
-        padding: 10,
+        // padding: 10,
       },
     cardImg: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        marginBottom: 15,
-        alignSelf: 'center',
+        // width: 120,
+        // height: 120,
+        // borderRadius: 80,
+        // marginBottom: 15,
+        // alignSelf: 'center',
         // flex: 1,
-        // width: "60%",
-        // height: 220,
-        // // resizeMode: "contain",
-        // borderRadius: 8,
-        // marginTop: 15,
-        // marginbottom: 8,
-        // marginLeft: '20%',
+        width: 180,
+        alignSelf: 'center',
+        height: 180,
+        // resizeMode: "contain",
+        borderRadius: 8,
+        marginTop: 15,
+        marginbottom: 8,
     },
     title: {
         marginTop: 2,
-        fontSize: 25,
+        fontSize: 27,
         color: "white",
         width: "100%",
         textShadowColor: "#c1d1e6",
@@ -323,15 +327,16 @@ const styles = StyleSheet.create({
         paddingTop: 5,
         paddingHorizontal: 10,
         textAlign: "center",
+        marginBottom: 3
     },
     text: {
         color: "white",
         fontSize: 16,
         fontWeight: "400",
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 6,
-        shadowOpacity: 0.2,
+        // textShadowColor: "#171717",
+        // textShadowOffset: { width: 0, height: 2 },
+        // textShadowRadius: 6,
+        // shadowOpacity: 0.2,
         textAlign: "center",
     },
     headerText: {
@@ -339,12 +344,12 @@ const styles = StyleSheet.create({
         textAlign: "center",
         fontSize: 18,
         fontWeight: "600",
-        marginBottom: 7,
-        marginLeft: 8,
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-        shadowOpacity: 0.2,
+        marginBottom: 12,
+        // marginLeft: 8,
+        // textShadowColor: "#171717",
+        // textShadowOffset: { width: 0, height: 2 },
+        // textShadowRadius: 4,
+        // shadowOpacity: 0.2,
 
         
     },

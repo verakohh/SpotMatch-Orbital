@@ -16,8 +16,6 @@ import { checkTokenValidity } from '../Login';
 import qs from 'qs';
 
 
-
-
 export default function ApiRecScreen() {
     const navigation = useNavigation();
     const [recommendedTracks, setRecommendedTracks] = useState([]);

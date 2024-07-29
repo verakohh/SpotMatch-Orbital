@@ -375,6 +375,7 @@ import { getUser, getToken } from '../../User';
 import { getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, where, query } from 'firebase/firestore';
 import { ref, set, usersColRef } from '../../../firebase';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 
 const BothMatchScreen = () => {
@@ -720,7 +721,9 @@ const BothMatchScreen = () => {
     );
 
     return (
-        <View style={styles.container}>
+        // <View style={styles.container}>
+        <LinearGradient colors={["#3a5e91", "transparent"]} style={{flex:1}}>
+
             <Swiper
                 cards={currentDocs}
                 renderCard={renderCard}
@@ -743,6 +746,9 @@ const BothMatchScreen = () => {
                 >
                     <View style={styles.modalContainer}>
                         <View style={styles.modalContent}>
+                            <TouchableOpacity onPress={() => setTapUser(null)} style={styles.closeButton}>
+                                <Text style={styles.closeButtonText}>X</Text>
+                            </TouchableOpacity>
                             <Image
                                 style={styles.modalImg}
                                 source={{ uri: tapUser.imageUrl }}
@@ -750,36 +756,37 @@ const BothMatchScreen = () => {
                             <Text style={styles.modalTitle}>{tapUser.firstName}</Text>
                             <ScrollView contentContainerStyle={styles.modalScrollView}>
                             {/* <View style={styles.modalTextContainer}> */}
-                            <Text style={styles.modalHeader}>Age: <Text style={styles.modalText}>{tapUser.age ? tapUser.age : "N/A"}</Text></Text>
-                                <Text style={styles.modalHeader}>Spotify display name:</Text>
-                                <Text style={styles.modalText}>{tapUser.displayName ? tapUser.displayName : "N/A"}</Text>
-                                
-                                <Text style={styles.modalHeader}>Top 3 Artists: </Text>
-                                {tapUser.topArtists ? tapUser.topArtists && tapUser.topArtists.slice(0, 3).map((artist, index) => (
-                                    <Text key={index} style={styles.modalText}>{artist ? artist : "N/A"}</Text>
-                                )) : <Text style={styles.modalText}>N/A</Text>}
-
-                                <Text style={styles.modalHeader}>Top Tracks: </Text>
-                                {tapUser.topTracks ? tapUser.topTracks && tapUser.topTracks.slice(0, 3).map((track, index) => (
-                                    <Text key={index} style={styles.modalText}>{track.name ? track.name : "N/A"} by {track.artist ? track.artist : "N/A"}</Text>
-                                )) :  <Text style={styles.modalText}>N/A</Text>}
-                                {/* <Text style={styles.modalText}> {tapUser.docTracks.slice(0, 3).join(', ')}</Text></Text> */}
-
-                                <Text style={styles.modalHeader}>Top 3 Genres: </Text>
-                                {tapUser.genres ? tapUser.genres && tapUser.genres.slice(0, 3).map((genre, index) => (
-                                    <Text key={index} style={styles.modalText}>{genre}</Text>
-                                )) :  <Text style={styles.modalText}>N/A</Text>}
-                                {/* <Text style={styles.modalText}>{tapUser.genres.slice(0, 3).join(', ')}</Text> */}
+                            <Text style={styles.modalText}>Age: {tapUser.age ? tapUser.age : "N/A"}</Text>
+                            <Text style={styles.modalText}>Spotify display name: {tapUser.displayName ? tapUser.displayName : "N/A"}</Text>
+                            <View style={styles.whiteBox}>
+                                <Text style={styles.whiteBoxText}>Top 3 Artists:</Text>
+                                {tapUser.topArtists ? tapUser.topArtists.slice(0, 3).map((artist, index) => (
+                                    <Text key={index} style={styles.whiteBoxText}>{artist}</Text>
+                                )) : <Text style={styles.whiteBoxText}>N/A</Text>}
+                            </View>
+                            <View style={styles.whiteBox}>
+                                <Text style={styles.whiteBoxText}>Top Tracks:</Text>
+                                {tapUser.topTracks ? tapUser.topTracks.slice(0, 3).map((track, index) => (
+                                    <Text key={index} style={styles.whiteBoxText}>{track.name ? track.name : "N/A"} by {track.artist ? track.artist : "N/A"}</Text>
+                                )) : <Text style={styles.whiteBoxText}>N/A</Text>}
+                            </View>
+                            <View style={styles.whiteBox}>
+                                <Text style={styles.whiteBoxText}>Top Genres:</Text>
+                                {tapUser.genres ? tapUser.genres.slice(0, 3).map((genre, index) => (
+                                    <Text key={index} style={styles.whiteBoxText}>{genre}</Text>
+                                )) : <Text style={styles.whiteBoxText}>N/A</Text>}
+                            </View>       
+                            {/* <Text style={styles.modalText}>{tapUser.genres.slice(0, 3).join(', ')}</Text> */}
                             </ScrollView>
                             {/* </View> */}
-                            <TouchableOpacity onPress={() => setTapUser(null)} style={styles.closeButton}>
+                            {/* <TouchableOpacity onPress={() => setTapUser(null)} style={styles.closeButton}>
                                 <Text style={styles.closeButtonText}>X</Text>
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
                         </View>
                     </View>
                 </Modal>
             )}
-        </View>
+        </LinearGradient>
     );
     
 }
@@ -800,15 +807,11 @@ const styles = StyleSheet.create({
         flex: 1,
       },
     card: {
-        flex: Dimensions.get("window").height < 700 ? 0.55 : 0.65,
-        // flex: 1,
+        // flex: Dimensions.get("window").height < 700 ? 0.55 : 0.65,
+        flex: 0.70,
         // width: "100%",
         // height: "100%",
         borderRadius: 8,
-        shadowRadius: 25,
-        shadowColor: '#171717',  
-        shadowOpacity: 0.2,
-        shadowOffset: { width: 0, height: 0 },
         justifyContent: "flex-start",
         alignItems: "center",
         backgroundColor: 'lightgrey',
@@ -818,90 +821,97 @@ const styles = StyleSheet.create({
       },
     cardImg: {
         // flex: 1,
-        width: "55%",
-        height: 200,
+        width: 180,
+        alignSelf: 'center',
+        height: 180,
         // resizeMode: "contain",
         borderRadius: 8,
         marginTop: 15,
         marginbottom: 8,
-        marginLeft: '22%',
+        // marginLeft: '25%',
     },
     title: {
-        // marginTop: 2,
-        fontSize: 25,
+        marginTop: 2,
+        fontSize: 27,
         color: "white",
         width: "100%",
         textShadowColor: "#c1d1e6",
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 8,
-        padding: 10,
-        paddingBottom: 8,
+        paddingTop: 5,
+        paddingHorizontal: 10,
         textAlign: "center",
+        marginBottom: 3
+
     },
     text: {
         color: "white",
         fontSize: 16,
-        fontWeight: "500",
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 6,
-        shadowOpacity: 0.2,
+        fontWeight: "400",
+        textAlign: "center",
+
+        // textShadowColor: "#171717",
+        // textShadowOffset: { width: 0, height: 2 },
+        // textShadowRadius: 6,
+        // shadowOpacity: 0.2,
     },
     headerText: {
         color: "white",
-        textAlign: "left",
-        fontSize: 17,
+        textAlign: "center",
+        fontSize: 18,
         fontWeight: "600",
-        marginBottom: 6,
-        marginLeft: 8,
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-        shadowOpacity: 0.2,
+        marginBottom: 12,
+        // textShadowColor: "#171717",
+        // textShadowOffset: { width: 0, height: 2 },
+        // textShadowRadius: 4,
+        // shadowOpacity: 0.2,
 
         
     },
     textContainer: {
         color: "white",
-        textAlign: "left",
-        // fontSize: 18,
-        marginHorizontal: 15,
-        marginBottom: 15,
+        textAlign: "center",
+        fontSize: 18,
+        margin: 15,
         fontWeight: "600",
     },
     common: {
-        backgroundColor: "rgba(65, 83, 127, 0.5)",
-        padding: 4,
-        borderRadius: 12,
+        // backgroundColor: "rgba(65, 83, 127, 0.5)",
+        // padding: 4,
+        // borderRadius: 12,
+        textAlign: "center",
+
 
     },
     commonText: {
         // color: "#33537f",
-        color: "#d3deed",
+        color: "white",
         fontSize: 16,
+        textAlign: "center",
+
         // fontWeight: "400",
         // textShadowColor: "#eaeff6",
-        textShadowColor: "#171717",
+        // textShadowColor: "#171717",
 
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 6,
-        shadowOpacity: 0.2,
-        fontWeight: '500',
+        // textShadowOffset: { width: 0, height: 2 },
+        // textShadowRadius: 6,
+        // shadowOpacity: 0.2,
+        fontWeight: '400',
     },
     commonHeader: {
         // color: "#eaeff6",
-        color: "#eaeff6",
-        textAlign: "left",
+        color: "white",
+        textAlign: "center",
         fontSize: 18,
         fontWeight: "600",
-        marginBottom: 7,
-        marginLeft: 8,
+        marginBottom: 12,
+        // marginLeft: 8,
         // textShadowColor: "#171717",
         // textShadowColor: "#c1d1e6",
 
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-        shadowOpacity: 0.2,
+        // textShadowOffset: { width: 0, height: 2 },
+        // textShadowRadius: 4,
+        // shadowOpacity: 0.2,
     },
     modalContainer: {
         flex: 1,
@@ -916,9 +926,9 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         width: '80%',
-        height: "80%",
+        height: '80%',
         padding: 25,
-        backgroundColor: '#bccce4',
+        backgroundColor: '#BAD6EB',
         borderRadius: 10,
         alignItems: 'center',
     },
@@ -928,20 +938,23 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 15,
         marginTop: 8,
+        textAlign: "center",
     },
     modalText: {
         fontSize: 18,
-        marginBottom: 8,
-        color: "#e4ebf4",
-        textShadowColor: "#171717",
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 6,
-        shadowOpacity: 0.2,
+        marginBottom: 10,
+        color: "#1e314b",
+        // color: "#e4ebf4",
+        // textShadowColor: "#171717",
+        // textShadowOffset: { width: 0, height: 2 },
+        // textShadowRadius: 6,
+        // shadowOpacity: 0.2,
         fontWeight: '500',
+        textAlign: "center",
     },
     modalHeader: {
         color: "#1e314b",
-        textAlign: "left",
+        textAlign: "center",
         fontSize: 20,
         fontWeight: "600",
         marginBottom: 2,
@@ -953,18 +966,25 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
     },
     modalTextContainer: {
-        textAlign: "left",
+        textAlign: "center",
         marginHorizontal: 0,
     },
     modalImg: {
-        // flex: 1,
-        width: "65%",
-        height: 190,
-        // resizeMode: "contain",
-        borderRadius: 20,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 15,
+        alignSelf: 'center',
+        // // flex: 1,
+        // width: "65%",
+        // height: 190,
+        // // resizeMode: "contain",
+        // borderRadius: 20,
     },
     closeButton: {
-        marginTop: 20,
+        position: 'absolute',
+        top: 10,
+        right: 10,
         padding: 8,
         paddingHorizontal: 12,
         backgroundColor: '#708090',
@@ -974,6 +994,20 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    whiteBox: {
+        width: '100%',
+        padding: 10,
+        backgroundColor: '#F7F2EC',
+        borderRadius: 10,
+        marginTop: 10, // Change this value to adjust the margin top
+        alignItems: 'center', // Center text inside white box
+    },
+    whiteBoxText: {
+        fontSize: 18,
+        color: '#1e314b',
+        fontWeight: '500',
+        textAlign: "center", // Center text
     },
 });
 // import React, { useEffect, useState } from 'react';

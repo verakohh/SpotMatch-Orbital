@@ -483,13 +483,11 @@ export default function Requests() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        marginHorizontal: 18,
         backgroundColor: '#FAF4EC',
         justifyContent: 'center'
     },
     wait: {
         flex: 1,
-        marginHorizontal: 25,
         backgroundColor: '#FAF4EC',
         alignItems: 'center',
         justifyContent: 'center'
