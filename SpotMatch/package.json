@@ -72,6 +72,7 @@
     "react-native": "^0.74.3",
     "react-native-app-auth": "^7.2.0",
     "react-native-deck-swiper": "^2.0.17",
+    "react-native-dotenv": "^3.4.11",
     "react-native-elements": "^3.4.3",
     "react-native-feather": "^1.1.2",
     "react-native-gesture-handler": "~2.16.1",

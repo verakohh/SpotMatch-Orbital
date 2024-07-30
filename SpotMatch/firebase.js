@@ -4,16 +4,26 @@ import { getAuth } from 'firebase/auth';
 import { collection, getFirestore, doc, setDoc } from 'firebase/firestore';
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN,
+  FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET,
+  FIREBASE_MESSAGING_SENDER_ID,
+  FIREBASE_APP_ID,
+  FIREBASE_MEASUREMENT_ID
+  
+} from '@env';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB8MXWlCQdF1vXBNh4SbhXTlql_1gkUm6A",
-  authDomain: "orbital-athena.firebaseapp.com",
-  projectId: "orbital-athena",
-  storageBucket: "orbital-athena.appspot.com",
-  messagingSenderId: "188382206377",
-  appId: "1:188382206377:web:df4b404255b56cba220cb8",
-  measurementId: "G-LY658XHFDB"
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+  appId: FIREBASE_APP_ID,
+  measurementId: FIREBASE_MEASUREMENT_ID
 };
 
 let app, auth;

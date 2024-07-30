@@ -222,6 +222,7 @@ import { getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/core';
 import axios from 'axios';
 import qs from 'qs';
+import { CLIENT_ID } from '@env';
 
 
 export const checkTokenValidity = async (expiration) => {
@@ -439,7 +440,7 @@ const Login = () => {
     if (refreshToken) {
       try {
         const data = qs.stringify({
-          client_id: '8346e646ff7a44b59b3f91f8a49033cb',
+          client_id: CLIENT_ID,
           grant_type: 'refresh_token',
           refresh_token: refreshToken
       

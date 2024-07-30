@@ -1,5 +1,4 @@
 import { useEffect, useContext, useState } from 'react';
-import {UserContext} from '../app/UserContext';
 import { getUser, getToken } from '../app/User';
 import axios from 'axios';
 

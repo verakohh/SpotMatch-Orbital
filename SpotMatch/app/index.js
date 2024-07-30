@@ -64,7 +64,6 @@ import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { UserProvider } from './UserContext';
 import { ChatProvider } from './screens/context/ChatContext';
 import Registration from './screens/Registration';
 import Login from './screens/Login';
@@ -103,7 +102,6 @@ function MainTabs() {
 
 export default function App() {
   return (
-    <UserProvider>
       <ChatProvider>
           <Stack.Navigator initialRouteName="Login">
           <Stack.Screen name="Access" component={Access} options={{ headerShown: false }} />
@@ -124,6 +122,5 @@ export default function App() {
             <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
       </ChatProvider>
-    </UserProvider>
   );
 }

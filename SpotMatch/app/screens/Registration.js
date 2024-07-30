@@ -6,7 +6,6 @@ import { createUserWithEmailAndPassword , updateProfile} from 'firebase/auth';
 import { ref, set } from '../../firebase';
 import { useNavigation } from '@react-navigation/core';
 import { doc, addDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { UserContext } from '../UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import User , {storeEmail, storeUser} from '../User';
 import GetSpotifyData from '../../components/GetSpotifyData';
@@ -32,7 +31,6 @@ const LabeledInput = ({ label, value, onChangeText, placeholder, secureTextEntry
 );
 
 const Registration = () => {
-    // const { setUserInfo } = useUserInfo();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
