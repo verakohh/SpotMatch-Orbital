@@ -9,7 +9,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { LinearGradient } from 'react-native-svg';
 import { checkTokenValidity } from './Login';
 import qs from 'qs';
-
+import { CLIENT_ID } from '@env';
 
 
 const ChatMusicScreen = ({route}) => {
@@ -237,7 +237,7 @@ const ChatMusicScreen = ({route}) => {
         if (refreshToken) {
         try {
             const data = qs.stringify({
-            client_id: '8346e646ff7a44b59b3f91f8a49033cb',
+            client_id: CLIENT_ID,
             grant_type: 'refresh_token',
             refresh_token: refreshToken
         

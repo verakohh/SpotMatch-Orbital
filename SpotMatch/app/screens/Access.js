@@ -7,13 +7,12 @@ import React from 'react';
 import axios from 'axios';
 import { refDoc , update} from './Registration';
 import { useNavigation } from '@react-navigation/core';
-import { useUserInfo, UserContext } from '../UserContext';
 import { ref, db } from '../../firebase';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
 
 import { getUser, getToken, getEmail, storeSubscription, getTokenExpiration, checkTokenValidity, getStoredToken } from '../User';
 import qs from 'qs';
-
+import { CLIENT_ID, REDIRECT_URI } from '@env';
 
 
 
@@ -22,12 +21,7 @@ const discovery = {
     tokenEndpoint: 'https://accounts.spotify.com/api/token',
   };
 
-// const clientId = '894050794daa4a568ee64d6a083cf2de';
-const clientId = '8346e646ff7a44b59b3f91f8a49033cb';
-const redirectUri = 'musicmatch://callback';
-// const clientId = '89d33611962f42ecb9e982ee2b879bb8';
-// const redirectUri = 'spotmatch://callback';
-// const navigation= useNavigation();
+
 
 
 // export const refreshToken = async (refreshToken) => {
@@ -92,8 +86,8 @@ export default function Access ({route}) {
 
     const [request, response, promptAsync] = useAuthRequest(
         {
-          clientId: clientId,
-          redirectUri: redirectUri,
+          clientId: CLIENT_ID,
+          redirectUri: REDIRECT_URI,
           scopes: [
             'user-top-read',
             'user-read-private',
@@ -144,10 +138,10 @@ export default function Access ({route}) {
                 // tokenData.append('code_verifier', request.codeVerifier);
                 setLoading(true);
                 const data = qs.stringify({
-                  client_id: clientId,
+                  client_id: CLIENT_ID,
                   grant_type: 'authorization_code',
                   code: code,
-                  redirect_uri: redirectUri,
+                  redirect_uri: REDIRECT_URI,
                   code_verifier: request.codeVerifier,  
                 });
     

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Button from '../../../components/navigation/Button';
 import { ResponseType, useAuthRequest } from 'expo-auth-session';
 import { useNavigation, useRoute } from '@react-navigation/core';
-import { UserContext } from '../../UserContext';
 import { getToken, removeToken, storeToken } from '../../User';
 import Feather from 'react-native-vector-icons/Feather';
 
