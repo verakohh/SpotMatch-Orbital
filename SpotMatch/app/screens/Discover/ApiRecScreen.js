@@ -7,7 +7,6 @@ import { getDoc, getDocs, query, where, arrayUnion} from 'firebase/firestore';
 import { ref, usersColRef } from '../../../firebase';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
-import SpotifyWebApi from "spotify-web-api-node";
 import { BlurView } from 'expo-blur';
 import Feather from 'react-native-vector-icons/Feather';
 // import { Audio } from 'expo-av';
