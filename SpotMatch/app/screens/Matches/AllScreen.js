@@ -238,32 +238,9 @@ const AllScreen = () => {
                                 )) : <Text style={styles.whiteBoxText}>N/A</Text>}
                             </View>
 
-                                {/* commented out */}
-                                {/* <Text style={styles.modalHeader}>Age: <Text style={styles.modalText}>{tapUser.age ? tapUser.age : "N/A"}</Text></Text>
-                                <Text style={styles.modalHeader}>Spotify display name:</Text>
-                                <Text style={styles.modalText}>{tapUser.displayName ? tapUser.displayName : "N/A"}</Text>
-                                
-                                <Text style={styles.modalHeader}>Top 3 Artists: </Text>
-                                {tapUser.topArtists ? tapUser.topArtists && tapUser.topArtists.slice(0, 3).map((artist, index) => (
-                                    <Text key={index} style={styles.modalText}>{artist ? artist : "N/A"}</Text>
-                                )) : <Text style={styles.modalText}>N/A</Text>}
-
-                                <Text style={styles.modalHeader}>Top Tracks: </Text>
-                                {tapUser.topTracks ? tapUser.topTracks && tapUser.topTracks.slice(0, 3).map((track, index) => (
-                                    <Text key={index} style={styles.modalText}>{track.name ? track.name : "N/A"} by {track.artist ? track.artist : "N/A"}</Text>
-                                )) :  <Text style={styles.modalText}>N/A</Text>} */}
-                                {/* <Text style={styles.modalText}> {tapUser.docTracks.slice(0, 3).join(', ')}</Text></Text> */}
-
-                                {/* <Text style={styles.modalHeader}>Top 3 Genres: </Text>
-                                {tapUser.genres ? tapUser.genres && tapUser.genres.slice(0, 3).map((genre, index) => (
-                                    <Text key={index} style={styles.modalText}>{genre}</Text>
-                                )) :  <Text style={styles.modalText}>N/A</Text>} */}
-                                {/* <Text style={styles.modalText}>{tapUser.genres.slice(0, 3).join(', ')}</Text> */}
+                               
                             </ScrollView>
-                            {/* </View> */}
-                            {/* <TouchableOpacity onPress={() => setTapUser(null)} style={styles.closeButton}>
-                                <Text style={styles.closeButtonText}>X</Text>
-                            </TouchableOpacity> */}
+                            
                         </View>
                     </View>
                 </Modal>
@@ -289,7 +266,6 @@ const styles = StyleSheet.create({
     },
     card: {
         flex: 0.70,
-        // flex: Dimensions.get("window").height < 700 ? 0.55 : 0.65,
         borderRadius: 8,
         shadowRadius: 25,
         shadowColor: '#171717',  
@@ -302,12 +278,6 @@ const styles = StyleSheet.create({
         // padding: 10,
       },
     cardImg: {
-        // width: 120,
-        // height: 120,
-        // borderRadius: 80,
-        // marginBottom: 15,
-        // alignSelf: 'center',
-        // flex: 1,
         width: 180,
         alignSelf: 'center',
         height: 180,
@@ -333,10 +303,6 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 16,
         fontWeight: "400",
-        // textShadowColor: "#171717",
-        // textShadowOffset: { width: 0, height: 2 },
-        // textShadowRadius: 6,
-        // shadowOpacity: 0.2,
         textAlign: "center",
     },
     headerText: {
@@ -345,13 +311,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "600",
         marginBottom: 12,
-        // marginLeft: 8,
-        // textShadowColor: "#171717",
-        // textShadowOffset: { width: 0, height: 2 },
-        // textShadowRadius: 4,
-        // shadowOpacity: 0.2,
-
-        
     },
     textContainer: {
         color: "white",
@@ -391,11 +350,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         marginBottom: 10,
         color: "#1e314b",
-        // color: "#e4ebf4",
-        // textShadowColor: "#171717",
-        // textShadowOffset: { width: 0, height: 2 },
-        // textShadowRadius: 6,
-        // shadowOpacity: 0.2,
         fontWeight: '500',
         textAlign: "center",
     },
@@ -406,7 +360,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         marginBottom: 2,
         marginTop: 14,
-        // marginLeft: 8,
         textShadowColor: "#c1d1e6",
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 4,
@@ -422,11 +375,6 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         marginBottom: 15,
         alignSelf: 'center',
-        // // flex: 1,
-        // width: "65%",
-        // height: 190,
-        // // resizeMode: "contain",
-        // borderRadius: 20,
     },
     closeButton: {
         position: 'absolute',

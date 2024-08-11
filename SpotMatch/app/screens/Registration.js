@@ -6,15 +6,9 @@ import { createUserWithEmailAndPassword , updateProfile} from 'firebase/auth';
 import { ref, set } from '../../firebase';
 import { useNavigation } from '@react-navigation/core';
 import { doc, addDoc, setDoc, updateDoc } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import User , {storeEmail, storeUser} from '../User';
-import GetSpotifyData from '../../components/GetSpotifyData';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import moment from 'moment';
-
-
-
-let docRef;
 
 const LabeledInput = ({ label, value, onChangeText, placeholder, secureTextEntry, editable }) => (
   <View style={styles.labeledInputContainer}>
@@ -39,17 +33,8 @@ const Registration = () => {
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [birthdate, setBirthdate] = useState('');
     const [age, setAge] = useState(0);
-    // const[docRef, setDocRef] = useState('');
-    // const[userId, setUserId] = useState("");
-   
-  
-
     const auth = FIREBASE_AUTH;
   
-
-    // useEffect(() => {
-    //   localStorage.setItem("user", JSON.stringify(user))
-    // }, [user])
 
     const handleSignUp = async () => {
       setLoading(true);
@@ -57,7 +42,6 @@ const Registration = () => {
         const response = await createUserWithEmailAndPassword(auth, email, password);
         console.log(response);  
         if(response.user) {
-          const userId = response.user.uid;
           set(email, {
                 firstName,
                 lastName,
@@ -69,28 +53,13 @@ const Registration = () => {
               );
 
               const docRef = doc(db, 'users', email);
-              const docRefPath = `users/${email}`;
               console.log('the ref is: ', docRef)
           
               const newUser = new User(firstName, lastName, email, age);
               newUser.setBirthdate(birthdate);
-              // user = newUser;
               await storeUser(newUser);
-              // await storeEmail(email);
-              // setUser(newUser);
               console.log("registered user Object : ",newUser);
               navigation.navigate("SideBar")
-
-              // setUserInfo(newUser);
-
-              // const newDocRef = ref(response.user.uid)
-          // setUserInfo(userId, newDocRef);
-
-
-          // setID(response.user.uid);
-          // console.log(id);
-          
-          // console.log('the ref is: ', newDocRef)
 
           alert('Created Successfully!')
         }
@@ -113,11 +82,7 @@ const Registration = () => {
       }
   };
 
-  //   useEffect(() => {
-  //     if (age > 0 && birthdate) {
-  //         handleSignUp();
-  //     }
-  // }, [age, birthdate]);
+
   
     const navigation= useNavigation();
     
@@ -143,40 +108,6 @@ const Registration = () => {
       hideDatePicker();
       
   };
-
-    // useEffect (()=> {
-    //   const today = new Date();
-    //   const birthDate = new Date(birthdate);
-
-    //   let years = today.getFullYear() - birthDate.getFullYear();
-    //   const monthDiff = today.getMonth() - birthDate.getMonth();
-    //   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    //       years--;
-    //   }
-    //   console.log(birthdate)
-    //   console.log(birthDate)
-    //   console.log(years);
-    //   setAge(years);
-    //   console.log(age);
-
-    // }, [birthdate])
-    // const calculateAge = () => {
-    //   const today = new Date();
-    //   const birthDate = new Date(birthdate);
-
-    //   let years = today.getFullYear() - birthDate.getFullYear();
-    //   const monthDiff = today.getMonth() - birthDate.getMonth();
-    //   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    //       years--;
-    //   }
-    //   console.log(birthdate)
-    //   console.log(birthDate)
-    //   console.log(years);
-    //   setAge(years);
-    //   console.log(age)
-
-    // };
-    
 
     return (
         <KeyboardAvoidingView
@@ -248,10 +179,6 @@ const Registration = () => {
 }
 
 export default Registration
-
-// export const refDoc = docRef;
-// export const update = data => { if (docRef) {setDoc(docRef, data , {merge: true});} 
-//                         else { console.error("No user docRef"); } } 
 
 
 const styles = StyleSheet.create({

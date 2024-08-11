@@ -1,6 +1,6 @@
-import React, { useState, useEffect , useRef} from 'react';
+import React, { useState , useRef} from 'react';
 import { View, TextInput, FlatList, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Modal , ScrollView} from 'react-native';
-import { getUser, getToken, getTokenExpiration, removeToken, getSubscription } from '../User';
+import { getUser, getSubscription } from '../User';
 import { FIREBASE_AUTH, db, ref } from '../../firebase';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
@@ -20,7 +20,6 @@ const ChatMusicScreen = ({route}) => {
     const [loading, setLoading] = useState(true);
     const [deviceId, setDeviceId] = useState(null);
     const [isDebounced, setIsDebounced] = useState(false);
-    const currentUser = FIREBASE_AUTH.currentUser;
     const [playingSong, setPlayingSong] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -30,7 +29,6 @@ const ChatMusicScreen = ({route}) => {
     const flatListRef = useRef(null);
     const deviceIdRef = useRef(null);
     const playingRef = useRef(false);
-    const playingIndexRef = useRef(0);
     const intervalRef = useRef(null);
     const playingSongIdRef = useRef(null);
 
@@ -42,8 +40,6 @@ const ChatMusicScreen = ({route}) => {
         if (premium) {
             try {
                 setLoading(true);
-                const chatDocRef = doc(db, 'chats', combinedId);
-                const chatDocSnap = await getDoc(chatDocRef);
                 const user = await getUser();
                 const userDocRef = ref(user.email);
                 const userDocSnap = await getDoc(userDocRef);
@@ -144,8 +140,6 @@ const ChatMusicScreen = ({route}) => {
                     }
                 };
 
-                // interval = setInterval(checkSongCompletion, 10000); // Check first 10 sec by default
-
 
                 const unsubscribe = onSnapshot(chatDocRef, async (doc) => {
                     const data = doc.data();
@@ -174,6 +168,7 @@ const ChatMusicScreen = ({route}) => {
                             await playTrack(data.currentSong);
                             
                         } else if (data.playing && playingRef.current && data.currentSong && playingSongIdRef.current && playingSongIdRef.current !== data.currentSong.id) {
+                            // if matched user playing, current user also playing, current song exists but playing song not same with current song 
                             setPlayingSong(data.currentSong);
                             const playingSong = data.currentSong
                             playingSongIdRef.current = playingSong.id;
@@ -666,7 +661,6 @@ const ChatMusicScreen = ({route}) => {
         }
     };
 
-    // setInterval(checkSongCompletion, 1000);
 
     
     if (loading) {
@@ -859,7 +853,7 @@ const ChatMusicScreen = ({route}) => {
         await updateDoc(chatDocRef, {
             chatMusic: arrayUnion(songObject),
         });
-        // setChatMusic((prev) => [...prev, songObject]);
+
         setSearchResults([]);
     };
 
@@ -1091,75 +1085,6 @@ const ChatMusicScreen = ({route}) => {
     );
 
 
-    // return (
-
-    //     <View style={styles.container}>
-
-    //         <View style={styles.header}>
-    //             <TouchableOpacity onPress={() => navigation.goBack()}>
-    //                 <Feather name="chevron-left" size={24} color="black" />
-    //             </TouchableOpacity>
-    //             <TextInput
-    //                 placeholder="Search for songs and enter..."
-    //                 value={query}
-    //                 onChangeText={setQuery}
-    //                 onSubmitEditing={handleSearch}
-    //                 style={styles.searchBar}
-    //             />
-    //         </View>
-
-    //         <Text style={styles.searchResultsHeader}>Search Results: (Pick the song!)</Text>
-    //         <FlatList
-    //             data={searchResults}
-    //             keyExtractor={(item) => item.id}
-    //             renderItem={({ item }) => (
-    //                 <TouchableOpacity onPress={() => addSongToChatMusic(item)}>
-    //                     <Text style={styles.searchResultText}>{item.name} -    {item.artists[0].name}</Text>
-    //                 </TouchableOpacity>
-    //             )}
-    //             ItemSeparatorComponent={() => <View style={styles.separator} />}
-    //             style={searchResults.length > 0 ? styles.searchResults : {display: "none"}}
-    //         />
-                            
-
-    //         <View style={styles.listHeaderContainer}>
-
-    //             <Text style={styles.listHeaderText}> #</Text>
-    //             <Text style={[styles.listHeaderText, { flex: 7 }]}>Title</Text>
-    //             <Feather name='clock' size={20} style={styles.listHeaderIcon} />
-    //             <Feather name='music' size={20} style={styles.listHeaderIcon} />
-
-    //         </View>
-    //         <FlatList
-    //             data={chatMusic}
-    //             keyExtractor={(item) => item.id}
-    //             renderItem={({ item , index }) => (
-    //                 <View style={styles.songContainer}>
-    //                     <Text style={styles.songIndex}>{index + 1}</Text>
-
-    //                     <Image source={{ uri: item.albumImg }} style={styles.albumArt} />
-    //                     <View style={styles.songDetails}>
-    //                         <Text style={styles.songName}>{item.name}</Text>
-    //                         <Text style={styles.artistName}>{item.artist}</Text>
-    //                     </View>
-    //                     {/* <Text style={styles.albumName}>{item.albumName}</Text> */}
-    //                     <Text style={styles.duration}>{item.durationMs}</Text>
-
-
-    //                     <TouchableOpacity onPress={() => removeSongFromChatMusic(item)} style={styles.button}>
-    //                         <Feather name='trash' size={24}/>
-    //                     </TouchableOpacity>
-    //                     <TouchableOpacity onPress={() => addSongToPlaylist(item)} style={styles.button}>
-    //                         <Feather name='plus' size={24}/>
-    //                     </TouchableOpacity>
-    //                 </View>
-    //             )}
-    //             style={styles.chatMusicList}
-    //         />
-
-    //     </View>
-
-    // );
 };
 
 const styles = StyleSheet.create({

@@ -8,10 +8,6 @@ import { FIREBASE_AUTH, db, ref, set } from '../../../firebase';
 import { doc, addDoc, setDoc, updateDoc } from 'firebase/firestore';
 import Feather from 'react-native-vector-icons/Feather';
 
-
-
-
-
 const WelcomeScreen = ({route}) => {
     const { firstName, lastName, email, password, birthdate, age } = route.params;
     const [loading, setLoading] = useState(false);
@@ -44,12 +40,9 @@ const WelcomeScreen = ({route}) => {
                 const newUser = new User(firstName, lastName, email, age);
                 newUser.setBirthdate(birthdate);
                 await storeUser(newUser);
-                // await storeEmail(email);
                 console.log("registered user Object : ", newUser);
 
-                // Alert.alert('Success', 'Created Successfully!');
                 navigation.navigate("Access", {docRefPath}
-                    // "Access", { firstName, lastName, email, password, birthdate, age }
                 );
 
           }
