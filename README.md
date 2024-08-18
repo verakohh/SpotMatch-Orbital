@@ -46,3 +46,8 @@ SpotMatch follows agile development methodologies, including iterative planning,
 
 We extend our heartfelt thanks to our advisors, professors, and fellow developers for their guidance and support throughout this project. SpotMatch is a testament to our dedication and passion for music, and we hope it brings as much joy to its users as it did to us during its development.
 
+## Contributors
+
+- [Charlene](https://github.com/charlenetcy)
+- [Vera](https://github.com/verakohh)
+
