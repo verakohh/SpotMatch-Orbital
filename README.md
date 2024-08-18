@@ -1,9 +1,4 @@
 # SpotMatch - Orbital
-Here is a draft for your README file based on the provided information:
-
----
-
-# SpotMatch - Orbital
 
 SpotMatch is a social networking mobile application designed to connect users based on their shared music preferences. Developed as part of the NUS Orbital 2024 project, SpotMatch leverages Spotify's extensive music data to create personalized user experiences that foster meaningful connections among music enthusiasts.
 
